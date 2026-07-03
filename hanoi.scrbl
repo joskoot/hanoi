@@ -6,7 +6,7 @@
    racket
    "hanoi.rkt"
    (for-label
-     "hanoi.rkt"
+  ;   "hanoi.rkt"
      racket
      (only-in typed/racket Setof Natural Sequenceof Index))
    (for-syntax racket))
