@@ -26,7 +26,8 @@
 @(Defmodule)
 
 @defproc[(hanoi) void?]{
- Opens a GUI for playing the game of the Tower of Hanoi.
+ Opens a GUI for playing the game of the
+ @hyperlink["https://en.wikipedia.org/wiki/Tower_of_Hanoi"]{Tower of Hanoi}.
  The following buttons are available:}
 
 @bold{@tt{Height}}@(lb)
