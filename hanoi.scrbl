@@ -4,7 +4,7 @@
    scribble/core
    scribble/eval
    racket
-  ; "hanoi.rkt"
+   ; "hanoi.rkt"
    (for-label
      "hanoi.rkt"
      racket
@@ -64,9 +64,10 @@ Requires height such clicks. Click a button to cancel setup.
 
 @bold{@tt{Quit}}@(lb)
 Closes and terminates the GUI.
-The Gui can be closed by means of the close button in the title bar (at the top-right corner),
+The GUI can be closed by means of the close button in the title bar (at the top-right corner),
 but procedure @racket[hanoi] may remain running when waiting for a mouseclick
-because it may have called procedure @@seclink["Mouse_Operations"
+because it may have called procedure
+@seclink["Mouse_Operations"
          #:doc '(lib "graphics/scribblings/graphics.scrbl")]{get-mouse-click}.
 
 @bold{@larger{@larger{The end}}}
