@@ -70,6 +70,7 @@ but procedure @racket[hanoi] may remain running when waiting for a mouseclick
 because it may have called procedure
 @seclink["Mouse_Operations"
          #:doc '(lib "graphics/scribblings/graphics.scrbl")]{get-mouse-click}.
+However, after closing the GUI window, no such mouse-click can be made.
 
 @bold{@larger{@larger{The end}}}
 @(collect-garbage)
