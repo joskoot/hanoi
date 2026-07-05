@@ -73,9 +73,7 @@ because it may have called procedure
 However, after closing the GUI window, no such mouse-click can be made.
 @(define (note . x) (inset (apply smaller x)))
 @(define (inset . x) (apply nested #:style 'inset x))
-@note{In @hyperlink[
-"https://github.com/racket/htdp/tree/master/htdp-doc/graphics/scribblings/graphics.scrbl"]{
- graphics/graphics}
+@note{In @other-doc['(lib "graphics/scribblings/graphics.scrbl")]
 I have not found a mean to check the state of a viewport.@(lb)
 (open, hidden or closed)}
 
