@@ -46,7 +46,7 @@ at most @racket[(sub1 (expt 2 height))] moves.
 When long mode is selected, first all disks are placed on the pile at the left and
 subsequently moved to the pile at the right with the largest number of moves possible
 without passing any distribution of disks more than once. @racket[(sub1 (expt height 3))] moves.
-The short and lkong mode can be halted by clicking the reset or quit button.
+The short and long mode can be halted by clicking the reset or quit button.
 
 @bold{@tt{Speed}}@(lb)
 The speed is either slow, fast or click and applies to modes short and long.
