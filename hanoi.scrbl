@@ -46,7 +46,7 @@ at most @racket[(sub1 (expt 2 height))] moves.
 When long mode is selected, first all disks are placed on the pile at the left and
 subsequently moved to the pile at the right with the largest number of moves possible
 without passing any distribution of disks more than once. @racket[(sub1 (expt height 3))] moves.
-The process can be halted by clicking the reset or quit button.
+The short and lkong mode can be halted by clicking the reset or quit button.
 
 @bold{@tt{Speed}}@(lb)
 The speed is either slow, fast or click and applies to modes short and long.
@@ -55,13 +55,13 @@ If it is fast, disks are moved at fast speed.
 If it is click, the GUI makes a move after a click near a pile.
  
 @bold{@tt{Reset}}@(lb)
-Puts all disks one the pile at the left.
+Puts all disks on the pile at the left.
 
 @bold{@tt{Setup}}@(lb)
-Vacates the piles and places disks in a distribution chosen by the user.
+Renoves all disks and subsequently places disks on the piles in a distribution chosen by the user.
 Disks are placed in order of decreasing size.
 The user is supposed to click near the pile where each next disk is to be placed.
-Requires height such clicks. Click a button to cancel setup.
+Requires `height´ such clicks. Click a button to cancel setup.
 
 @bold{@tt{Quit}}@(lb)
 Closes and terminates the GUI.
@@ -71,6 +71,13 @@ because it may have called procedure
 @seclink["Mouse_Operations"
          #:doc '(lib "graphics/scribblings/graphics.scrbl")]{get-mouse-click}.
 However, after closing the GUI window, no such mouse-click can be made.
+@(define (note . x) (inset (apply smaller x)))
+@(define (inset . x) (apply nested #:style 'inset x))
+@note{In @hyperlink[
+"https://github.com/racket/htdp/tree/master/htdp-doc/graphics/scribblings/graphics.scrbl"]{
+ graphics/graphics}
+I have not found a mean to check the state of a viewport.@(lb)
+(open, hidden or closed)}
 
 @bold{@larger{@larger{The end}}}
 @(collect-garbage)
