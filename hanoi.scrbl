@@ -58,7 +58,7 @@ If it is click, the GUI makes a move after a click near a pile.
 Puts all disks on the pile at the left.
 
 @bold{@tt{Setup}}@(lb)
-Renoves all disks and subsequently places disks on the piles in a distribution chosen by the user.
+Removes all disks and subsequently places disks on the piles in a distribution chosen by the user.
 Disks are placed in order of decreasing size.
 The user is supposed to click near the pile where each next disk is to be placed.
 Requires `height´ such clicks. Click a button to cancel setup.
