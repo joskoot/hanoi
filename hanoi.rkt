@@ -315,7 +315,18 @@
             (else (draw-disk d h p) (manual))))))))
 
 (define (short)
-  (let/cc exit
+  (define move-count 0)
+  (define count-str (format "Move count: ~s" move-count))
+  (define pos (add-posn quit-pos (+ button-width border) button-height))
+  (define (draw-count)
+    ((clear-string vp) pos count-str)
+    (set! count-str (format "Move count: ~s" move-count))
+    ((draw-string vp) pos count-str))
+  ((draw-string vp) pos count-str)
+  (let/cc return
+    (define (exit)
+      ((clear-string vp) pos count-str)
+      (return))
     (define p-list
       (for*/list
         ((d (in-reversed-range height))
@@ -329,6 +340,8 @@
         (else
           (short (cdr conf) (- 3 (car conf) dest))
           (move (car conf) dest)
+          (set! move-count (add1 move-count))
+          (draw-count)
           (short (make-list (length (cdr conf))  (- 3 (car conf) dest)) dest))))
     (define (move f t)
       (define ff (vector-ref config f))
@@ -338,7 +351,7 @@
       (case speed
         ((click) (check-click #t))
         ((slow) (sleep 1) (check-click #f))
-        (else (sleep 0.03) (check-click #f)))
+        (else #;(sleep 0.03) (check-click #f)))
       (remove-disk d (sub1 (length ff)) f)
       (draw-disk d (length tt) t)
       (vector-set! config f (cdr ff))
@@ -352,10 +365,22 @@
         ((quit) (exit))))
     (short p-list 2)
     (message-box "Short" "Finished")
+    ((clear-string vp) pos count-str)
     (reset)))
 
 (define (long)
-  (let/cc exit
+  (define move-count 0)
+  (define count-str (format "Move count: ~s" move-count))
+  (define pos (add-posn quit-pos (+ button-width border) button-height))
+  (define (draw-count)
+    ((clear-string vp) pos count-str)
+    (set! count-str (format "Move count: ~s" move-count))
+    ((draw-string vp) pos count-str))
+  ((draw-string vp) pos count-str)
+  (let/cc return
+    (define (exit)
+      ((clear-string vp) pos count-str)
+      (return))
     (define p-list
       (for*/list
         ((d (in-reversed-range height))
@@ -371,8 +396,12 @@
           ; (writeln (list 'top-not-on-dest (car conf) dest (length conf)))
           (long (cdr conf) dest)
           (move (car conf) third)
+          (set! move-count (add1 move-count))
+          (draw-count)
           (long (make-list (length (cdr conf)) dest) (car conf))
           (move third dest)
+          (set! move-count (add1 move-count))
+          (draw-count)
           (long (make-list (length (cdr conf)) (car conf)) dest))))
     (define (move f t)
       ; (writeln config)
@@ -397,6 +426,7 @@
         ((quit) (exit))))
     (long p-list 2)
     (message-box "Long" "Finished")
+    ((clear-string vp) pos count-str)
     (reset)))
 
 (define (not-yet-implemented node)
