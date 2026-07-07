@@ -527,7 +527,7 @@
 
 (define (initialize)
   (open-graphics)
-  (set! vp (open-viewport "aap" vp-width vp-height))
+  (set! vp (open-viewport "Tower of Hanoi" vp-width vp-height))
   ((draw-button vp) height-pos "Height")
   ((draw-button vp) mode-pos   "Mode")
   ((draw-button vp) speed-pos  "Speed")
