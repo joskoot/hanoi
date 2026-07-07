@@ -58,7 +58,7 @@ feasible distribution of disks and finishing with all disks at the pile started 
 The short, long and hamilton mode can be halted by clicking the reset or quit button.
 
 @bold{@tt{Speed}}@(lb)
-The speed is either slow, fast or click and applies to modes short and long.
+The speed is either slow, fast or click and applies to modes short, long and hamilton.
 If it is slow, about one move per second is made.
 If it is fast, disks are moved at fast speed.
 If it is click, the GUI makes a move after a click near a pile.
