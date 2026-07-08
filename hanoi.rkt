@@ -60,7 +60,7 @@
 (define max-height 9)
 (define height max-height) ; always (<= 1 height max-height)
 (define mode 'manual)      ; manual, short, long or hamilton
-(define speed 'click)      ; click, positive real
+(define delay 'click)      ; click, positive real
 (define config (vector (range max-height) '() '())) ; each element an ascending sorted list of disks
 
 ;=====================================================================================================
@@ -136,7 +136,7 @@
     (get? (get-click))))
 
 ;=====================================================================================================
-; Layout of window, disks and piles. Open the viewport.
+; Layout of window, disks and piles.
 
 (define disk-height block)
 (define min-disk-width (* 3 block))
@@ -276,20 +276,22 @@
       #:validate validate-speed))
   (cond
     ((equal? str "click")
-     (set! speed 'click)
+     (set! delay 'click)
      ((draw-button-content vp) speed-pos str))
     (else
       (define v (min 9999999 (read (open-input-string str))))
-      (set! speed (/ v))
-      ((draw-button-content vp) speed-pos (format "~s" v)))))
+      (set! delay (/ v))
+      ((draw-button-content vp) speed-pos (format "~s" (inexact->exact v))))))
 
 (define (validate-speed str)
-  (with-handlers ((exn:fail (λ (e) #f)))
+  (with-handlers ((exn:fail? (λ (e) #f)))
     (cond
       ((equal? str "click"))
       (else
         (define speed (read (open-input-string str)))
-        (positive-real? (read (open-input-string str)))))))
+        (cond
+          ((infinite? speed) #f)
+          (else (positive-real? speed)))))))
 
 (define (positive-real? x) (and (real? x) (positive? x)))
 
@@ -384,9 +386,9 @@
       (define ff (vector-ref config f))
       (define tt (vector-ref config t))
       (define d (car ff))
-      (case speed
+      (case delay
         ((click) (check-click #t))
-        (else (sleep speed) (check-click #f)))
+        (else (sleep delay) (check-click #f)))
       (remove-disk d (sub1 (length ff)) f)
       (draw-disk d (length tt) t)
       (vector-set! config f (cdr ff))
@@ -438,9 +440,9 @@
       (define ff (vector-ref config f))
       (define tt (vector-ref config t))
       (define d (car ff))
-      (case speed
+      (case delay
         ((click) (check-click #t))
-        (else (sleep speed) (check-click #f)))
+        (else (sleep delay) (check-click #f)))
       (remove-disk d (sub1 (length ff)) f)
       (draw-disk d (length tt) t)
       (vector-set! config f (cdr ff))
@@ -506,9 +508,9 @@
       (define ff (vector-ref config f))
       (define tt (vector-ref config t))
       (define d (car ff))
-      (case speed
+      (case delay
         ((click) (check-click #t))
-        (else (sleep speed) (check-click #f)))
+        (else (sleep delay) (check-click #f)))
       (remove-disk d (sub1 (length ff)) f)
       (draw-disk d (length tt) t)
       (vector-set! config f (cdr ff))
@@ -550,11 +552,11 @@
   ((draw-button vp) reset-pos  "Reset")
   ((draw-button vp) setup-pos  "Setup")
   ((draw-button vp) quit-pos   "Quit")
-  (set! speed 'click)
+  (set! delay 'click)
   (set! height max-height)
   (set! mode 'manual)
   ((draw-button-content vp) height-pos (format "~s" height))
-  ((draw-button-content vp) speed-pos (format "~s" speed))
+  ((draw-button-content vp) speed-pos (format "~s" delay))
   ((draw-button-content vp) mode-pos "manual")
   ((draw-solid-rectangle vp)
    (make-posn border (- vp-height border block))
