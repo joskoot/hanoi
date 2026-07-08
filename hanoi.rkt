@@ -250,17 +250,44 @@
     (set! height hh)
     ((draw-button-content vp) height-pos (format "~s" hh))))
 
+;; (define (set-speed!)
+;;   (define sp
+;;     (message-box/custom	
+;;       "Speed for non manual operation"	 
+;;       "Select speed"
+;;       "click"
+;;       "slow"
+;;       "fast"))
+;;   (when sp
+;;     (set! speed (vector-ref #(click slow fast) (sub1 sp)))
+;;     ((draw-button-content vp) speed-pos (vector-ref #("click" "slow" "fast") (sub1 sp)))))
+
 (define (set-speed!)
-  (define sp
-    (message-box/custom	
-      "Speed for non manual operation"	 
-      "Select speed"
-      "click"
-      "slow"
-      "fast"))
-  (when sp
-    (set! speed (vector-ref #(click slow fast) (sub1 sp)))
-    ((draw-button-content vp) speed-pos (vector-ref #("click" "slow" "fast") (sub1 sp)))))
+  (define str
+    (get-text-from-user
+      "Speed"
+      (string-append
+        "Enter a positive real number for the approximate\n"
+        "number of moves to be made per second\n"
+        "or leave the default 'click' as it is")
+      #f	 
+      "click"	 
+      '(disallow-invalid)	 
+      #:validate validate-speed))
+  (cond
+    ((equal? str "click") (set! speed 'click))
+    (else (set! speed (/ (read (open-input-string str))))))
+  ((draw-button-content vp) speed-pos str))
+
+(define (validate-speed str)
+  (with-handlers ((exn:fail (λ (e) #f)))
+    (cond
+      ((equal? str "click"))
+      (else
+        (define speed (read (open-input-string str)))
+        (positive-real? (read (open-input-string str)))))))
+
+(define (positive-real? x) (and (real? x) (positive? x)))
 
 (define (manual)
   (define click (get-click))
@@ -355,8 +382,7 @@
       (define d (car ff))
       (case speed
         ((click) (check-click #t))
-        ((slow) (sleep 1) (check-click #f))
-        (else (check-click #f)))
+        (else (sleep speed) (check-click #f)))
       (remove-disk d (sub1 (length ff)) f)
       (draw-disk d (length tt) t)
       (vector-set! config f (cdr ff))
@@ -410,8 +436,7 @@
       (define d (car ff))
       (case speed
         ((click) (check-click #t))
-        ((slow) (sleep 1) (check-click #f))
-        (else (sleep 0.03) (check-click #f)))
+        (else (sleep speed) (check-click #f)))
       (remove-disk d (sub1 (length ff)) f)
       (draw-disk d (length tt) t)
       (vector-set! config f (cdr ff))
@@ -479,8 +504,7 @@
       (define d (car ff))
       (case speed
         ((click) (check-click #t))
-        ((slow) (sleep 1) (check-click #f))
-        (else (sleep 0.03) (check-click #f)))
+        (else (sleep speed) (check-click #f)))
       (remove-disk d (sub1 (length ff)) f)
       (draw-disk d (length tt) t)
       (vector-set! config f (cdr ff))
