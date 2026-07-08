@@ -64,6 +64,7 @@ If it is click, the GUI makes a move after a click near a pile.
 If it is a positive real number, the GUI makes about @tt{speed} moves per second.
 Enter a fraction for less than one move per second, for example @racket[1/3]
 for three moves per second.
+A speed greater than @racket[9999999] is truncated to @racket[9999999].
  
 @bold{@tt{Reset}}@(lb)
 Puts all disks on the pile at the left.

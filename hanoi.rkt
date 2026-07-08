@@ -60,7 +60,7 @@
 (define max-height 9)
 (define height max-height) ; always (<= 1 height max-height)
 (define mode 'manual)      ; manual, short, long or hamilton
-(define speed 'click)      ; click, slow, fast
+(define speed 'click)      ; click, positive real
 (define config (vector (range max-height) '() '())) ; each element an ascending sorted list of disks
 
 ;=====================================================================================================
@@ -132,7 +132,7 @@
         ((in-region? pos (pile-region 0)) 0)
         ((in-region? pos (pile-region 1)) 1)
         ((in-region? pos (pile-region 2)) 2)
-        (else (get-click))))
+        (get? (get-click))))
     (get? (get-click))))
 
 ;=====================================================================================================
@@ -275,9 +275,13 @@
       '(disallow-invalid)	 
       #:validate validate-speed))
   (cond
-    ((equal? str "click") (set! speed 'click))
-    (else (set! speed (/ (read (open-input-string str))))))
-  ((draw-button-content vp) speed-pos str))
+    ((equal? str "click")
+     (set! speed 'click)
+     ((draw-button-content vp) speed-pos str))
+    (else
+      (define v (min 9999999 (read (open-input-string str))))
+      (set! speed (/ v))
+      ((draw-button-content vp) speed-pos (format "~s" v)))))
 
 (define (validate-speed str)
   (with-handlers ((exn:fail (λ (e) #f)))
