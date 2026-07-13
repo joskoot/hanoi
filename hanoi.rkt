@@ -267,7 +267,7 @@
     (get-text-from-user
       "Speed"
       (string-append
-        "Enter a positive real number for the approximate\n"
+        "Enter a finite positive real number for the approximate\n"
         "number of moves to be made per second\n"
         "or leave the default 'click' as it is")
       #f	 
@@ -281,7 +281,7 @@
     (else
       (define v (min 9999999 (read (open-input-string str))))
       (set! delay (/ v))
-      ((draw-button-content vp) speed-pos (format "~s" (inexact->exact v))))))
+      ((draw-button-content vp) speed-pos (~r (inexact->exact v) #:precision 5)))))
 
 (define (validate-speed str)
   (with-handlers ((exn:fail? (λ (e) #f)))
