@@ -250,18 +250,6 @@
     (set! height hh)
     ((draw-button-content vp) height-pos (format "~s" hh))))
 
-;; (define (set-speed!)
-;;   (define sp
-;;     (message-box/custom	
-;;       "Speed for non manual operation"	 
-;;       "Select speed"
-;;       "click"
-;;       "slow"
-;;       "fast"))
-;;   (when sp
-;;     (set! speed (vector-ref #(click slow fast) (sub1 sp)))
-;;     ((draw-button-content vp) speed-pos (vector-ref #("click" "slow" "fast") (sub1 sp)))))
-
 (define (set-speed!)
   (define str
     (get-text-from-user
@@ -279,19 +267,25 @@
      (set! delay 'click)
      ((draw-button-content vp) speed-pos str))
     (else
-      (define v (min 9999999 (read (open-input-string str))))
-      (set! delay (/ v))
-      ((draw-button-content vp) speed-pos (~r (inexact->exact v) #:precision 5)))))
+      (define v (min 9999999 (inexact->exact (read (open-input-string str)))))
+      (set! delay (/ (max 0.000001 v)))
+      (cond
+        ((integer? v) ((draw-button-content vp) speed-pos (format "~s" v)))
+        ((< v 1) ((draw-button-content vp) speed-pos (~r v #:precision 5)))
+        (else
+          (define oom (order-of-magnitude (floor v)))
+          ((draw-button-content vp) speed-pos (~r v #:precision (- 5 oom))))))))
 
 (define (validate-speed str)
   (with-handlers ((exn:fail? (λ (e) #f)))
     (cond
       ((equal? str "click"))
       (else
-        (define speed (read (open-input-string str)))
+        (define speed (inexact->exact (read (open-input-string str))))
         (cond
           ((infinite? speed) #f)
-          (else (positive-real? speed)))))))
+          ((and (real? speed) (positive? speed)) speed)
+          (else #f))))))
 
 (define (positive-real? x) (and (real? x) (positive? x)))
 

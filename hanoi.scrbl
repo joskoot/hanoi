@@ -61,9 +61,10 @@ The short, long and hamilton mode can be halted by clicking the reset or quit bu
 The speed is either "click" or a positive real number.
 It applies to modes short, long and hamilton.
 If it is click, the GUI makes a move after a click near a pile.
-If it is a positive real number, the GUI makes about @tt{speed} moves per second.
+If it is a positive real number, the GUI makes about @tt{speed} moves per second
+(in fact somewhat less).
 Enter a fraction for less than one move per second, for example @racket[1/3]
-for three moves per second.
+for one move per three seconds.
 A speed greater than @racket[9999999] is truncated to @racket[9999999].
  
 @bold{@tt{Reset}}@(lb)
