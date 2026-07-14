@@ -403,6 +403,7 @@
         ((quit) (exit))))
     (short p-list 2)
     (message-box "Short" "Finished")
+    (viewport-flush-input vp)
     ((clear-string vp) pos count-str)
     (reset)))
 
@@ -460,6 +461,7 @@
     (long p-list 2)
     (message-box "Long" "Finished")
     ((clear-string vp) pos count-str)
+    (viewport-flush-input vp)
     (reset)))
 
 (define (hamilton)
@@ -532,6 +534,7 @@
     (longest-circular-path height 0 2)
     (message-box "Hamilton" "Finished")
     ((clear-string vp) pos count-str)
+    (viewport-flush-input vp)
     (reset)))
 
 (define (reset (include-manual #t))
@@ -575,9 +578,11 @@
 ;=====================================================================================================
 ; Run the game protected.
 
+(define (close) (close-viewport vp) (close-graphics))
+
 (define (hanoi)
   (initialize)
   (dynamic-wind
     void
     main
-    (λ () (close-viewport vp) (close-graphics))))
+    close))
