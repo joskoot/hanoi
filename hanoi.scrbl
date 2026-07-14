@@ -74,7 +74,7 @@ Puts all disks on the pile at the left.
 Removes all disks and subsequently places disks on the piles in a distribution chosen by the user.
 Disks are placed in order of decreasing size.
 The user is supposed to click near the pile where each next disk is to be placed.
-Requires `height´ such clicks. Click a button to cancel setup.
+Requires ‘height’ such clicks. Click a button to cancel setup.
 
 @bold{@tt{Quit}}@(lb)
 Closes and terminates the GUI.
