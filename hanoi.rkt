@@ -271,6 +271,7 @@
     ((equal? str "click")
      (set! delay 'click)
      ((draw-button-content vp) speed-pos "click"))
+    ((not str))
     (else
       (define sp (read (open-input-string str)))
       (define v (max min-speed (min max-speed sp)))
