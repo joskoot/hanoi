@@ -58,7 +58,7 @@ feasible distribution of disks and finishing with all disks at the pile started 
 The short, long and hamilton mode can be halted by clicking the reset or quit button.
 
 @bold{@tt{Speed}}@(lb)
-The speed is either "click" or a positive real number.
+The speed is either "click" or a positive real number written with not more than 7 characters.
 It applies to modes short, long and hamilton.
 If it is click, the GUI makes a move after a click near a pile.
 If it is a positive real number, the GUI makes about @tt{speed} moves per second
@@ -66,6 +66,7 @@ If it is a positive real number, the GUI makes about @tt{speed} moves per second
 Enter a fraction for less than one move per second, for example @racket[1/3]
 for one move per three seconds.
 A speed greater than @racket[9999999] is truncated to @racket[9999999].
+A speed less than 1/10 is increased to 1/10.
  
 @bold{@tt{Reset}}@(lb)
 Puts all disks on the pile at the left.

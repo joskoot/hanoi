@@ -61,6 +61,11 @@
 (define height max-height) ; always (<= 1 height max-height)
 (define mode 'manual)      ; manual, short, long or hamilton
 (define delay 'click)      ; click, positive real
+(define max-speed 9999999)
+(define min-speed 1/10)
+(define max-speed-str (~a max-speed))
+(define min-speed-str (~a min-speed))
+(define clock #f)
 (define config (vector (range max-height) '() '())) ; each element an ascending sorted list of disks
 
 ;=====================================================================================================
@@ -265,26 +270,27 @@
   (cond
     ((equal? str "click")
      (set! delay 'click)
-     ((draw-button-content vp) speed-pos str))
+     ((draw-button-content vp) speed-pos "click"))
     (else
-      (define v (min 9999999 (inexact->exact (read (open-input-string str)))))
-      (set! delay (/ (max 0.000001 v)))
-      (cond
-        ((integer? v) ((draw-button-content vp) speed-pos (format "~s" v)))
-        ((< v 1) ((draw-button-content vp) speed-pos (~r v #:precision 5)))
-        (else
-          (define oom (order-of-magnitude (floor v)))
-          ((draw-button-content vp) speed-pos (~r v #:precision (- 5 oom))))))))
+      (define sp (read (open-input-string str)))
+      (define v (max min-speed (min max-speed sp)))
+      (set! delay (/ v))
+      ((draw-button-content vp)
+       speed-pos
+       (cond
+         ((> sp max-speed) max-speed-str)
+         ((< sp min-speed) min-speed-str)
+         (else str))))))
 
-(define (validate-speed str)
-  (with-handlers ((exn:fail? (λ (e) #f)))
-    (cond
-      ((equal? str "click"))
-      (else
+(define (validate-speed str) 
+  (and (<= 1 (string-length str) 7)
+    (or
+      (equal? str "click")
+      (with-handlers ((exn:fail? (λ (e) #f)))
         (define speed (inexact->exact (read (open-input-string str))))
         (cond
           ((infinite? speed) #f)
-          ((and (real? speed) (positive? speed)) speed)
+          ((and (real? speed) (positive? speed)))
           (else #f))))))
 
 (define (positive-real? x) (and (real? x) (positive? x)))
@@ -348,12 +354,14 @@
             (else (draw-disk d h p) (manual))))))))
 
 (define (short)
+  (set! clock (current-inexact-milliseconds))
+  (define (get-clock) (~r #:precision 3 (/ (- (current-inexact-milliseconds) clock) 1000)))
   (define move-count 0)
-  (define count-str (format "Move count: ~s" move-count))
+  (define count-str (format "Move count: ~s, time: ~a seconds" move-count 0))
   (define pos (add-posn quit-pos (+ button-width border) button-height))
   (define (draw-count)
     ((clear-string vp) pos count-str)
-    (set! count-str (format "Move count: ~s" move-count))
+    (set! count-str (format "Move count: ~s, time: ~a seconds" move-count (get-clock)))
     ((draw-string vp) pos count-str))
   ((draw-string vp) pos count-str)
   (let/cc return
@@ -398,12 +406,14 @@
     (reset)))
 
 (define (long)
+  (set! clock (current-inexact-milliseconds))
+  (define (get-clock) (~r #:precision 3 (/ (- (current-inexact-milliseconds) clock) 1000)))
   (define move-count 0)
-  (define count-str (format "Move count: ~s" move-count))
+  (define count-str (format "Move count: ~s, time: ~a seconds" move-count 0))
   (define pos (add-posn quit-pos (+ button-width border) button-height))
   (define (draw-count)
     ((clear-string vp) pos count-str)
-    (set! count-str (format "Move count: ~s" move-count))
+    (set! count-str (format "Move count: ~s, time: ~a seconds" move-count (get-clock)))
     ((draw-string vp) pos count-str))
   ((draw-string vp) pos count-str)
   (let/cc return
@@ -452,12 +462,14 @@
     (reset)))
 
 (define (hamilton)
+  (set! clock (current-inexact-milliseconds))
+  (define (get-clock) (~r #:precision 3 (/ (- (current-inexact-milliseconds) clock) 1000)))
   (define move-count 0)
-  (define count-str (format "Move count: ~s" move-count))
+  (define count-str (format "Move count: ~s, time: ~a seconds" move-count 0))
   (define pos (add-posn quit-pos (+ button-width border) button-height))
   (define (draw-count)
     ((clear-string vp) pos count-str)
-    (set! count-str (format "Move count: ~s" move-count))
+    (set! count-str (format "Move count: ~s, time: ~a seconds" move-count (get-clock)))
     ((draw-string vp) pos count-str))
   ((draw-string vp) pos count-str)
   (let/cc return
