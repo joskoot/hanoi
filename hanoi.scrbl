@@ -31,8 +31,8 @@
  The following buttons are available:}
 
 @bold{@tt{Height}}@(lb)
-The number of disks, at least one, at most nine.
-Clicking the button opens a modal dialog allowing to select the desired number of disks.
+Opens a modal dialog for selection of the desired number of disks,
+at least one, at most nine.
 Initially the height is 9.
 
 @bold{@tt{Mode}}@(lb)
@@ -47,13 +47,13 @@ with the least possible number of moves to the pile on the right,
 at most @racket[(sub1 (expt 2 height))] moves.
 
 When long mode is selected, first all disks are placed on the pile at the left and
-subsequently moved to the pile at the right with the largest number of moves possible
+subsequently moved by the GUI to the pile at the right with the largest number of moves possible
 without passing any distribution of disks more than once. @racket[(sub1 (expt height 3))] moves.
 In fact every feasible distribution of disks is visited.
 
-When hamilton mode is selected, first all disks are placed on the pile at the left
-and @nonbreaking{@racket[(expt 3 height)]} moves are made such as to pass exactly once along every
-feasible distribution of disks and finishing with all disks at the pile started from.
+When hamilton mode is selected, first all disks are placed on the pile at the left. Subsequently
+the GUI makes @nonbreaking{@racket[(expt 3 height)]} moves such as to pass exactly once along
+every feasible distribution of disks and finishing with all disks at the pile started from.
 
 The short, long and hamilton mode can be halted by clicking the reset or quit button.
 
