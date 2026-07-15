@@ -86,7 +86,7 @@ every feasible distribution of disks and finishing with all disks at the pile st
 The short, long and circular mode can be halted by clicking the reset or quit button.
 
 @bold{@tt{Speed}}@(lb)
-The speed is either @tt{click} or a positive real number written with not more than 7 characters.
+The speed is either @tt{click} or a positive real number written with not more than 6 characters.
 It applies to modes short, long and circular.
 If it is @tt{click} the GUI makes a move after a click near a pile.
 If it is a positive real number, the GUI makes about @tt{speed} moves per second

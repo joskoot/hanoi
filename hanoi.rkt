@@ -61,7 +61,7 @@
 (define height max-height) ; always (<= 1 height max-height)
 (define mode 'manual)      ; manual, short, long or circular
 (define delay 'click)      ; click, positive real
-(define max-speed 9999999)
+(define max-speed 999999)
 (define min-speed 1/10)
 (define max-speed-str (~a max-speed))
 (define min-speed-str (~a min-speed))
