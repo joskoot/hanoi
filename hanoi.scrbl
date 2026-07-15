@@ -39,15 +39,19 @@ The goal of the game is to move all disks to the pile at the right by making suc
 During a move the top disk of a (non-empty) pile is taken and slipped on top onto another pile,
 but it is not allowed to move a disk upon a smaller one.
 Hence a disk never rests upon a smaller one.
+The distributions of disks among the pieces can be taken as the vertices of a graph
+with the moves as bidirectional edges of length one. The graph resembles a
+@hyperlink["https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle"]{Sierpińsky triangle}.
 The least number of moves required is @racket[(sub1 (expt h 2))] with uniquely defined
 sequence of moves. This is the short mode.
 The largest number of moves without passing a distribution of disks among the piles more than once
 is @racket[(sub1 (expr 3 h))], implying that every feasible distribution is visited exactly once.
 This is the long mode and is uniquely defined too.
 Another interesting way is the circular mode, moving the disks such as to visit all feasible
-distributions of disks among the pìles exactly once
+distributions of disks among the piles exactly once
 and finishing with all disks on the starting pile at the left.
-This takes @racket[(expt h 3)] moves. The circular mode is uniquely defined too.
+This takes @racket[(expt h 3)] moves. The circular mode is uniquely defined too when disregarding
+the fact that the path of moves can be followed in two opposit directions.
 
 @section{How to play}
 
