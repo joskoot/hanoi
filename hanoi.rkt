@@ -483,7 +483,7 @@
 (define (get-clock) (~r #:precision 3 (/ (- (current-inexact-milliseconds) clock) 1000)))
 
 (define (finish mode)
-  (message-box "Short" mode)
+  (message-box mode (string-append mode " mode finished"))
   (viewport-flush-input vp)
   ((clear-string vp) count-pos count-str)
   (reset))
