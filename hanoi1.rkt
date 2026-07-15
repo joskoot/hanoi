@@ -284,7 +284,7 @@
          (else str))))))
 
 (define (validate-speed str) 
-  (and (<= 1 (string-length str) 7)
+  (and (<= 1 (string-length str) 6)
     (or
       (equal? str "click")
       (with-handlers ((exn:fail? (λ (e) #f)))
