@@ -18,25 +18,15 @@
 
 (define (main)
   (case mode
-    ((manual)
-     (manual))
-    ((short)
-     (short)
-     (set! mode 'manual)
-     ((draw-button-content vp) mode-pos "Manual")
-     (main))
-    ((long)
-     (reset #f)
-     (long)
-     (set! mode 'manual)
-     ((draw-button-content vp) mode-pos "Manual")
-     (main))
-    ((circular)
-     (reset #f)
-     (circular)
-     (set! mode 'manual)
-     ((draw-button-content vp) mode-pos "Manual")
-     (main))))
+    ((manual) (manual))
+    ((short) (short) (after-burn))
+    ((long) (reset #f) (long) (after-burn))
+    ((circular) (reset #f) (circular) (after-burn))))
+
+(define (after-burn)
+  (set! mode 'manual)
+  ((draw-button-content vp) mode-pos "Manual")
+  (main))
 
 ;=====================================================================================================
 ; A region is used to dispatch a mouse-click. Used for buttons and piles.
@@ -304,7 +294,7 @@
     ((0 1 2) (manual1 click))
     ((height) (set-height!) (reset) (main))
     ((mode) (set-mode!) (main))
-    ((speed) (set-speed!) (manual))
+    ((speed) (set-speed!) (main))
     ((reset) (reset) (main))
     ((setup) (setup) (main))
     ((quit) (void))
@@ -537,3 +527,6 @@
     void
     main
     close))
+
+;=====================================================================================================
+; The end
