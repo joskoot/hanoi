@@ -24,43 +24,19 @@
 ; Main procedure.
 
 (define (main)
-  (case (get-mode)
+  (case mode
     ((manual) (manual))
     ((short) (short) (set-mode-manual))
     ((long) (reset) (long) (set-mode-manual))
     ((circular) (reset) (circular) (set-mode-manual))))
 
 (define (set-mode-manual)
-  (put-mode 'manual)
+  (set! mode 'manual)
   ((draw-button-content vp) mode-pos "Manual")
   (main))
 
 ;=====================================================================================================
-; State of the game:
-
-(struct state (height mode delay clock move-count count-str config)
-  #:mutable #:constructor-name make-state #:omit-define-syntaxes)
-
-(define (get-height    ) (state-height     state))
-(define (get-mode      ) (state-mode       state))
-(define (get-delay     ) (state-delay      state))
-(define (get-clock     ) (state-clock      state))
-(define (get-move-count) (state-move-count state))
-(define (get-count-str ) (state-count-str  state))
-(define (get-config    ) (state-config     state))
-
-(define (put-height     heigth) (set-state-height!     state heigth))
-(define (put-mode       mode  ) (set-state-mode!       state mode))
-(define (put-delay      delay ) (set-state-delay!      state delay))
-(define (put-clock      clock ) (set-state-clock!      state clock))
-(define (put-move-count count ) (set-state-move-count! state count))
-(define (put-count-str  str   ) (set-state-count-str!  state str))
-(define (put-config     config) (set-state-config!     state config))
-
-;=====================================================================================================
-; Top level variables:
-
-; Never mutated:
+; Constants
 
 (define max-height 9)
 (define max-speed 999999)
@@ -68,9 +44,17 @@
 (define max-speed-str (~a max-speed))
 (define min-speed-str (~a min-speed))
 
-; Initialized once, thereafter never mutated.
+;=====================================================================================================
+; Initial state of the game, mutated while playing.
 
-; (define vp 'yet-to-be-initialized)
+(define (make-disk-distribution) (vector (range height) '() '()))
+(define height max-height)
+(define mode 'manual)
+(define delay 'click)
+(define clock 0)
+(define move-count 0)
+(define count-str "")
+(define config (make-disk-distribution))
 
 ;=====================================================================================================
 ; Elementary dimensions.
@@ -118,7 +102,9 @@
   (define click (get-and-dispatch-click get?))
   (case click
     ((reset) (reset) (exit))
-    ((quit) (exit))))
+    ((quit) (exit))
+    ((0 1 2) #t)
+    (else #f)))
 
 ;=====================================================================================================
 ; Layout of the viewport and related procedures.
@@ -241,19 +227,20 @@
   (draw-piles))
 
 (define (move-disk f t exit)
-  (define ff (vector-ref (get-config) f))
-  (define tt (vector-ref (get-config) t))
+  (define ff (vector-ref config f))
+  (define tt (vector-ref config t))
+  (define d (car ff))
   (unless (null? ff)
-    (define d (car ff))
-    (define delay (get-delay))
-    (case delay
-      ((click) (check-click #t exit))
-      (else (sleep delay) (check-click #f exit)))
-    (remove-disk d (sub1 (length ff)) f)
-    (draw-disk d (length tt) t)
-    (draw-count)
-    (vector-set! (get-config) f (cdr ff))
-    (vector-set! (get-config) t (cons d tt))))
+    (define goon?
+      (case delay
+        ((click) (check-click #t exit))
+        (else (sleep delay) (check-click #f exit))))
+    (when goon?
+      (remove-disk d (sub1 (length ff)) f)
+      (draw-disk d (length tt) t)
+      (draw-count)
+      (vector-set! config f (cdr ff))
+      (vector-set! config t (cons d tt)))))
 
 ;=====================================================================================================
 ; Actions.
@@ -261,16 +248,16 @@
 (define (setup)
   (let/ec exit
     (remove-all-disks)
-    (put-config (make-vector 3 '()))
+    (set! config (make-vector 3 '()))
     (define msg "Setting up")
     (define (remove-msg) ((clear-string vp) count-pos msg))
     ((draw-string vp) count-pos msg "red")
-    (for ((d (in-reversed-range (get-height))))
+    (for ((d (in-reversed-range height)))
       (define click (get-and-dispatch-click))
       (case click
         ((0 1 2)
-         (define pile (vector-ref (get-config) click))
-         (vector-set! (get-config) click (cons d pile))
+         (define pile (vector-ref config click))
+         (vector-set! config click (cons d pile))
          (draw-disk d (length pile) click))
         ((mode) (remove-msg) (reset) (set-mode) (exit))
         ((height) (remove-msg) (set-height) (reset) (exit))
@@ -289,7 +276,7 @@
   (when choice
     (define ch (car choice))
     ((draw-button-content vp) mode-pos (list-ref modes ch))
-    (put-mode (vector-ref #(manual short long circular) ch))))
+    (set! mode (vector-ref #(manual short long circular) ch))))
 
 (define (set-height)
   (define heights (range 1 (add1 max-height)))
@@ -300,7 +287,7 @@
       (map (curry format "~s") heights)))
   (when h
     (define hh (add1 (car h)))
-    (put-height hh)
+    (set! height hh)
     ((draw-button-content vp) height-pos (format "~s" hh))))
 
 (define (set-speed)
@@ -327,13 +314,13 @@
       #:validate validate-speed))
   (cond
     ((equal? str "click")
-     (put-delay 'click)
+     (set! delay 'click)
      ((draw-button-content vp) speed-pos "click"))
     ((not str))
     (else
       (define sp (read (open-input-string str)))
       (define v (max min-speed (min max-speed sp)))
-      (put-delay (/ v))
+      (set! delay (/ v))
       ((draw-button-content vp)
        speed-pos
        (cond
@@ -354,7 +341,7 @@
     (else (manual))))
 
 (define (manual1 p)
-  (define pile (vector-ref (get-config) p))
+  (define pile (vector-ref config p))
   (cond
     ((null? pile) (manual))
     (else
@@ -379,13 +366,13 @@
   (cond
     ((= dest-p p) (draw-disk d h p) (manual))
     (else
-      (define pile (vector-ref (get-config) dest-p))
+      (define pile (vector-ref config dest-p))
       (cond
         ((null? pile)
          (remove-disk d h p)
-         (vector-set! (get-config) p (cdr (vector-ref (get-config) p)))
+         (vector-set! config p (cdr (vector-ref config p)))
          (draw-disk d 0 dest-p)
-         (vector-set! (get-config) dest-p (cons d (vector-ref (get-config) dest-p)))
+         (vector-set! config dest-p (cons d (vector-ref config dest-p)))
          (manual))
         (else
           (define dest-d (car pile))
@@ -393,9 +380,9 @@
           (cond
             ((< d dest-d)
              (remove-disk d h p)
-             (vector-set! (get-config) p (cdr (vector-ref (get-config) p)))
+             (vector-set! config p (cdr (vector-ref config p)))
              (draw-disk d dest-h dest-p)
-             (vector-set! (get-config) dest-p (cons d (vector-ref (get-config) dest-p)))
+             (vector-set! config dest-p (cons d (vector-ref config dest-p)))
              (manual))
             (else (draw-disk d h p) (manual))))))))
 
@@ -403,13 +390,13 @@
   (reset-time-and-counter)
   (let/cc return
     (define (exit)
-      ((clear-string vp) count-pos (get-count-str))
+      ((clear-string vp) count-pos count-str)
       (return))
     (define p-list
       (for*/list
-        ((d (in-reversed-range (get-height)))
+        ((d (in-reversed-range height))
          (p (in-range 3))
-         #:when (member d (vector-ref (get-config) p)))
+         #:when (member d (vector-ref config p)))
         p))
     (define (short conf dest)
       (cond
@@ -426,13 +413,13 @@
   (reset-time-and-counter)
   (let/cc return
     (define (exit)
-      ((clear-string vp) count-pos (get-count-str))
+      ((clear-string vp) count-pos count-str)
       (return))
     (define p-list
       (for*/list
-        ((d (in-reversed-range (get-height)))
+        ((d (in-reversed-range height))
          (p (in-range 3))
-         #:when (member d (vector-ref (get-config) p)))
+         #:when (member d (vector-ref config p)))
         p))
     (define (long conf dest)
       (define third (and (not (null? conf)) (- 3 (car conf) dest)))
@@ -452,7 +439,7 @@
   (define pos (add-posn quit-pos (+ button-width border) button-height))
   (let/cc return
     (define (exit)
-      ((clear-string vp) pos (get-count-str))
+      ((clear-string vp) pos count-str)
       (return))
     (define (longest-circular-path h f t)
       (unless (zero? h)
@@ -488,61 +475,47 @@
         (longest-non-circular-path h-1 f r)
         (move-disk f t exit)
         (finish-path  h-1 r t)))
-    (longest-circular-path (get-height) 0 2)
+    (longest-circular-path height 0 2)
     (finish "Circular")))
 
 (define (reset)
-  (put-config (make-disk-distribution))
+  (set! config (make-disk-distribution))
   (remove-all-disks)
-  (for ((d (in-range (get-height))) (h (in-reversed-range (get-height))))
+  (for ((d (in-range height)) (h (in-reversed-range height)))
     (draw-disk d h 0)))
-
-(define (make-disk-distribution) (vector (range (get-height)) '() '()))
 
 ;=====================================================================================================
 ; Count and time info for modes short, long and circular.
 
 (define (reset-time-and-counter)
-  (put-clock (current-inexact-milliseconds))
-  (put-move-count -1)
-  (put-count-str "")
+  (set! clock (current-inexact-milliseconds))
+  (set! move-count -1)
+  (set! count-str "")
   (draw-count))
 
-
 (define (draw-count)
-  ((clear-string vp) count-pos (get-count-str))
-  (put-move-count(add1 (get-move-count)))
-  (put-count-str
+  ((clear-string vp) count-pos count-str)
+  (set! move-count(add1 move-count))
+  (set! count-str
     (format "Move count: ~s, time: ~a seconds"
-      (get-move-count) (watch-clock)))
-  ((draw-string vp) count-pos (get-count-str)))
+      move-count (watch-clock)))
+  ((draw-string vp) count-pos count-str))
 
 (define (watch-clock)
-  (~r #:precision 3 (/ (- (current-inexact-milliseconds) (get-clock)) 1000)))
+  (~r #:precision 3 (/ (- (current-inexact-milliseconds) clock) 1000)))
 
 (define (finish mode)
   (message-box mode (string-append mode " mode finished"))
   (viewport-flush-input vp)
-  ((clear-string vp) count-pos (get-count-str))
+  ((clear-string vp) count-pos count-str)
   (reset))
 
 ;=====================================================================================================
 ; Initialization.
 
-; The following two variables are referred to within procedures only.
-; These procedures are not called before initialization.
-; Therefore they can be defined and initialized here.
-
-(define state (apply make-state (make-list (procedure-arity make-state) 'yet-to-be-initialized)))
 (define vp 'yet-to-be-initialized)
 
 (define (initialize)
-  (put-height max-height)
-  (put-mode 'manual)
-  (put-delay 'click)
-  (put-config (make-disk-distribution))
-  (put-move-count 0)
-  (put-count-str "")
   (open-graphics)
   (set! vp (open-viewport "Tower of Hanoi" vp-width vp-height))
   ((draw-button vp) height-pos "Height")
@@ -551,8 +524,8 @@
   ((draw-button vp) reset-pos  "Reset")
   ((draw-button vp) setup-pos  "Setup")
   ((draw-button vp) quit-pos   "Quit")
-  ((draw-button-content vp) height-pos (format "~s" (get-height)))
-  ((draw-button-content vp) speed-pos (format "~s" (get-delay)))
+  ((draw-button-content vp) height-pos (format "~s" height))
+  ((draw-button-content vp) speed-pos (format "~s" delay))
   ((draw-button-content vp) mode-pos "Manual")
   ((draw-solid-rectangle vp)
    (make-posn border (- vp-height border block))
