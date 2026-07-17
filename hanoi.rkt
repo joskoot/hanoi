@@ -96,15 +96,17 @@
         ((in-region? pos (pile-region 1)) 1)
         ((in-region? pos (pile-region 2)) 2)
         (get? (get-and-dispatch-click))))
-    (get? (get-and-dispatch-click))))
+    (get? (get-and-dispatch-click))
+    (else #f)))
 
 (define (check-click get? exit)
   (define click (get-and-dispatch-click get?))
   (case click
     ((reset) (reset) (exit))
     ((quit) (exit))
-    ((0 1 2) #t)
-    (else #f)))
+    (else
+      (or (and get? (member click '(0 1 2)))
+        (not get?)))))
 
 ;=====================================================================================================
 ; Layout of the viewport and related procedures.
@@ -229,18 +231,20 @@
 (define (move-disk f t exit)
   (define ff (vector-ref config f))
   (define tt (vector-ref config t))
-  (define d (car ff))
   (unless (null? ff)
-    (define goon?
+    (define d (car ff))
+    (define do?
       (case delay
         ((click) (check-click #t exit))
         (else (sleep delay) (check-click #f exit))))
-    (when goon?
-      (remove-disk d (sub1 (length ff)) f)
-      (draw-disk d (length tt) t)
-      (draw-count)
-      (vector-set! config f (cdr ff))
-      (vector-set! config t (cons d tt)))))
+    (cond
+      (do?
+        (remove-disk d (sub1 (length ff)) f)
+        (draw-disk d (length tt) t)
+        (draw-count)
+        (vector-set! config f (cdr ff))
+        (vector-set! config t (cons d tt)))
+      (else (move-disk f t exit)))))
 
 ;=====================================================================================================
 ; Actions.
