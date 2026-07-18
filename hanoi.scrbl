@@ -75,7 +75,7 @@ Initially the mode is manual.
 
 In manual mode the user is supposed to click near the pile the disk is to be taken from
 followed by a click near the pile of destination.
-An attempt to make an illegal moves is ignored.
+An attempt to make an illegal move is ignored.
 
 In short mode the disks are moved by the GUI to the pile at the right
 with the least possible number of moves,
