@@ -57,7 +57,7 @@ the fact that the path of moves can be followed in opposit direction too.
 
 @section{How to play}
 
-@defproc[#:link-target? #f (hanoi) void?]{
+@defproc[(hanoi) void?]{
  Opens a GUI for playing the game of the
  @hyperlink["https://en.wikipedia.org/wiki/Tower_of_Hanoi"]{Tower of Hanoi}.
  The following buttons are available:}
