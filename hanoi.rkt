@@ -4,14 +4,14 @@
 #lang racket
 
 (require graphics/graphics racket/gui)
-(provide hanoi)
+(provide play)
 (define-syntax-rule (in-reversed-range n) (in-range (sub1 n) -1 -1))
 (define (add-posn pos width height) (make-posn (+ (posn-x pos) width) (+ (posn-y pos) height)))
 
 ;=====================================================================================================
 ; Run the game protected.
 
-(define (hanoi)
+(define (play)
   (initialize)
   (dynamic-wind
     void
