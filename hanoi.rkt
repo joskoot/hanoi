@@ -50,17 +50,11 @@
 (define (make-disk-distribution) (vector (range height) '() '()))
 (define height max-height)
 (define mode 'manual)
-(define delay 'click)
+(define speed 'click)
 (define clock 0)
 (define move-count 0)
 (define count-str "")
 (define config (make-disk-distribution))
-
-;=====================================================================================================
-; Elementary dimensions.
-
-(define block 20)
-(define border (* 3 block))
 
 ;=====================================================================================================
 ; A region is used to dispatch a mouse-click. Used for buttons and piles.
@@ -109,11 +103,29 @@
         (not get?)))))
 
 ;=====================================================================================================
+; Elementary dimensions.
+
+(define block 20)
+(define border (* 3 block))
+
+;=====================================================================================================
+; Colors.
+
+(define green (make-rgb 0    8/10 0   ))
+(define red   (make-rgb 1    0    0   ))
+(define white (make-rgb 1    1    1   ))
+(define black (make-rgb 0    0    0   ))
+(define gray  (make-rgb 6/10 6/10 6/10))
+(define blue  (make-rgb 0    0    1   ))
+
+;=====================================================================================================
 ; Layout of the viewport and related procedures.
 
 (define-syntax-rule
   (define-values-block (value ...) expr ...)
   (define-values (value ...) (let () expr ... (values value ...))))
+
+; Determine dimensions of buttons and button contents.
 
 (define-values-block (draw-button draw-button-content button-width button-height)
   (open-graphics)
@@ -137,16 +149,18 @@
     (define x (posn-x pos))
     (define y (posn-y pos))
     ((draw-solid-rectangle vp)
-     pos button-width button-height "blue")
+     pos button-width button-height blue)
     ((draw-string vp)
-     (make-posn (+ x string-offset) (+ y button-height (- string-offset))) str "white"))
+     (make-posn (+ x string-offset) (+ y button-height (- string-offset))) str white))
   (define ((draw-button-content vp) pos str)
     (define x (posn-x pos))
     (define y (+ (posn-y pos) button-height))
     ((clear-solid-rectangle vp) (make-posn x y) button-width button-height)
-    ((draw-rectangle vp)  (make-posn x y) button-width button-height "blue")
+    ((draw-rectangle vp)  (make-posn x y) button-width button-height blue)
     ((draw-string vp)
-     (make-posn (+ x string-offset) (+ y button-height (- (* 2 string-offset)))) str "blue")))
+     (make-posn (+ x string-offset) (+ y button-height (- (* 2 string-offset)))) str blue)))
+
+; Determine all other dimensions and regions.
 
 (define height-pos (make-posn border border))
 (define mode-pos  (add-posn height-pos (+ button-width border) 0))
@@ -191,7 +205,7 @@
   (for ((p (in-range 3)))
     ((draw-solid-rectangle vp)
      (make-posn (pile-x p) pile-y)
-     pile-width pile-height "green")))
+     pile-width pile-height green)))
 
 (define (draw-disk d h p)
   (define width (disk-width d))
@@ -199,8 +213,8 @@
   (define x (- center (/ width 2)))
   (define y (- vp-height border block (* (add1 h) disk-height)))
   (define pos (make-posn x y))
-  ((draw-solid-rectangle vp) pos width disk-height "black")
-  ((draw-rectangle vp) pos width disk-height "white"))
+  ((draw-solid-rectangle vp) pos width disk-height black)
+  ((draw-rectangle vp) pos width disk-height white))
 
 (define (mark-disk d h p)
   (define width (disk-width d))
@@ -208,8 +222,8 @@
   (define x (- center (/ width 2)))
   (define y (- vp-height border block (* (add1 h) disk-height)))
   (define pos (make-posn x y))
-  ((draw-solid-rectangle vp) pos width disk-height "red")
-  ((draw-rectangle vp) pos width disk-height "white"))
+  ((draw-solid-rectangle vp) pos width disk-height red)
+  ((draw-rectangle vp) pos width disk-height white))
 
 (define (remove-disk d h p)
   (define width (disk-width d))
@@ -219,7 +233,7 @@
   (define pos (make-posn x y))
   ((clear-solid-rectangle vp) pos width disk-height)
   ((draw-solid-rectangle vp)
-   (make-posn (- center (/ pile-width 2)) y) pile-width disk-height "green"))
+   (make-posn (- center (/ pile-width 2)) y) pile-width disk-height green))
 
 (define (remove-all-disks)
   ((clear-solid-rectangle vp)
@@ -234,9 +248,9 @@
   (unless (null? ff)
     (define d (car ff))
     (define do?
-      (case delay
+      (case speed
         ((click) (check-click #t exit))
-        (else (sleep delay) (check-click #f exit))))
+        (else (sleep speed) (check-click #f exit))))
     (cond
       (do?
         (remove-disk d (sub1 (length ff)) f)
@@ -255,7 +269,7 @@
     (set! config (make-vector 3 '()))
     (define msg "Setting up")
     (define (remove-msg) ((clear-string vp) count-pos msg))
-    ((draw-string vp) count-pos msg "red")
+    ((draw-string vp) count-pos msg red)
     (for ((d (in-reversed-range height)))
       (define click (get-and-dispatch-click))
       (case click
@@ -318,13 +332,13 @@
       #:validate validate-speed))
   (cond
     ((equal? str "click")
-     (set! delay 'click)
+     (set! speed 'click)
      ((draw-button-content vp) speed-pos "click"))
     ((not str))
     (else
       (define sp (read (open-input-string str)))
       (define v (max min-speed (min max-speed sp)))
-      (set! delay (/ v))
+      (set! speed (/ v))
       ((draw-button-content vp)
        speed-pos
        (cond
@@ -529,13 +543,13 @@
   ((draw-button vp) setup-pos  "Setup")
   ((draw-button vp) quit-pos   "Quit")
   ((draw-button-content vp) height-pos (format "~s" height))
-  ((draw-button-content vp) speed-pos (format "~s" delay))
+  ((draw-button-content vp) speed-pos (format "~s" speed))
   ((draw-button-content vp) mode-pos "Manual")
   ((draw-solid-rectangle vp)
    (make-posn border (- vp-height border block))
    (- vp-width (* 2 border))
    block
-   "gray")
+   gray)
   (reset))
 
 ;=====================================================================================================
