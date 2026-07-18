@@ -57,16 +57,18 @@ the fact that the path of moves can be followed in opposit direction too.
 
 @section{How to play}
 
-@defproc[(hanoi) void?]{
+@defproc[#:link-target? #f (hanoi) void?]{
  Opens a GUI for playing the game of the
  @hyperlink["https://en.wikipedia.org/wiki/Tower_of_Hanoi"]{Tower of Hanoi}.
  The following buttons are available:}
 
+@elemtag["height" ""]
 @bold{@tt{Height}}@(lb)
 Opens a modal dialog for selection of the desired number of disks,
 at least one, at most nine.
 Initially the height is 9.
 
+@elemtag["Mode" ""]
 @bold{@tt{Mode}}@(lb)
 Opens a modal dialog for selection of the mode, which is manual, short, long or circular.
 Initially the mode is manual.
@@ -77,41 +79,48 @@ An attempt to make an illegal moves is ignored.
 
 In short mode the disks are moved by the GUI to the pile at the right
 with the least possible number of moves,
-at most @racket[(sub1 (expt 2 height))] moves.
+at most @nonbreaking{@tt{(@racket[sub1] (@racket[expt 2] @elemref["height"]{height}))}} moves.
 
 When the long mode is selected, first all disks are placed on the pile at the left and
 subsequently moved by the GUI to the pile at the right with the largest number of moves possible
 without passing any distribution of disks more than once.
-@nonbreaking{@racket[(sub1 (expt height 3))]} moves.
+@nonbreaking{@tt{(@racket[sub1] (@racket[expt 3] @elemref["height"]{height}))}} moves.
 In fact every feasible distribution of disks is visited.
 
-When the circular mode is selected, first all disks are placed on the pile at the left. Subsequently
-the GUI makes @nonbreaking{@racket[(expt 3 height)]} moves such as to pass exactly once along
-every feasible distribution of disks and finishing with all disks at the pile started from
+When the circular mode is selected, first all disks are placed on the pile at the left.
+Subsequently the GUI makes moves such as to pass exactly once along
+every feasible distribution of disks and finishing with all disks at the pile started from.
+@nonbreaking{@tt{(@racket[expt 3] @elemref["height"]{height})}} moves.
 
-The short, long and circular mode can be halted by clicking the reset or quit button.
+The short, long and circular mode can be halted by clicking the
+@elemref["Reset"]{reset} or @elemref["Quit"]{quit} button.
 
+@elemtag["Speed" ""]
 @bold{@tt{Speed}}@(lb)
 The speed is either @tt{click} or a positive real number written with not more than 6 characters.
-It applies to modes short, long and circular.
+It applies to @elemref["Mode"]{modes} short, long and circular.
 If it is @tt{click} the GUI makes a move after a click near a pile.
-If it is a positive real number, the GUI makes about @tt{speed} moves per second.
-In fact slightly less, because the speed only applies to the sleeping time between moves.
+If it is a positive real number, the GUI makes about speed moves per second.
+In fact slightly less, because the speed
+only applies to the sleeping time between moves.
 and does not take into account the time spent on calculations and graphical rendering.
 Enter a fraction for less than one move per second, for example @racket[1/3]
 for one move per three seconds.
 @nonbreaking{A speed} greater than @racket[999999] is truncated to @racket[999999].
 @nonbreaking{A speed} less than 1/10 is increased to 1/10.
  
+@elemtag["Reset" ""]
 @bold{@tt{Reset}}@(lb)
 Puts all disks on the pile at the left.
 
+@elemtag["Setup" ""]
 @bold{@tt{Setup}}@(lb)
 Removes all disks and subsequently places disks on the piles in a distribution chosen by the user.
 Disks are placed in order of decreasing size.
 The user is supposed to click near the pile where each next disk is to be placed.
-Requires @tt{height} such clicks. Click a button to cancel setup.
+Requires @elemref["height"]{height} such clicks. Click a button to cancel setup.
 
+@elemtag["Quit" ""]
 @bold{@tt{Quit}}@(lb)
 Closes and terminates the GUI.
 The GUI can be closed by means of the close button in the title bar (at the top-right corner),
