@@ -97,17 +97,20 @@ The short, long and circular mode can be halted by clicking the
 
 @elemtag["Speed" ""]
 @bold{@tt{Speed}}@(lb)
-The speed is either @tt{click} or a positive real number written with not more than 6 characters.
+The speed is specified by means of a modal dialog.
+It is either @tt{click} or a finite positive real number
+written with not more than 6 characters.
 It applies to @elemref["Mode"]{modes} short, long and circular.
 If it is @tt{click} the GUI makes a move after a click near a pile.
 If it is a positive real number, the GUI makes about speed moves per second.
 In fact slightly less, because the speed
-only applies to the sleeping time between moves.
-and does not take into account the time spent on calculations and graphical rendering.
+only applies to the sleeping time between moves
+and does not take into account the time lost on calculations and graphical rendering.
+This time depends on your CPU and GPU and may be in the order of magnitude of 1 ms per move.
 Enter a fraction for less than one move per second, for example @racket[1/3]
 for one move per three seconds.
 @nonbreaking{A speed} greater than @racket[999999] is truncated to @racket[999999].
-@nonbreaking{A speed} less than 1/10 is increased to 1/10.
+@nonbreaking{A speed} less than @racket[1/10] is increased to @racket[1/10].
  
 @elemtag["Reset" ""]
 @bold{@tt{Reset}}@(lb)
