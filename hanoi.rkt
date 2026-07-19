@@ -32,7 +32,7 @@
     ((circular) (reset) (circular) (continue-manual))))
 
 (define (continue-manual)
-  (remove-count)
+  (clear-counter)
   (set! mode 'manual)
   ((draw-button-content vp) mode-pos "Manual")
   (main))
@@ -70,7 +70,7 @@
   (define y (posn-y pos))
   (define x-min (posn-x (region-pos region)))
   (define y-min (posn-y (region-pos region)))
-  (define x-max (+ x-min (region-width region)))
+  (define x-max (+ x-min (region-width  region)))
   (define y-max (+ y-min (region-height region)))
   (and (<= x-min x x-max) (<= y-min y y-max)))
 
@@ -175,7 +175,7 @@
 (define pile-height (+ pile-top (* max-height disk-height)))
 (define vp-width (+ (* 3 max-disk-width) (* 2 block) (* 4 border)))
 (define vp-height (+ (* 2 button-height) (* 3 border) pile-height block))
-(define (remove-count) ((clear-string vp) count-pos count-str))
+(define (clear-counter) ((clear-string vp) count-pos count-str))
 
 (define (pile-region p)
   (define x (+ block border (* p (+ max-disk-width border))))
@@ -252,7 +252,7 @@
       (else (move-disk f t exit)))))
 
 ; In short, long or circular mode accept click on reset and quit button
-; to exit from an action that makes moves.
+; as signbal to exit from the action.
 
 (define (check-click click-required? exit)
   (define click (get-and-dispatch-click click-required?))
@@ -268,7 +268,7 @@
 ; Actions.
 
 (define (setup)
-  (remove-count)
+  (clear-counter)
   (let/ec exit
     (remove-all-disks)
     (set! disk-distr (make-vector 3 '()))
@@ -281,15 +281,15 @@
          (define pile (vector-ref disk-distr click))
          (vector-set! disk-distr click (cons d pile))
          (draw-disk d (length pile) click))
-        ((mode) (reset) (set-mode) (exit))
-        ((height) (set-height) (reset) (exit))
-        ((setup) (setup) (exit))
-        ((speed) (reset) (set-speed) (exit))
-        ((reset quit) (remove-count) (reset) (exit))))
-    (remove-count)))
+        ((mode)   (reset) (set-mode)  (exit))
+        ((height) (reset) (set-height)(exit))
+        ((setup)          (setup)     (exit))
+        ((speed)  (reset) (set-speed) (exit))
+        ((reset quit) (clear-counter) (reset) (exit))))
+    (clear-counter)))
 
 (define (set-mode)
-  (remove-count)
+  (clear-counter)
   (define modes (list "Manual" "Short" "Long" "Circular"))
   (define choice
     (get-choices-from-user
@@ -300,10 +300,10 @@
     (define ch (car choice))
     ((draw-button-content vp) mode-pos (list-ref modes ch))
     (set! mode (vector-ref #(manual short long circular) ch)))
-  (remove-count))
+  (clear-counter))
 
 (define (set-height)
-  (remove-count)
+  (clear-counter)
   (define heights (range 1 (add1 max-height)))
   (define h
     (get-choices-from-user
@@ -314,12 +314,12 @@
     (define hh (add1 (car h)))
     (set! height hh)
     ((draw-button-content vp) height-pos (format "~s" hh)))
-  (remove-count))
+  (clear-counter))
 
 (define (set-speed)
-  (remove-count)
+  (clear-counter)
   (define (validate-speed str) 
-    (and (<= 1 (string-length str) 7)
+    (and (<= 1 (string-length str) 6)
       (or
         (equal? str "click")
         (with-handlers ((exn:fail? (λ (e) #f)))
@@ -354,20 +354,20 @@
          ((> sp max-speed) max-speed-str)
          ((< sp min-speed) min-speed-str)
          (else str)))))
-  (remove-count))
+  (clear-counter))
 
 (define (manual)
   (init-manual)
   (manual0)
-  (remove-count))
+  (clear-counter))
 
 (define (init-manual)
-  (remove-count)
+  (clear-counter)
   (set! move-count -1)
-  (count-manual))
+  (count-manual-move))
 
-(define (count-manual)
-  (remove-count)
+(define (count-manual-move)
+  (clear-counter)
   (set! move-count (add1 move-count))
   (set! count-str (format "Nr of manual moves: ~s" move-count))
   ((draw-string vp) count-pos count-str))
@@ -375,13 +375,13 @@
 (define (manual0)
   (define click (get-and-dispatch-click))
   (case click
-    ((0 1 2) (manual1 click))
-    ((height) (set-height) (reset) (main))
-    ((mode) (set-mode) (main))
-    ((speed) (set-speed) (main))
-    ((reset) (reset) (main))
-    ((setup) (setup) (main))
-    ((quit) (remove-count) (void))
+    ((0 1 2)  (manual1 click))
+    ((height) (set-height) (reset)  (main))
+    ((mode)   (set-mode)            (main))
+    ((speed)  (set-speed)           (main))
+    ((reset)  (reset)               (main))
+    ((setup)  (setup)               (main))
+    ((quit)   (clear-counter))
     (else (manual0))))
 
 (define (manual1 p)
@@ -399,12 +399,12 @@
   (case click
     ((0 1 2) (manual3 d h p click))
     ((height) (set-height) (reset) (main))
-    ((mode) (reset) (set-mode) (main))
-    ((speed) (set-speed) (manual2 d h p))
-    ((reset) (reset) (main))
-    ((setup) (setup) (main))
-    ((quit) (void))
-    (else (manual2 d h p))))
+    ((mode)   (set-mode)   (reset) (main))
+    ((speed)  (set-speed)  (manual2 d h p))
+    ((reset)  (reset)              (main))
+    ((setup)  (setup)              (main))
+    ((quit)   (void))
+    (else                  (manual2 d h p))))
 
 (define (manual3 d h p dest-p)
   (cond
@@ -417,7 +417,7 @@
          (vector-set! disk-distr p (cdr (vector-ref disk-distr p)))
          (draw-disk d 0 dest-p)
          (vector-set! disk-distr dest-p (cons d (vector-ref disk-distr dest-p)))
-         (count-manual)
+         (count-manual-move)
          (manual0))
         (else
           (define dest-d (car pile))
@@ -428,15 +428,15 @@
              (vector-set! disk-distr p (cdr (vector-ref disk-distr p)))
              (draw-disk d dest-h dest-p)
              (vector-set! disk-distr dest-p (cons d (vector-ref disk-distr dest-p)))
-             (count-manual)
+             (count-manual-move)
              (manual0))
             (else (draw-disk d h p) (manual0))))))))
 
 (define (short)
-  (reset-time-and-counter)
+  (reset-time-and-move-counter)
   (let/cc return
     (define (exit)
-      (remove-count)
+      (clear-counter)
       (return))
     (define p-list
       (for*/list
@@ -456,10 +456,10 @@
     (finish "Short")))
 
 (define (long)
-  (reset-time-and-counter)
+  (reset-time-and-move-counter)
   (let/cc return
     (define (exit)
-      (remove-count)
+      (clear-counter)
       (return))
     (define p-list
       (for*/list
@@ -481,10 +481,10 @@
     (finish "Long")))
 
 (define (circular)
-  (reset-time-and-counter)
+  (reset-time-and-move-counter)
   (let/cc return
     (define (exit)
-      (remove-count)
+      (clear-counter)
       (return))
     (define (longest-circular-path h f t)
       (unless (zero? h)
@@ -524,7 +524,7 @@
     (finish "Circular")))
 
 (define (reset)
-  (remove-count)
+  (clear-counter)
   (set! disk-distr (make-fresh-disk-distr))
   (remove-all-disks)
   (for ((d (in-range height)) (h (in-reversed-range height)))
@@ -535,14 +535,14 @@
 ;=====================================================================================================
 ; Count and time info for modes short, long and circular.
 
-(define (reset-time-and-counter)
+(define (reset-time-and-move-counter)
   (set! clock (current-inexact-milliseconds))
   (set! move-count -1)
   (set! count-str "")
   (draw-count))
 
 (define (draw-count)
-  (remove-count)
+  (clear-counter)
   (set! move-count(add1 move-count))
   (set! count-str
     (if (eq? speed 'click)
@@ -557,7 +557,7 @@
 (define (finish mode)
   (message-box mode (string-append mode " mode finished"))
   (viewport-flush-input vp)
-  (remove-count)
+  (clear-counter)
   (reset))
 
 ;=====================================================================================================
@@ -584,13 +584,10 @@
   ((draw-button vp) setup-pos  "Setup")
   ((draw-button vp) quit-pos   "Quit")
   ((draw-button-content vp) height-pos (format "~s" height))
-  ((draw-button-content vp) speed-pos (format "~s" speed))
-  ((draw-button-content vp) mode-pos "Manual")
+  ((draw-button-content vp) speed-pos  (format "~s" speed))
+  ((draw-button-content vp) mode-pos   "Manual")
   ((draw-solid-rectangle vp)
-   (make-posn border (- vp-height border block))
-   (- vp-width (* 2 border))
-   block
-   gray)
+   (make-posn border (- vp-height border block)) (- vp-width (* 2 border)) block gray)
   ; Reset draws the tower on the pile at the left.
   (reset))
 
