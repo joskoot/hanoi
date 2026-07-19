@@ -25,7 +25,7 @@
 
 (define (main)
   (case mode
-    ((manual) (manual))
+    ((manual) (manual0))
     ((short) (short) (set-mode-manual))
     ((long) (reset) (long) (set-mode-manual))
     ((circular) (reset) (circular) (set-mode-manual))))
@@ -186,6 +186,7 @@
 (define pile-height (+ pile-top (* max-height disk-height)))
 (define vp-width (+ (* 3 max-disk-width) (* 2 block) (* 4 border)))
 (define vp-height (+ (* 2 button-height) (* 3 border) pile-height block))
+(define (remove-count) ((clear-string vp) count-pos count-str))
 
 (define (pile-region p)
   (define x (+ block border (* p (+ max-disk-width border))))
@@ -264,12 +265,12 @@
 ; Actions.
 
 (define (setup)
+  (remove-count)
   (let/ec exit
     (remove-all-disks)
     (set! config (make-vector 3 '()))
-    (define msg "Setting up")
-    (define (remove-msg) ((clear-string vp) count-pos msg))
-    ((draw-string vp) count-pos msg red)
+    (set! count-str "Setting up")
+    ((draw-string vp) count-pos count-str red)
     (for ((d (in-reversed-range height)))
       (define click (get-and-dispatch-click))
       (case click
@@ -277,14 +278,15 @@
          (define pile (vector-ref config click))
          (vector-set! config click (cons d pile))
          (draw-disk d (length pile) click))
-        ((mode) (remove-msg) (reset) (set-mode) (exit))
-        ((height) (remove-msg) (set-height) (reset) (exit))
-        ((setup) (remove-msg) (setup) (exit))
-        ((speed) (remove-msg) (reset) (set-speed) (exit))
-        ((reset quit) (remove-msg) (reset) (exit))))
-    (remove-msg)))
+        ((mode) (reset) (set-mode) (exit))
+        ((height) (set-height) (reset) (exit))
+        ((setup) (setup) (exit))
+        ((speed) (reset) (set-speed) (exit))
+        ((reset quit) (remove-count) (reset) (exit))))
+    (remove-count)))
 
 (define (set-mode)
+  (remove-count)
   (define modes (list "Manual" "Short" "Long" "Circular"))
   (define choice
     (get-choices-from-user
@@ -297,6 +299,7 @@
     (set! mode (vector-ref #(manual short long circular) ch))))
 
 (define (set-height)
+  (remove-count)
   (define heights (range 1 (add1 max-height)))
   (define h
     (get-choices-from-user
@@ -309,6 +312,7 @@
     ((draw-button-content vp) height-pos (format "~s" hh))))
 
 (define (set-speed)
+  (remove-count)
   (define (validate-speed str) 
     (and (<= 1 (string-length str) 7)
       (or
@@ -346,6 +350,22 @@
          ((< sp min-speed) min-speed-str)
          (else str))))))
 
+(define (manual0)
+  (init-manual)
+  (manual)
+  (remove-count))
+
+(define (init-manual)
+  (remove-count)
+  (set! move-count -1)
+  (count-manual))
+
+(define (count-manual)
+  (remove-count)
+  (set! move-count (add1 move-count))
+  (set! count-str (format "Nr of manual moves: ~s" move-count))
+  ((draw-string vp) count-pos count-str))
+
 (define (manual)
   (define click (get-and-dispatch-click))
   (case click
@@ -355,7 +375,7 @@
     ((speed) (set-speed) (main))
     ((reset) (reset) (main))
     ((setup) (setup) (main))
-    ((quit) (void))
+    ((quit) (remove-count) (void))
     (else (manual))))
 
 (define (manual1 p)
@@ -391,6 +411,7 @@
          (vector-set! config p (cdr (vector-ref config p)))
          (draw-disk d 0 dest-p)
          (vector-set! config dest-p (cons d (vector-ref config dest-p)))
+         (count-manual)
          (manual))
         (else
           (define dest-d (car pile))
@@ -401,6 +422,7 @@
              (vector-set! config p (cdr (vector-ref config p)))
              (draw-disk d dest-h dest-p)
              (vector-set! config dest-p (cons d (vector-ref config dest-p)))
+             (count-manual)
              (manual))
             (else (draw-disk d h p) (manual))))))))
 
@@ -408,7 +430,7 @@
   (reset-time-and-counter)
   (let/cc return
     (define (exit)
-      ((clear-string vp) count-pos count-str)
+      (remove-count)
       (return))
     (define p-list
       (for*/list
@@ -431,7 +453,7 @@
   (reset-time-and-counter)
   (let/cc return
     (define (exit)
-      ((clear-string vp) count-pos count-str)
+      (remove-count)
       (return))
     (define p-list
       (for*/list
@@ -454,10 +476,9 @@
 
 (define (circular)
   (reset-time-and-counter)
-  (define pos (add-posn quit-pos (+ button-width border) button-height))
   (let/cc return
     (define (exit)
-      ((clear-string vp) pos count-str)
+      (remove-count)
       (return))
     (define (longest-circular-path h f t)
       (unless (zero? h)
@@ -497,6 +518,7 @@
     (finish "Circular")))
 
 (define (reset)
+  (remove-count)
   (set! config (make-disk-distribution))
   (remove-all-disks)
   (for ((d (in-range height)) (h (in-reversed-range height)))
@@ -512,11 +534,13 @@
   (draw-count))
 
 (define (draw-count)
-  ((clear-string vp) count-pos count-str)
+  (remove-count)
   (set! move-count(add1 move-count))
   (set! count-str
-    (format "Move count: ~s, time: ~a seconds"
-      move-count (watch-clock)))
+    (if (eq? speed 'click)
+      (format "Move count: ~s" move-count)
+      (format "Move count: ~s, time: ~a seconds"
+        move-count (watch-clock))))
   ((draw-string vp) count-pos count-str))
 
 (define (watch-clock)
@@ -525,7 +549,7 @@
 (define (finish mode)
   (message-box mode (string-append mode " mode finished"))
   (viewport-flush-input vp)
-  ((clear-string vp) count-pos count-str)
+  (remove-count)
   (reset))
 
 ;=====================================================================================================
