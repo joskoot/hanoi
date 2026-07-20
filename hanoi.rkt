@@ -363,8 +363,7 @@
 
 (define (init-manual)
   (clear-counter)
-  (set! move-count -1)
-  (count-manual-move))
+  (set! move-count 0))
 
 (define (count-manual-move)
   (clear-counter)
