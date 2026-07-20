@@ -41,10 +41,6 @@
 ; Constants (not mutated)
 
 (define max-height 9)
-(define max-speed 999999)
-(define min-speed 1/10)
-(define max-speed-str (~a max-speed))
-(define min-speed-str (~a min-speed))
 
 ;=====================================================================================================
 ; State of the game, kept at top level,
@@ -52,7 +48,7 @@
 
 (define height     'yet-to-be-assigned)
 (define mode       'yet-to-be-assigned)
-(define speed      'yet-to-be-assigned)
+(define delay      'yet-to-be-assigned)
 (define clock      'yet-to-be-assigned)
 (define move-count 'yet-to-be-assigned)
 (define count-str  'yet-to-be-assigned)
@@ -84,7 +80,7 @@
       (cond
         ((in-region? pos height-region) 'height)
         ((in-region? pos mode-region  ) 'mode)
-        ((in-region? pos speed-region ) 'speed)
+        ((in-region? pos delay-region ) 'delay)
         ((in-region? pos reset-region ) 'reset)
         ((in-region? pos setup-region ) 'setup)
         ((in-region? pos quit-region  ) 'quit)
@@ -153,14 +149,14 @@
 (define border (* 3 block))
 (define height-pos (make-posn border border))
 (define mode-pos  (add-posn height-pos (+ button-width border) 0))
-(define speed-pos (add-posn mode-pos   (+ button-width border) 0))
-(define reset-pos (add-posn speed-pos  (+ button-width border) 0))
+(define delay-pos (add-posn mode-pos   (+ button-width border) 0))
+(define reset-pos (add-posn delay-pos  (+ button-width border) 0))
 (define setup-pos (add-posn reset-pos  (+ button-width border) 0))
 (define quit-pos  (add-posn setup-pos  (+ button-width border) 0))
 (define count-pos (add-posn quit-pos   (+ button-width border) button-height))
 (define height-region (make-region height-pos button-width button-height))
 (define mode-region   (make-region mode-pos   button-width button-height))
-(define speed-region  (make-region speed-pos  button-width button-height))
+(define delay-region  (make-region delay-pos  button-width button-height))
 (define reset-region  (make-region reset-pos  button-width button-height))
 (define setup-region  (make-region setup-pos  button-width button-height))
 (define quit-region   (make-region quit-pos   button-width button-height))
@@ -238,9 +234,9 @@
   (unless (null? ff)
     (define d (car ff))
     (define move-to-be-made?
-      (case speed
+      (case delay
         ((click) (check-click #t exit))
-        (else (sleep speed) (check-click #f exit))))
+        (else (sleep delay) (check-click #f exit))))
     (cond
       (move-to-be-made?
         (remove-disk d (sub1 (length ff)) f)
@@ -284,7 +280,7 @@
         ((mode)   (reset) (set-mode)  (exit))
         ((height) (reset) (set-height)(exit))
         ((setup)          (setup)     (exit))
-        ((speed)  (reset) (set-speed) (exit))
+        ((delay)  (reset) (set-delay) (exit))
         ((reset quit) (clear-counter) (reset) (exit))))
     (clear-counter)))
 
@@ -316,44 +312,40 @@
     ((draw-button-content vp) height-pos (format "~s" hh)))
   (clear-counter))
 
-(define (set-speed)
+(define (set-delay)
   (clear-counter)
-  (define (validate-speed str) 
+  (define (validate-delay str) 
     (and (<= 1 (string-length str) 6)
       (or
         (equal? str "click")
         (with-handlers ((exn:fail? (λ (e) #f)))
-          (define speed (inexact->exact (read (open-input-string str))))
+          (define input (open-input-string str))
+          (define delay (read input))
           (cond
-            ((infinite? speed) #f)
-            ((and (real? speed) (positive? speed)))
+            ((not (eof-object? (read input))) #f)
+            ((infinite? delay) #f)
+            ((and (real? delay) (>= delay 0)))
             (else #f))))))
   (define str
     (get-text-from-user
-      "Speed"
+      "Delay"
       (string-append
-        "Enter a finite positive real number for the approximate\n"
-        "number of moves to be made per second\n"
-        "or leave the default 'click' as it is")
+        "Enter a non-negative real number for the\n"
+        "approximate delay in seconds between moves\n"
+        "or leave the default 'click' as it is.\n"
+        "Do not enter more than 6 characters")
       #f	 
       "click"	 
       '(disallow-invalid)	 
-      #:validate validate-speed))
+      #:validate validate-delay))
   (cond
     ((equal? str "click")
-     (set! speed 'click)
-     ((draw-button-content vp) speed-pos "click"))
+     (set! delay 'click)
+     ((draw-button-content vp) delay-pos "click"))
     ((not str))
     (else
-      (define sp (read (open-input-string str)))
-      (define v (max min-speed (min max-speed sp)))
-      (set! speed (/ v))
-      ((draw-button-content vp)
-       speed-pos
-       (cond
-         ((> sp max-speed) max-speed-str)
-         ((< sp min-speed) min-speed-str)
-         (else str)))))
+      (set! delay (read (open-input-string str)))
+      ((draw-button-content vp) delay-pos str)))
   (clear-counter))
 
 (define (manual)
@@ -377,7 +369,7 @@
     ((0 1 2)  (manual1 click))
     ((height) (set-height) (reset)  (main))
     ((mode)   (set-mode)            (main))
-    ((speed)  (set-speed)           (main))
+    ((delay)  (set-delay)           (main))
     ((reset)  (reset)               (main))
     ((setup)  (setup)               (main))
     ((quit)   (clear-counter))
@@ -399,7 +391,7 @@
     ((0 1 2) (manual3 d h p click))
     ((height) (set-height) (reset) (main))
     ((mode)   (set-mode)   (reset) (main))
-    ((speed)  (set-speed)  (manual2 d h p))
+    ((delay)  (set-delay)  (manual2 d h p))
     ((reset)  (reset)              (main))
     ((setup)  (setup)              (main))
     ((quit)   (void))
@@ -544,7 +536,7 @@
   (clear-counter)
   (set! move-count(add1 move-count))
   (set! count-str
-    (if (eq? speed 'click)
+    (if (eq? delay 'click)
       (format "Move count: ~s" move-count)
       (format "Move count: ~s, time: ~a seconds"
         move-count (watch-clock))))
@@ -568,7 +560,7 @@
   ; Enter initial state.
   (set! height max-height)
   (set! mode 'manual)
-  (set! speed 'click)
+  (set! delay 'click)
   (set! clock 0)
   (set! move-count 0)
   (set! count-str "")
@@ -578,12 +570,12 @@
   (set! vp (open-viewport "Tower of Hanoi" vp-width vp-height))
   ((draw-button vp) height-pos "Height")
   ((draw-button vp) mode-pos   "Mode")
-  ((draw-button vp) speed-pos  "Speed")
+  ((draw-button vp) delay-pos  "Delay")
   ((draw-button vp) reset-pos  "Reset")
   ((draw-button vp) setup-pos  "Setup")
   ((draw-button vp) quit-pos   "Quit")
   ((draw-button-content vp) height-pos (format "~s" height))
-  ((draw-button-content vp) speed-pos  (format "~s" speed))
+  ((draw-button-content vp) delay-pos  (format "~s" delay))
   ((draw-button-content vp) mode-pos   "Manual")
   ((draw-solid-rectangle vp)
    (make-posn border (- vp-height border block)) (- vp-width (* 2 border)) block gray)

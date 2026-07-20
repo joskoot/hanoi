@@ -95,22 +95,18 @@ every feasible distribution of disks and finishing with all disks at the pile st
 The short, long and circular mode can be halted by clicking the
 @elemref["Reset"]{reset} or @elemref["Quit"]{quit} button.
 
-@elemtag["Speed" ""]
-@bold{@tt{Speed}}@(lb)
-The speed is specified by means of a modal dialog.
-It is either @tt{click} or a finite positive real number
+@elemtag["Delay" ""]
+@bold{@tt{Delay}}@(lb)
+The delay is specified by means of a modal dialog.
+It is either @tt{click} or a non-negative real number
 written with not more than 6 characters.
 It applies to @elemref["Mode"]{modes} short, long and circular.
 If it is @tt{click} the GUI makes a move after a click near a pile.
-If it is a positive real number, the GUI makes about speed moves per second.
-In fact slightly less, because the speed
-only applies to the sleeping time between moves
-and does not take into account the time lost on calculations and graphical rendering.
+If it is a positive real number, the GUI waits @tt{delay} seconds between moves.
+In fact longer, because the delay does not take into account
+the time lost on calculations and graphical rendering or
+time the processor was not evailable for the GUI.
 This time depends on your CPU and GPU and may be in the order of magnitude of 1 ms per move.
-Enter a fraction for less than one move per second, for example @racket[1/3]
-for one move per three seconds.
-@nonbreaking{A speed} greater than @racket[999999] is truncated to @racket[999999].
-@nonbreaking{A speed} less than @racket[1/10] is increased to @racket[1/10].
  
 @elemtag["Reset" ""]
 @bold{@tt{Reset}}@(lb)
