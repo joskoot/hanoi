@@ -4,33 +4,7 @@
 #lang racket
 
 (provide play)
-
-(require
-  (only-in graphics/graphics
-    open-graphics
-    close-graphics
-    open-viewport
-    open-pixmap
-    close-viewport
-    viewport-flush-input
-    draw-rectangle
-    draw-solid-rectangle
-    clear-solid-rectangle
-    draw-string
-    clear-string
-    get-string-size
-    make-posn
-    posn-x
-    posn-y
-    get-mouse-click
-    ready-mouse-click
-    mouse-click-posn
-    make-rgb)
-  (only-in racket/gui
-    message-box
-    get-choices-from-user
-    get-text-from-user))
-
+(require graphics/graphics racket/gui/base)
 (define-syntax-rule (in-reversed-range n) (in-range (sub1 n) -1 -1))
 (define (add-posn pos width height) (make-posn (+ (posn-x pos) width) (+ (posn-y pos) height)))
 
@@ -63,13 +37,13 @@
   (main))
 
 ;=====================================================================================================
-; Constants (not mutated)
+; Constant (not mutated)
 
 (define max-height 9)
 
 ;=====================================================================================================
-; State of the game, kept at top level,
-; Initialized before playing and mutated while playing.
+; Mutable state of the game. Kept at top level.
+; Initialized before playing.
 
 (define height     'yet-to-be-assigned)
 (define mode       'yet-to-be-assigned)
@@ -282,11 +256,22 @@
     ((quit) (exit))
     (else
       ; If the click is required and not reset or quit, it must be a pile.
-      (or (and click-required? (member click '(0 1 2)))
-        (not click-required?)))))
+      (implies click-required? (member click '(0 1 2))))))
 
 ;=====================================================================================================
-; Actions.
+; Action reset.
+
+(define (reset)
+  (clear-counter)
+  (set! disk-distr (make-fresh-disk-distr))
+  (remove-all-disks)
+  (for ((d (in-range height)) (h (in-reversed-range height)))
+    (draw-disk d h 0)))
+
+(define (make-fresh-disk-distr) (vector (range height) '() '()))
+
+;=====================================================================================================
+; Action setup.
 
 (define (setup)
   (clear-counter)
@@ -309,6 +294,9 @@
         ((reset quit) (clear-counter) (reset) (exit))))
     (clear-counter)))
 
+;=====================================================================================================
+; Action set-mode.
+
 (define (set-mode)
   (clear-counter)
   (define modes (list "Manual" "Short" "Long" "Circular"))
@@ -324,6 +312,9 @@
   (viewport-flush-input vp)
   (clear-counter))
 
+;=====================================================================================================
+; Action set-height.
+
 (define (set-height)
   (clear-counter)
   (define heights (range 1 (add1 max-height)))
@@ -338,6 +329,9 @@
     ((draw-button-content vp) height-pos (format "~s" hh)))
   (clear-counter)
   viewport-flush-input)
+
+;=====================================================================================================
+; Action delay.
 
 (define (set-delay)
   (clear-counter)
@@ -375,6 +369,9 @@
       ((draw-button-content vp) delay-pos str)))
   (viewport-flush-input vp)
   (clear-counter))
+
+;=====================================================================================================
+; Action manual.
 
 (define (manual)
   (init-manual)
@@ -451,6 +448,9 @@
              (manual0))
             (else (draw-disk d h p) (manual0))))))))
 
+;=====================================================================================================
+; Action short.
+
 (define (short)
   (reset-time-and-move-counter)
   (let/cc return
@@ -473,6 +473,9 @@
           (short (make-list (length (cdr conf))  (- 3 (car conf) dest)) dest))))
     (short p-list 2)
     (finish "Short")))
+
+;=====================================================================================================
+; Action long.
 
 (define (long)
   (reset-time-and-move-counter)
@@ -498,6 +501,9 @@
           (long (make-list (length (cdr conf)) (car conf)) dest))))
     (long p-list 2)
     (finish "Long")))
+
+;=====================================================================================================
+; Action circular.
 
 (define (circular)
   (reset-time-and-move-counter)
@@ -542,17 +548,8 @@
     (longest-circular-path height 0 2)
     (finish "Circular")))
 
-(define (reset)
-  (clear-counter)
-  (set! disk-distr (make-fresh-disk-distr))
-  (remove-all-disks)
-  (for ((d (in-range height)) (h (in-reversed-range height)))
-    (draw-disk d h 0)))
-
-(define (make-fresh-disk-distr) (vector (range height) '() '()))
-
 ;=====================================================================================================
-; Count and time info for modes short, long and circular.
+; Count and time info (real times, not cpu times)
 
 (define (reset-time-and-move-counter)
   (set! clock (current-inexact-milliseconds))
@@ -582,7 +579,7 @@
 ;=====================================================================================================
 ; Initialization.
 
-(define vp 'yet-to-be-initialized) ; Needed at top level.
+(define vp 'yet-to-be-initialized) ; Needed at top level, but not referred to before initialization.
 
 (define (initialize)
   ; Enter initial state.
