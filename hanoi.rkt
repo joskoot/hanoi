@@ -321,6 +321,7 @@
     (define ch (car choice))
     ((draw-button-content vp) mode-pos (list-ref modes ch))
     (set! mode (vector-ref #(manual short long circular) ch)))
+  (viewport-flush-input vp)
   (clear-counter))
 
 (define (set-height)
@@ -335,7 +336,8 @@
     (define hh (add1 (car h)))
     (set! height hh)
     ((draw-button-content vp) height-pos (format "~s" hh)))
-  (clear-counter))
+  (clear-counter)
+  viewport-flush-input)
 
 (define (set-delay)
   (clear-counter)
@@ -371,6 +373,7 @@
     (else
       (set! delay (read (open-input-string str)))
       ((draw-button-content vp) delay-pos str)))
+  (viewport-flush-input vp)
   (clear-counter))
 
 (define (manual)
