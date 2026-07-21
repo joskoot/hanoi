@@ -103,7 +103,7 @@ written with not more than 6 characters.
 It applies to @elemref["Mode"]{modes} short, long and circular.
 If it is @tt{click} the GUI makes a move after a click near a pile.
 If it is a positive real number, the GUI waits @tt{delay} seconds between moves.
-In fact longer, because the delay does not take into account
+In fact the delay is slightly longer, because it is not corrected for
 the time lost on calculations and graphical rendering or
 time the processor was not evailable for the GUI.
 This time depends on your CPU and GPU and may be in the order of magnitude of 1 ms per move.

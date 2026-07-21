@@ -5,7 +5,32 @@
 
 (provide play)
 
-(require graphics/graphics racket/gui)
+(require
+  (only-in graphics/graphics
+    open-graphics
+    close-graphics
+    open-viewport
+    open-pixmap
+    close-viewport
+    viewport-flush-input
+    draw-rectangle
+    draw-solid-rectangle
+    clear-solid-rectangle
+    draw-string
+    clear-string
+    get-string-size
+    make-posn
+    posn-x
+    posn-y
+    get-mouse-click
+    ready-mouse-click
+    mouse-click-posn
+    make-rgb)
+  (only-in racket/gui
+    message-box
+    get-choices-from-user
+    get-text-from-user))
+
 (define-syntax-rule (in-reversed-range n) (in-range (sub1 n) -1 -1))
 (define (add-posn pos width height) (make-posn (+ (posn-x pos) width) (+ (posn-y pos) height)))
 
@@ -530,7 +555,7 @@
   (set! clock (current-inexact-milliseconds))
   (set! move-count -1)
   (set! count-str "")
-  (draw-count))
+  (draw-count))  
 
 (define (draw-count)
   (clear-counter)
@@ -538,7 +563,7 @@
   (set! count-str
     (if (eq? delay 'click)
       (format "Move count: ~s" move-count)
-      (format "Move count: ~s, time: ~a seconds"
+      (format "Move count: ~s, real time: ~a seconds"
         move-count (watch-clock))))
   ((draw-string vp) count-pos count-str))
 
