@@ -17,69 +17,64 @@
     main
     close))
 
-(define (main)
-  (case mode
-    ((manual) (manual))
-    ((short) (short) (continue-manual))
-    ((long) (reset) (long) (continue-manual))
-    ((circular) (reset) (circular) (continue-manual))))
-
 (define (close)
   (close-viewport vp)
   (close-graphics))
 
-(define (continue-manual)
+(define (main)
+  (clear-counter)
+  (case mode
+    ((manual  ) (main1))
+    ((short   ) (short) (continue-main))
+    ((long    ) (long) (continue-main))
+    ((circular) (circular) (continue-main))))
+
+(define (main1)
+  (define click (get-and-dispatch-click))
+  (case click
+    ((0 1 2 ) (manual click))
+    ((height) (set-height) (reset) (main))
+    ((mode  ) (set-mode  )         (main))
+    ((delay ) (set-delay )         (main))
+    ((reset )              (reset) (main))
+    ((setup ) (setup     )         (main))
+    ((quit  ) (void      ))
+    (else (main1))))
+
+(define (continue-main)
   (clear-counter)
   (set! mode 'manual)
-  ((draw-button-content vp) mode-pos "Manual")
-  (main))
+  ((draw-button-content vp) mode-pos manual-str)
+  (main1))
 
 ;=====================================================================================================
 ; Action manual.
 
-(define (manual)
-  (clear-counter)
-  (set! move-count 0)
-  (manual0)
-  (clear-counter))
-
-(define (manual0)
-  (define click (get-and-dispatch-click))
-  (case click
-    ((0 1 2) (manual1 click))
-    ((height) (set-height) (reset) (main))
-    ((mode) (set-mode) (main))
-    ((delay) (set-delay) (main))
-    ((reset) (reset) (main))
-    ((setup) (setup) (main))
-    ((quit) (clear-counter))
-    (else (manual0))))
-
-(define (manual1 p)
+(define (manual p)
   (define pile (vector-ref disk-distr p))
   (cond
-    ((null? pile) (manual0))
+    ((null? pile) (main))
     (else
       (define d (car pile))
       (define h (sub1 (length pile)))
       (mark-disk d h p)
-      (manual2 d h p))))
+      (manual1 d h p))))
 
-(define (manual2 d h p)
+(define (manual1 d h p)
   (define click (get-and-dispatch-click))
   (case click
-    ((0 1 2) (manual3 d h p click))
+    ((0 1 2 ) (manual2 d h p click))
+    ((delay ) (set-delay ) (manual1 d h p))
     ((height) (set-height) (reset) (main))
-    ((mode) (set-mode) (reset) (main))
-    ((delay) (set-delay) (manual2 d h p))
-    ((reset) (reset) (main))
-    ((setup) (setup) (main))
-    ((quit) (void))
-    (else (manual2 d h p))))
+    ((mode  ) (set-mode  ) (reset) (main))
+    ((reset )              (reset) (main))
+    ((setup ) (setup     )         (main))
+    ((quit  ) (void      ))
+    (else (manual1 d h p))))
 
-(define (manual3 d h p dest-p)
+(define (manual2 d h p dest-p)
   (cond
-    ((= dest-p p) (draw-disk d h p) (manual0))
+    ((= dest-p p) (draw-disk d h p) (main))
     (else
       (define pile (vector-ref disk-distr dest-p))
       (cond
@@ -89,7 +84,7 @@
          (draw-disk d 0 dest-p)
          (vector-set! disk-distr dest-p (cons d (vector-ref disk-distr dest-p)))
          (count-manual-move)
-         (manual0))
+         (main))
         (else
           (define dest-d (car pile))
           (define dest-h (length pile))
@@ -100,8 +95,8 @@
              (draw-disk d dest-h dest-p)
              (vector-set! disk-distr dest-p (cons d (vector-ref disk-distr dest-p)))
              (count-manual-move)
-             (manual0))
-            (else (draw-disk d h p) (manual0))))))))
+             (main))
+            (else (draw-disk d h p) (main))))))))
 
 (define (count-manual-move)
   (clear-counter)
@@ -114,10 +109,10 @@
 
 (define (short)
   (reset-time-and-move-counter)
-  (let/cc return
+  (let/ec ec
     (define (exit)
       (clear-counter)
-      (return))
+      (ec))
     (define p-list
       (for*/list
         ((d (in-reversed-range height))
@@ -133,7 +128,7 @@
           (move-disk (car conf) dest exit)
           (short (make-list (length (cdr conf)) (- 3 (car conf) dest)) dest))))
     (short p-list 2)
-    (finish "Short")))
+    (finish manual-str)))
 
 ;=====================================================================================================
 ; Action long.
@@ -141,10 +136,10 @@
 (define (long)
   (reset-time-and-move-counter)
   (reset)
-  (let/cc return
+  (let/ec ec
     (define (exit)
       (clear-counter)
-      (return))
+      (ec))
     (define p-list
       (for*/list
         ((d (in-reversed-range height))
@@ -152,17 +147,17 @@
          #:when (member d (vector-ref disk-distr p)))
         p))
     (define (long conf dest)
-      (define third (and (not (null? conf)) (- 3 (car conf) dest)))
       (cond
         ((null? conf))
         (else
+          (define third (- 3 (car conf) dest))
           (long (cdr conf) dest)
           (move-disk (car conf) third exit)
           (long (make-list (length (cdr conf)) dest) (car conf))
           (move-disk third dest exit)
           (long (make-list (length (cdr conf)) (car conf)) dest))))
     (long p-list 2)
-    (finish "Long")))
+    (finish long-str)))
 
 ;=====================================================================================================
 ; Action circular.
@@ -170,10 +165,10 @@
 (define (circular)
   (reset)
   (reset-time-and-move-counter)
-  (let/cc return
+  (let/ec ec
     (define (exit)
       (clear-counter)
-      (return))
+      (ec))
     (define (longest-circular-path h f t)
       (unless (zero? h)
         (define h-1 (sub1 h))
@@ -209,7 +204,7 @@
         (move-disk f t exit)
         (finish-path h-1 r t)))
     (longest-circular-path height 0 2)
-    (finish "Circular")))
+    (finish circular-str)))
 
 ;=====================================================================================================
 ; Remove message with move-count and time after actions short, long and circular.
@@ -227,7 +222,7 @@
   (define (validate-height str) (and (= (string-length str) 1) (char<=? #\1 (string-ref str 0) #\9)))
   (define str
     (get-text-from-user
-      "Height"
+      height-str
       (string-append
         "How many disks do you want.\n"
         "At least one, at most nine.\n"
@@ -247,10 +242,10 @@
 
 (define (set-mode)
   (clear-counter)
-  (define modes (list "Manual" "Short" "Long" "Circular"))
+  (define modes (list manual-str short-str long-str circular-str))
   (define choice
     (get-choices-from-user
-      "Mode"
+      mode-str
       "Select a mode"
       modes))
   (when choice
@@ -268,7 +263,7 @@
   (define (validate-delay str) 
     (and (<= 1 (string-length str) 6)
       (or
-        (equal? str "click")
+        (equal? str click-str)
         (with-handlers ((exn:fail? (λ (e) #f)))
           (define input (open-input-string str))
           (define delay (read input))
@@ -279,18 +274,18 @@
             (else #f))))))
   (define str
     (get-text-from-user
-      "Delay"
+      delay-str
       (string-append
         "Enter a non-negative real number for the\n"
         "approximate delay in seconds between moves\n"
         "or leave the default 'click' as it is.\n"
         "Do not enter more than 6 characters")
       #f	 
-      "click"	 
+      click-str	 
       '(disallow-invalid)	 
       #:validate validate-delay))
   (cond
-    ((equal? str "click")
+    ((equal? str click-str)
      (set! delay click)
      ((draw-button-content vp) delay-pos click))
     ((not str))
@@ -315,24 +310,28 @@
 
 (define (setup)
   (clear-counter)
-  (let/ec exit
-    (remove-all-disks)
-    (set! disk-distr (make-vector 3 '()))
-    (set! count-str "Setting up")
-    ((draw-string vp) count-pos count-str red)
-    (for ((d (in-reversed-range height)))
-      (define click (get-and-dispatch-click))
-      (case click
-        ((0 1 2)
-         (define pile (vector-ref disk-distr click))
-         (vector-set! disk-distr click (cons d pile))
-         (draw-disk d (length pile) click))
-        ((mode) (reset) (set-mode) (exit))
-        ((height) (reset) (set-height)(exit))
-        ((setup) (setup) (exit))
-        ((delay) (reset) (set-delay) (exit))
-        ((reset quit) (clear-counter) (reset) (exit))))
-    (clear-counter)))
+  (remove-all-disks)
+  (set! disk-distr (make-vector 3 '()))
+  (set! count-str "Setting up")
+  ((draw-string vp) count-pos count-str red)
+  (help-setup (reverse (range height)))
+  (clear-counter))
+
+(define (help-setup disks)
+  (unless (null? disks)
+    (define d (car disks))
+    (define click (get-and-dispatch-click))
+    (case click
+      ((0 1 2)
+       (define pile (vector-ref disk-distr click))
+       (vector-set! disk-distr click (cons d pile))
+       (draw-disk d (length pile) click)
+       (help-setup (cdr disks)))
+      ((setup )         (setup     ))
+      ((mode  ) (reset) (set-mode  ))
+      ((height) (reset) (set-height))
+      ((delay ) (reset) (set-delay ))
+      ((reset quit) (reset)))))
 
 ;=====================================================================================================
 ; Drawing procedures.
@@ -432,15 +431,27 @@
 ;=====================================================================================================
 ; Layout of the GUI.
 
-(define red (make-rgb 1 0 0))
-(define white (make-rgb 1 1 1))
-(define black (make-rgb 0 0 0))
-(define gray (make-rgb 6/10 6/10 6/10))
-(define blue (make-rgb 0 0 1))
-(define green (make-rgb 0 8/10 0))
+(define red   (make-rgb 1    0    0   ))
+(define white (make-rgb 1    1    1   ))
+(define black (make-rgb 0    0    0   ))
+(define gray  (make-rgb 6/10 6/10 6/10))
+(define blue  (make-rgb 0    0    1   ))
+(define green (make-rgb 0    8/10 0   ))
 (define max-height 9)
 (define block 20)
 (define border (* 3 block))
+(define height-str   "Height"  )
+(define mode-str     "Mode"    )
+(define delay-str    "Delay"   )
+(define reset-str    "Reset"   )
+(define setup-str    "Setup"   )
+(define quit-str     "Quit"    )
+(define undo-str     "Undo"    )
+(define manual-str   "manual"  )
+(define short-str    "short"   )
+(define long-str     "long"    )
+(define circular-str "circular")
+(define click-str    "click"   )
 
 (struct region (pos width height)
   #:omit-define-syntaxes
@@ -451,7 +462,7 @@
   (define y (posn-y pos))
   (define x-min (posn-x (region-pos region)))
   (define y-min (posn-y (region-pos region)))
-  (define x-max (+ x-min (region-width region)))
+  (define x-max (+ x-min (region-width  region)))
   (define y-max (+ y-min (region-height region)))
   (and (<= x-min x x-max) (<= y-min y y-max)))
 
@@ -462,11 +473,11 @@
       (define pos (mouse-click-posn click))
       (cond
         ((in-region? pos height-region) 'height)
-        ((in-region? pos mode-region) 'mode)
-        ((in-region? pos delay-region) 'delay)
-        ((in-region? pos reset-region) 'reset)
-        ((in-region? pos setup-region) 'setup)
-        ((in-region? pos quit-region) 'quit)
+        ((in-region? pos mode-region  ) 'mode  )
+        ((in-region? pos delay-region ) 'delay )
+        ((in-region? pos reset-region ) 'reset )
+        ((in-region? pos setup-region ) 'setup )
+        ((in-region? pos quit-region  ) 'quit)
         ((in-region? pos (pile-region 0)) 0)
         ((in-region? pos (pile-region 1)) 1)
         ((in-region? pos (pile-region 2)) 2)
@@ -497,8 +508,8 @@
 (define-values-block (draw-button draw-button-content button-width button-height)
   (open-graphics)
   (define vp (open-pixmap "string-sizes" 1000 500))
-  (define button-strings (list "Height" "Mode" "Reset" "Setup" "Quit" "Undo"))
-  (define button-content-strings (list "Short" "Long" "Circular"))
+  (define button-strings (list height-str mode-str reset-str setup-str quit-str undo-str))
+  (define button-content-strings (list manual-str long-str circular-str))
   (define string-offset 4)
   (define *2string-offset (* 2 string-offset))
   
@@ -537,17 +548,17 @@
 
 (define height-pos (make-posn border border))
 (define mode-pos (add-posn height-pos (+ button-width border) 0))
-(define delay-pos (add-posn mode-pos (+ button-width border) 0))
+(define delay-pos (add-posn mode-pos  (+ button-width border) 0))
 (define reset-pos (add-posn delay-pos (+ button-width border) 0))
 (define setup-pos (add-posn reset-pos (+ button-width border) 0))
-(define quit-pos (add-posn setup-pos (+ button-width border) 0))
-(define count-pos (add-posn quit-pos (+ button-width border) button-height))
+(define quit-pos (add-posn setup-pos  (+ button-width border) 0))
+(define count-pos (add-posn quit-pos  (+ button-width border) button-height))
 (define height-region (make-region height-pos button-width button-height))
-(define mode-region (make-region mode-pos button-width button-height))
-(define delay-region (make-region delay-pos button-width button-height))
-(define reset-region (make-region reset-pos button-width button-height))
-(define setup-region (make-region setup-pos button-width button-height))
-(define quit-region (make-region quit-pos button-width button-height))
+(define mode-region   (make-region mode-pos   button-width button-height))
+(define delay-region  (make-region delay-pos  button-width button-height))
+(define reset-region  (make-region reset-pos  button-width button-height))
+(define setup-region  (make-region setup-pos  button-width button-height))
+(define quit-region   (make-region quit-pos   button-width button-height))
 (define disk-height block)
 (define min-disk-width (* 3 block))
 (define disk-width-incr block)
@@ -562,40 +573,42 @@
 
 ;=====================================================================================================
 ; Internal state. Mutable. Initialized by procedure initialize.
+; The following variables are the only ones that are accepted by set!.
+; See syntax set! at the top of this module.
 
 (define height     'yet-to-be-initialized)
 (define mode       'yet-to-be-initialized)
 (define delay      'yet-to-be-initialized)
-(define clock      'yet-to-be-initialized)
 (define move-count 'yet-to-be-initialized)
 (define count-str  'yet-to-be-initialized)
 (define disk-distr 'yet-to-be-initialized)
+(define vp         'yet-to-be-initialized)
+(define clock      'needs-no-initialization)
 
 ;=====================================================================================================
 ; Initialization.
 
 (define (make-fresh-disk-distr) (vector (range height) '() '()))
 (define click 'click)
-(define vp 'yet-to-be-initialized)
 
 (define (initialize)
-  (set! height max-height)
-  (set! mode 'manual)
-  (set! delay click)
-  (set! move-count 0)
-  (set! count-str "")
+  (set! height      max-height            )
+  (set! mode       'manual                )
+  (set! delay      click                  )
+  (set! move-count 0                      )
+  (set! count-str  ""                     )
   (set! disk-distr (make-fresh-disk-distr))
   (open-graphics)
   (set! vp (open-viewport "Tower of Hanoi" vp-width vp-height))
-  ((draw-button vp) height-pos "Height")
-  ((draw-button vp) mode-pos "Mode")
-  ((draw-button vp) delay-pos "Delay")
-  ((draw-button vp) reset-pos "Reset")
-  ((draw-button vp) setup-pos "Setup")
-  ((draw-button vp) quit-pos "Quit")
+  ((draw-button vp) height-pos height-str)
+  ((draw-button vp) mode-pos   mode-str  )
+  ((draw-button vp) delay-pos  delay-str )
+  ((draw-button vp) reset-pos  reset-str )
+  ((draw-button vp) setup-pos  setup-str )
+  ((draw-button vp) quit-pos   quit-str)
   ((draw-button-content vp) height-pos height)
-  ((draw-button-content vp) mode-pos mode)
-  ((draw-button-content vp) delay-pos delay)
+  ((draw-button-content vp) mode-pos   mode  )
+  ((draw-button-content vp) delay-pos  delay )
   ((draw-solid-rectangle vp)
    (make-posn border (- vp-height border block)) (- vp-width (* 2 border)) block gray)
   (draw-all-disks))
