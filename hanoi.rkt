@@ -24,9 +24,9 @@
 (define (main)
   (clear-counter)
   (case mode
-    ((manual  ) (main1))
-    ((short   ) (short) (continue-main))
-    ((long    ) (long) (continue-main))
+    ((manual  ) (main1   ))
+    ((short   ) (short   ) (continue-main))
+    ((long    ) (long    ) (continue-main))
     ((circular) (circular) (continue-main))))
 
 (define (main1)
@@ -400,7 +400,7 @@
   (define click (get-and-dispatch-click click-required?))
   (case click
     ((reset) (reset) (exit))
-    ((quit) (exit))
+    ((quit )         (exit))
     (else
       ; If the click is required and not reset or quit, it must be a pile.
       (implies click-required? (member click '(0 1 2))))))
@@ -431,15 +431,15 @@
 ;=====================================================================================================
 ; Layout of the GUI.
 
-(define red   (make-rgb 1    0    0   ))
-(define white (make-rgb 1    1    1   ))
-(define black (make-rgb 0    0    0   ))
-(define gray  (make-rgb 6/10 6/10 6/10))
-(define blue  (make-rgb 0    0    1   ))
-(define green (make-rgb 0    8/10 0   ))
 (define max-height 9)
 (define block 20)
 (define border (* 3 block))
+(define red   (make-rgb 1   0   0  ))
+(define white (make-rgb 1   1   1  ))
+(define black (make-rgb 0   0   0  ))
+(define gray  (make-rgb 0.6 0.6 0.6))
+(define blue  (make-rgb 0   0   1  ))
+(define green (make-rgb 0   0.8 0  ))
 (define height-str   "Height"  )
 (define mode-str     "Mode"    )
 (define delay-str    "Delay"   )
@@ -452,6 +452,7 @@
 (define long-str     "long"    )
 (define circular-str "circular")
 (define click-str    "click"   )
+(define click        'click    )
 
 (struct region (pos width height)
   #:omit-define-syntaxes
@@ -573,8 +574,7 @@
 
 ;=====================================================================================================
 ; Internal state. Mutable. Initialized by procedure initialize.
-; The following variables are the only ones that are accepted by set!.
-; See syntax set! at the top of this module.
+; The following variables are the only ones that are mutated by set!.
 
 (define height     'yet-to-be-initialized)
 (define mode       'yet-to-be-initialized)
@@ -582,14 +582,13 @@
 (define move-count 'yet-to-be-initialized)
 (define count-str  'yet-to-be-initialized)
 (define disk-distr 'yet-to-be-initialized)
-(define vp         'yet-to-be-initialized)
+(define vp         'yet-to-be-initialized) ; Assigned once only in procedure initialize.
 (define clock      'needs-no-initialization)
 
 ;=====================================================================================================
 ; Initialization.
 
 (define (make-fresh-disk-distr) (vector (range height) '() '()))
-(define click 'click)
 
 (define (initialize)
   (set! height      max-height            )
