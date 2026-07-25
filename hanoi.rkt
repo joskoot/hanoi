@@ -1,5 +1,5 @@
 ;=====================================================================================================
-; A GUI playing the game of the tower of Hanoi.
+; A GUI for the game of the tower of Hanoi.
 
 #lang racket
 (provide play)
@@ -212,7 +212,7 @@
     (finish "Circular")))
 
 ;=====================================================================================================
-; Re,move message with move-count and time after actions short, long and circular.
+; Remove message with move-count and time after actions short, long and circular.
 
 (define (finish mode)
   (message-box mode (string-append mode " mode finished"))
@@ -487,6 +487,8 @@
 
 ;=====================================================================================================
 ; Layout of the buttons of the GUI.
+; Use a temporal viewport for the calculation of string-sizes
+; such as to be sure they fit in the buttons.
 
 (define-syntax-rule
   (define-values-block (value ...) expr ...)

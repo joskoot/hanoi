@@ -44,6 +44,10 @@ with the moves as bidirectional edges of length one.
 Connectivity means that there is a path between every two vertices.
 The graph resembles a
 @hyperlink["https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle"]{Sierpińsky triangle}.
+For example, for 5 disks the graph is:
+
+@(hspace 5) @image["hanoi-whole-5.gif" #:scale 0.25]
+
 The least number of moves required is @racket[(sub1 (expt h 2))] with uniquely defined
 sequence of moves. This is the short mode.
 The largest number of moves without passing a distribution of disks among the piles more than once
