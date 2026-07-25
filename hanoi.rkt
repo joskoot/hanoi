@@ -2,7 +2,6 @@
 ; A GUI playing the game of the tower of Hanoi.
 
 #lang racket
-
 (provide play)
 (require graphics/graphics racket/gui/base)
 (define-syntax-rule (in-reversed-range n) (in-range (sub1 n) -1 -1))
@@ -12,17 +11,11 @@
 ; Procedure play does the game.
 
 (define (play)
-  ; First initialize the internal state and the GUI.
   (initialize)
-  ; Now play protected such as to close the viewport and graphics before quitting.
   (dynamic-wind
     void
     main
     close))
-
-(define (close)
-  (close-viewport vp)
-  (close-graphics))
 
 (define (main)
   (case mode
@@ -30,6 +23,10 @@
     ((short) (short) (continue-manual))
     ((long) (reset) (long) (continue-manual))
     ((circular) (reset) (circular) (continue-manual))))
+
+(define (close)
+  (close-viewport vp)
+  (close-graphics))
 
 (define (continue-manual)
   (clear-counter)
@@ -41,19 +38,10 @@
 ; Action manual.
 
 (define (manual)
-  (init-manual)
+  (clear-counter)
+  (set! move-count 0)
   (manual0)
   (clear-counter))
-
-(define (init-manual)
-  (clear-counter)
-  (set! move-count 0))
-
-(define (count-manual-move)
-  (clear-counter)
-  (set! move-count (add1 move-count))
-  (set! count-str (format "Nr of manual moves: ~s" move-count))
-  ((draw-string vp) count-pos count-str))
 
 (define (manual0)
   (define click (get-and-dispatch-click))
@@ -114,6 +102,12 @@
              (count-manual-move)
              (manual0))
             (else (draw-disk d h p) (manual0))))))))
+
+(define (count-manual-move)
+  (clear-counter)
+  (set! move-count (add1 move-count))
+  (set! count-str (format "Nr of manual moves: ~s" move-count))
+  ((draw-string vp) count-pos count-str))
 
 ;=====================================================================================================
 ; Action short.
@@ -218,7 +212,7 @@
     (finish "Circular")))
 
 ;=====================================================================================================
-; Reset after actions short, long and circular.
+; Re,move message with move-count and time after actions short, long and circular.
 
 (define (finish mode)
   (message-box mode (string-append mode " mode finished"))
@@ -227,22 +221,29 @@
   (reset))
 
 ;=====================================================================================================
-; Responses to button clicks.
+; Response to button Height.
 
 (define (set-height)
-  (clear-counter)
-  (define heights (range 1 (add1 max-height)))
-  (define h
-    (get-choices-from-user
+  (define (validate-height str) (and (= (string-length str) 1) (char<=? #\1 (string-ref str 0) #\9)))
+  (define str
+    (get-text-from-user
       "Height"
-      "Select nr of disks"
-      (map (curry format "~s") heights)))
-  (when h
-    (define hh (add1 (car h)))
-    (set! height hh)
-    ((draw-button-content vp) height-pos hh))
-  (clear-counter)
-  viewport-flush-input)
+      (string-append
+        "How many disks do you want.\n"
+        "At least one, at most nine.\n"
+        "Enter a decimal digit but not 0")
+      #f
+      "9"
+      '(disallow-invalid)
+      #:validate validate-height))
+  (when str
+    (set! height (- (char->integer (string-ref str 0)) (char->integer #\0)))
+    ((draw-button-content vp) height-pos str))
+  (viewport-flush-input vp)
+  (clear-counter))
+
+;=====================================================================================================
+; Response to button Mode.
 
 (define (set-mode)
   (clear-counter)
@@ -258,6 +259,9 @@
     (set! mode (vector-ref #(manual short long circular) ch)))
   (viewport-flush-input vp)
   (clear-counter))
+
+;=====================================================================================================
+; Response to button Delay.
 
 (define (set-delay)
   (clear-counter)
@@ -296,12 +300,18 @@
   (viewport-flush-input vp)
   (clear-counter))
 
+;=====================================================================================================
+; Response to button Reset.
+
 (define (reset)
   (clear-counter)
   (set! disk-distr (make-fresh-disk-distr))
   (remove-all-disks)
   (for ((d (in-range height)) (h (in-reversed-range height)))
     (draw-disk d h 0)))
+
+;=====================================================================================================
+; Response to button Setup.
 
 (define (setup)
   (clear-counter)
@@ -347,23 +357,17 @@
    (* max-height disk-height))
   (draw-piles))
 
-(define (draw-disk d h p)
+(define (draw-disk d h p (color black))
   (define width (disk-width d))
   (define center (+ (pile-x p) (/ pile-width 2)))
   (define x (- center (/ width 2)))
   (define y (- vp-height border block (* (add1 h) disk-height)))
   (define pos (make-posn x y))
-  ((draw-solid-rectangle vp) pos width disk-height black)
-  ((draw-rectangle vp) pos width disk-height white))
+  ((draw-solid-rectangle vp) pos width disk-height color)
+  ((draw-rectangle vp) pos width disk-height white)
+  ((draw-string vp) (make-posn (- (pile-x p) 2) (+ y block -3)) (format "~s" (add1 d)) white))
 
-(define (mark-disk d h p)
-  (define width (disk-width d))
-  (define center (+ (pile-x p) (/ pile-width 2)))
-  (define x (- center (/ width 2)))
-  (define y (- vp-height border block (* (add1 h) disk-height)))
-  (define pos (make-posn x y))
-  ((draw-solid-rectangle vp) pos width disk-height red)
-  ((draw-rectangle vp) pos width disk-height white))
+(define (mark-disk d h p) (draw-disk d h p red))
 
 (define (remove-disk d h p)
   (define width (disk-width d))
@@ -393,12 +397,6 @@
         (vector-set! disk-distr t (cons d tt)))
       (else (move-disk f t exit)))))
 
-(define (reset-time-and-move-counter)
-  (set! clock (current-inexact-milliseconds))
-  (set! move-count -1)
-  (set! count-str "")
-  (draw-count))
-
 (define (check-click click-required? exit)
   (define click (get-and-dispatch-click click-required?))
   (case click
@@ -411,16 +409,21 @@
 ;=====================================================================================================
 ; Move-count and real time clock.
 
+(define (reset-time-and-move-counter)
+  (set! clock (current-inexact-milliseconds))
+  (set! move-count -1)
+  (set! count-str "")
+  (draw-count))
+
 (define (clear-counter) ((clear-string vp) count-pos count-str))
 
 (define (draw-count)
   (clear-counter)
-  (set! move-count(add1 move-count))
+  (set! move-count (add1 move-count))
   (set! count-str
     (if (eq? delay click)
       (format "Move count: ~s" move-count)
-      (format "Move count: ~s, real time: ~a seconds"
-        move-count (watch-clock))))
+      (format "Move count: ~s, real time: ~a seconds" move-count (watch-clock))))
   ((draw-string vp) count-pos count-str))
 
 (define (watch-clock)
