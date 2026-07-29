@@ -31,27 +31,28 @@ The Tower of Hanoi is a game.
 It has 3 piles, one at the left, one in the middle and one at the right.
 It has a number of disks. Let @tt{h} be the number of disks.
 All disks have different sizes and a hole in the center.
-They are slipped on the piles.
+They are put on the piles.
 A disk never rests upon a smaller disk.
 Initially all disks are on the pile at the left,
 forming a conical tower with the disks in order of decreasing size from bottom to top.
 The goal of the game is to move all disks to the pile at the right by making successive moves.
-During a move the top disk of a (non-empty) pile is taken and slipped on top onto another pile,
-but it is not allowed to move a disk upon a smaller one.
+A move is made by taking the top disk of a (non-empty) pile and putting it on top onto another pile
+or just putting there if the pile of destination currently has no disks.
+However, it is not allowed to put a disk upon a smaller one.
 Hence a disk never rests upon a smaller one.
-The distributions of disks among the pieces can be taken as the vertices of a connected graph
+The distributions of disks among the piles can be taken as the vertices of a connected graph
 with the moves as bidirectional edges of length one.
-Connectivity means that there is a path between every two vertices.
-The graph resembles a
+Connectivity means that there is at least one path between every two vertices.
+The graph has @tt{h}@superscript{3} vertices and resembles a
 @hyperlink["https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle"]{Sierpińsky triangle}.
 For example, for 5 disks the graph is:
 
 @(hspace 5) @image["hanoi-whole-5.gif" #:scale 0.25]
 
-The least number of moves required is @racket[(sub1 (expt h 2))] with uniquely defined
+The least number of moves required is @tt{h}@superscript{2}@tt{-}1 with uniquely defined
 sequence of moves. This is the short mode.
 The largest number of moves without passing a distribution of disks among the piles more than once
-is @racket[(sub1 (expr 3 h))], implying that every feasible distribution is visited exactly once.
+is @tt{h}@superscript{3}@tt{-}1, implying that every feasible distribution is visited exactly once.
 This is the long mode and is uniquely defined too.
 Another interesting way is the circular mode, moving the disks such as to visit all feasible
 distributions of disks among the piles exactly once
@@ -64,9 +65,10 @@ the fact that the path of moves can be followed in opposit direction too.
 @defproc[(play) void?]{
  Opens a GUI for playing the game of the
  @hyperlink["https://en.wikipedia.org/wiki/Tower_of_Hanoi"]{Tower of Hanoi}.
- The following buttons are available:}
+ The GUI shows buttons which are described below.
+ A button can temporarily be absent when not allowed by the current action instructed by the user.}
 
-@elemtag["height" ""]
+@elemtag["Height" ""]
 @bold{@tt{Height}}@(lb)
 Opens a modal dialog for selection of the desired number of disks,
 at least one, at most nine.
@@ -77,26 +79,27 @@ Initially the height is 9.
 Opens a modal dialog for selection of the mode, which is manual, short, long or circular.
 Initially the mode is manual.
 
-In manual mode the user is supposed to click near the pile the disk is to be taken from
-followed by a click near the pile of destination.
+In manual mode the user is supposed to click the @elemref["Pile n"]{pile button}
+the disk is to be taken from
+followed by a click on the @elemref["Pile n"]{pile button} of destination.
 An attempt to make an illegal move is ignored.
 
 In short mode the disks are moved by the GUI to the pile at the right
 with the least possible number of moves,
-at most @nonbreaking{@tt{(@racket[sub1] (@racket[expt 2] @elemref["height"]{height}))}} moves.
+at most @nonbreaking{@tt{(@racket[sub1] (@racket[expt 2] @elemref["Height"]{height}))}} moves.
 
 When the long mode is selected, first all disks are placed on the pile at the left and
-subsequently moved by the GUI to the pile at the right with the largest number of moves possible
+subsequently moved to the pile at the right with the largest number of moves possible
 without passing any distribution of disks more than once.
-@nonbreaking{@tt{(@racket[sub1] (@racket[expt 3] @elemref["height"]{height}))}} moves.
+@nonbreaking{@tt{(@racket[sub1] (@racket[expt 3] @elemref["Height"]{height}))}} moves.
 In fact every feasible distribution of disks is visited.
 
-When the circular mode is selected, first all disks are placed on the pile at the left.
-Subsequently the GUI makes moves such as to pass exactly once along
+When the circular mode is selected, first all disks are placed on the pile at the left and
+subsequently moved such as to pass exactly once along
 every feasible distribution of disks and finishing with all disks at the pile started from.
-@nonbreaking{@tt{(@racket[expt 3] @elemref["height"]{height})}} moves.
+@nonbreaking{@tt{(@racket[expt 3] @elemref["Height"]{height})}} moves.
 
-The short, long and circular mode can be halted by clicking the
+The short, long and circular mode can be aborted by clicking the
 @elemref["Reset"]{reset} or @elemref["Quit"]{quit} button.
 
 @elemtag["Delay" ""]
@@ -105,11 +108,13 @@ The delay is specified by means of a modal dialog.
 It is either @tt{click} or a non-negative real number
 written with not more than 6 characters.
 It applies to @elemref["Mode"]{modes} short, long and circular.
-If it is @tt{click} the GUI makes a move after a click near a pile.
-If it is a positive real number, the GUI waits @tt{delay} seconds between moves.
-In fact the delay is slightly longer, because it is not corrected for
-the time lost on calculations and graphical rendering or
-the real time the processor was not evailable for the GUI.
+When the delay is @tt{click} a move is made after each mouse click at arbitrary position in the window
+of the GUI.
+If the delay is a non-negative real number,
+the GUI does not wait for mouse clicks and makes @tt{delay} moves per real time second.
+In fact slightly slower, because the delay is not corrected for
+the real time lost on calculations and graphical rendering or
+the real time no processor was evailable for the GUI.
 This time depends on your CPU and GPU and may be in the order of magnitude of 1 ms per move.
  
 @elemtag["Reset" ""]
@@ -120,13 +125,16 @@ Puts all disks on the pile at the left.
 @bold{@tt{Setup}}@(lb)
 Removes all disks and subsequently places disks on the piles in a distribution chosen by the user.
 Disks are placed in order of decreasing size.
-The user is supposed to click near the pile where each next disk is to be placed.
-Requires @elemref["height"]{height} such clicks. Click a button to cancel setup.
+The user is supposed to click a @elemref["Pile n"]{pile button}
+indicating on which pile the next disk is to be placed.
+Requires @elemref["Height"]{height} such clicks.
+Click the @elemref["Reset"]{reset} or @elemref["Quit"]{quit} button to cancel setup.
 
 @elemtag["Quit" ""]
 @bold{@tt{Quit}}@(lb)
-Closes and terminates the GUI.
-The GUI can be closed by means of the close button in the title bar (at the top-right corner),
+Closes and terminates the GUI, but during @elemref["Setup"]{setup}
+cancels the setup without closing the GUI.
+The GUI window can be closed by means of the close button in the title bar (at the top-right corner),
 but procedure @racket[play] may remain running when waiting for a mouseclick
 because it may have called procedure
 @seclink["Mouse_Operations"
@@ -137,6 +145,10 @@ However, after closing the GUI window, no such mouse-click can be made.
 @note{In @other-doc['(lib "graphics/scribblings/graphics.scrbl")]
 I have not found a mean to check the state of a viewport.@(lb)
 (open, hidden or closed)}
+
+@elemtag["Pile n" ""]
+@bold{@tt{Pile n}}, @tt{n} being 1, 2 or 3.@(lb)
+Used to make moves manually and for @elemref["Setup"]{setup} of a distribution of disks.
 
 @bold{@larger{@larger{The end}}}
 @(collect-garbage)
