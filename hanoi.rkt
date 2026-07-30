@@ -480,7 +480,7 @@
     (longest-circular-path height 0 2)))
 
 (deffun (finish who)
-  (message-box "who" "finished" #f '(ok))
+  (message-box who "finished" #f '(ok))
   (viewport-flush-input vp)
   (mode-button 'put-content 'manual)
   (set! mode 'manual)
