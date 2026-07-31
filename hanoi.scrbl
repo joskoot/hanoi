@@ -19,6 +19,7 @@
      #'(defmodule hanoi/hanoi #:packages ())))
 
 @(define lb linebreak)
+@(define(minus) (tt "-"))
 
 @title[#:version ""]{Tower of Hanoi}
 @author{Jacob J. A. Koot}
@@ -29,8 +30,8 @@
 
 The Tower of Hanoi is a game.
 It has 3 piles, one at the left, one in the middle and one at the right.
-It has a number of disks. Let @tt{h} be the number of disks.
-All disks have different sizes and a hole in the center.
+It has a number of disks. Let @tt{h} be this number.
+The disks have different sizes and a hole in the center.
 They are put on the piles.
 A disk never rests upon a smaller disk.
 Initially all disks are on the pile at the left,
@@ -43,7 +44,12 @@ Hence a disk never rests upon a smaller one.
 The distributions of disks among the piles can be taken as the vertices of a connected graph
 with the moves as bidirectional edges of length one.
 Connectivity means that there is at least one path between every two vertices.
-The graph has @tt{h}@superscript{3} vertices and resembles a
+The graph has @tt{h}@superscript{3} vertices and
+@nonbreaking{@tt{(3(3@superscript{h}@(minus)3)+3×2)/2)}} = @nonbreaking{@tt{(3@superscript{h+1}@(minus)@smaller{3})/2}}
+edges because it has
+@tt{h}@superscript{3} vertices, of which @tt{h@superscript{3}@(minus)3} have 3 edges and
+3 vertices have 2 edges only. The division by 2 is needed because every edge connects 2 vertices.
+The graph resembles a
 @hyperlink["https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle"]{Sierpińsky triangle}.
 For example, for 5 disks the graph is:
 
@@ -52,12 +58,12 @@ For example, for 5 disks the graph is:
 The least number of moves required is @tt{h}@superscript{2}@tt{-}1 with uniquely defined
 sequence of moves. This is the short mode.
 The largest number of moves without passing a distribution of disks among the piles more than once
-is @tt{h}@superscript{3}@tt{-}1, implying that every feasible distribution is visited exactly once.
+is @tt{h}@superscript{3}@(minus)1, implying that every feasible distribution is visited exactly once.
 This is the long mode and is uniquely defined too.
 Another interesting way is the circular mode, moving the disks such as to visit all feasible
 distributions of disks among the piles exactly once
 and finishing with all disks on the starting pile at the left.
-This takes @racket[(expt h 3)] moves. The circular mode is uniquely defined too when disregarding
+This takes @tt{h}@superscript{3} moves. The circular mode is uniquely defined too when disregarding
 the fact that the path of moves can be followed in opposit direction too.
 
 @section{How to play}
