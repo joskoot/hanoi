@@ -11,7 +11,7 @@
 
 (provide play)
 
-; First import all needed bindings and define two general purpose macros.
+; Import all needed bindings and define two general purpose macros.
 
 (require graphics/graphics racket/gui/base)
 
@@ -40,16 +40,16 @@
 (define (main)
   (define pos (mouse-click-posn (get-mouse-click vp)))
   (dispatch pos
-    (height-button (do-height) (main))
-    (mode-button   (do-mode  ) (main))
-    (delay-button  (do-delay ) (main))
-    (reset-button  (do-reset ) (main))
-    (setup-button  (do-setup ) (main))
-    (pile1-button  (when (eq? mode 'manual) (do-manual 0)) (main))
-    (pile2-button  (when (eq? mode 'manual) (do-manual 1)) (main))
-    (pile3-button  (when (eq? mode 'manual) (do-manual 2)) (main))
-    (quit-button   (void     ))
-    (else (main))))
+    (height-button (do-height)                                                   (main))
+    (  mode-button (do-mode  )                                                   (main))
+    ( delay-button (do-delay )                                                   (main))
+    ( reset-button (do-reset )                                                   (main))
+    ( setup-button (do-setup )                                                   (main))
+    ( pile1-button (when (eq? (mode-button 'get-content) 'manual) (do-manual 0)) (main))
+    ( pile2-button (when (eq? (mode-button 'get-content) 'manual) (do-manual 1)) (main))
+    ( pile3-button (when (eq? (mode-button 'get-content) 'manual) (do-manual 2)) (main))
+    (  quit-button (void))
+    (else                                                  (main))))
 
 ;=====================================================================================================
 ; A button is displayed on the screen. It has procedure property can have a content.
@@ -89,10 +89,8 @@
                            ((put-content)
                             (set-button-content! button (car args))
                             ((draw-button-content vp) pos (car args))))
-                         ; Command get-content currently is not used,
-                         ; but may be needed in future versions.
-                         #;(syntax
-                             ((get-content) (button-content button))))))
+                         (syntax
+                           ((get-content) (button-content button))))))
                    ((disable)
                     (set! enabled? #f)
                     ((clear-solid-rectangle vp) pos button-width button-height))
@@ -150,8 +148,8 @@
 (define (in-region? pos region)
   (define x (posn-x pos))
   (define y (posn-y pos))
-  (define x-min (posn-x (region-pos region)))
-  (define y-min (posn-y (region-pos region)))
+  (define x-min (posn-x  (region-pos    region)))
+  (define y-min (posn-y  (region-pos    region)))
   (define x-max (+ x-min (region-width  region)))
   (define y-max (+ y-min (region-height region)))
   (and (<= x-min x x-max) (<= y-min y y-max)))
@@ -181,7 +179,7 @@
 
 ;=====================================================================================================
 ; Procedures to draw buttons and their contents. Computation of their sizes.
-; A temporary pismap is used to measure string sizes.
+; A temporary pixmap is used to measure string sizes.
 
 (define-values-block (draw-button draw-button-content button-width button-height)
   
@@ -245,15 +243,15 @@
 (define block 20)
 (define border (* 3 block))
 (define height-pos (make-posn border border))
-(define mode-pos  (add-posn height-pos (+ button-width border) 0))
-(define delay-pos (add-posn mode-pos   (+ button-width border) 0))
-(define reset-pos (add-posn delay-pos  (+ button-width border) 0))
-(define setup-pos (add-posn reset-pos  (+ button-width border) 0))
-(define quit-pos  (add-posn setup-pos  (+ button-width border) 0))
-(define pile1-pos (add-posn quit-pos   (+ button-width border) 0))
-(define pile2-pos (add-posn pile1-pos  (+ button-width border) 0))
-(define pile3-pos (add-posn pile2-pos  (+ button-width border) 0))
-(define msg-pos   (add-posn pile3-pos  (+ button-width (/ border 2)) button-height))
+(define   mode-pos (add-posn height-pos (+ button-width border) 0))
+(define  delay-pos (add-posn   mode-pos (+ button-width border) 0))
+(define  reset-pos (add-posn  delay-pos (+ button-width border) 0))
+(define  setup-pos (add-posn  reset-pos (+ button-width border) 0))
+(define   quit-pos (add-posn  setup-pos (+ button-width border) 0))
+(define  pile1-pos (add-posn   quit-pos (+ button-width border) 0))
+(define  pile2-pos (add-posn  pile1-pos (+ button-width border) 0))
+(define  pile3-pos (add-posn  pile2-pos (+ button-width border) 0))
+(define    msg-pos (add-posn  pile3-pos (+ button-width (/ border 2)) button-height))
 (define disk-height block)
 (define max-tower-height (* max-height disk-height))
 (define min-disk-width (* 3 block))
@@ -350,29 +348,14 @@
       modes))
   (when choice
     (define ch (car choice))
-    (set! mode (vector-ref #(short long circular) ch))
+    (define do-mode (vector-ref  (vector       short long circular) ch))
+    (define    mode (vector-ref #(             short long circular) ch))
     (mode-button 'put-content mode)
-    (case ch
-      ((0)
-       (prepare/finish-auto-move 'disable)
-       (short)
-       (prepare/finish-auto-move 'enable)
-       (finish "short"))
-      ((1)
-       (do-reset)
-       (prepare/finish-auto-move 'disable)
-       (long)
-       (prepare/finish-auto-move 'enable)
-       (finish "long"))
-      ((2)
-       (do-reset)
-       (prepare/finish-auto-move 'disable)
-       (circular)
-       (prepare/finish-auto-move 'enable)
-       (finish "circular")))))
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-; Actions short, long and circular disable some buttons.
+    (unless (eq? mode 'short) (do-reset))
+    (prepare/finish-auto-move 'disable)
+    (do-mode)
+    (prepare/finish-auto-move 'enable)
+    (finish (symbol->string mode))))
 
 (define (prepare/finish-auto-move enable/disable)
   (for
@@ -388,7 +371,14 @@
            pile3-button))))
     (button enable/disable)))
 
+(define (finish who)
+  (message-box who "finished" #f '(ok))
+  ; (viewport-flush-input vp)
+  (clear-msg)
+  (mode-button 'put-content 'manual))
+
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+; Actions short, long and circular disable some buttons.
 
 (define (short)
   (reset-time-and-move-counter)
@@ -477,15 +467,6 @@
         (move-disk f t exit)
         (finish-path h-1 r t)))
     (longest-circular-path height 0 2)))
-
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-(define (finish who)
-  (message-box who "finished" #f '(ok))
-  ; (viewport-flush-input vp)
-  (mode-button 'put-content 'manual)
-  (set! mode 'manual)
-  (clear-msg))
 
 ;=====================================================================================================
 ; Action : respons to click on button delay.
@@ -667,7 +648,6 @@
 (define vp            'yet-to-be-initialized)
 (define height        'yet-to-be-initialized)
 (define delay         'yet-to-be-initialized)
-(define mode          'yet-to-be-initialized)
 (define disk-distr    'yet-to-be-initialized)
 (define height-button 'yet-to-be-initialized)
 (define mode-button   'yet-to-be-initialized)
@@ -692,7 +672,6 @@
   (set! msg-str    ""     )
   (set! clock      0      )
   (set! move-count 0      )
-  (set! mode       'manual)
   ; Open graphics and the viewport.
   (open-graphics)
   (set! vp (open-viewport "Tower of Hanoi" vp-width vp-height))
