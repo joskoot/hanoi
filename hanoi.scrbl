@@ -41,20 +41,27 @@ A move is made by taking the top disk of a (non-empty) pile and putting it on to
 or just putting there if the pile of destination currently has no disks.
 However, it is not allowed to put a disk upon a smaller one.
 Hence a disk never rests upon a smaller one.
+
 The distributions of disks among the piles can be taken as the vertices of a connected graph
 with the moves as bidirectional edges of length one.
 Connectivity means that there is at least one path between every two vertices.
-The graph has @tt{h}@superscript{3} vertices and
-@nonbreaking{@tt{(3(3@superscript{h}@(minus)3)+3×2)/2)}} = @nonbreaking{@tt{(3@superscript{h+1}@(minus)@smaller{3})/2}}
-edges because it has
-@tt{h}@superscript{3} vertices, of which @tt{h@superscript{3}@(minus)3} have 3 edges and
-3 vertices have 2 edges only. The division by 2 is needed because every edge connects 2 vertices.
+The graph has
+@nonbreaking{@tt{(3(3@superscript{h}@(minus)3)+3×2)/2)}} =
+@nonbreaking{@tt{(3@superscript{h+1}@(minus)@smaller{3})/2}}
+edges because it has @tt{h}@superscript{3} vertices, of which
+@tt{h@superscript{3}@(minus)3} have 3 edges and 3 vertices have 2 edges only.
+The division by 2 is needed because every edge connects 2 vertices.
 The graph resembles a
 @hyperlink["https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle"]{Sierpińsky triangle}.
 For example, for 5 disks the graph is:
 
 @(hspace 5) @image["hanoi-whole-5.gif" #:scale 0.25]
 
+In contrast to a
+@hyperlink["https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle"]{Sierpińsky triangle}
+the vertices of the triangles of a Hanoi graph do not coincide with the vertices of other triangles.
+The vertices of two triangles are separated by at least one edge. The sides of the largest triangle
+correspond to the shortest path of moving all disks from a pile to another pile.
 The least number of moves required is @tt{h}@superscript{2}@tt{-}1 with uniquely defined
 sequence of moves. This is the short mode.
 The largest number of moves without passing a distribution of disks among the piles more than once
@@ -62,9 +69,13 @@ is @tt{h}@superscript{3}@(minus)1, implying that every feasible distribution is 
 This is the long mode and is uniquely defined too.
 Another interesting way is the circular mode, moving the disks such as to visit all feasible
 distributions of disks among the piles exactly once
-and finishing with all disks on the starting pile at the left.
+and finishing with all disks on the starting pile.
 This takes @tt{h}@superscript{3} moves. The circular mode is uniquely defined too when disregarding
-the fact that the path of moves can be followed in opposit direction too.
+the fact that the path of moves can be followed in opposit direction too. The number of
+distinct non self-crossing paths from one pile to another one is a(n) with a(0) = 1 and
+@nonbreaking{a(n+1)=a(n)@superscript{2}+a(n)@superscript{3}}.
+This is a very fast increasing sequence.
+See sequence @hyperlink["https://oeis.org/A125295"]{A125295} of @hyperlink["https://oeis.org/"]{OEIS}.
 
 @section{How to play}
 
@@ -116,9 +127,9 @@ written with not more than 6 characters.
 It applies to @elemref["Mode"]{modes} short, long and circular.
 When the delay is @tt{click} a move is made after each mouse click at arbitrary position in the window
 of the GUI.
-If the delay is a non-negative real number,
-the GUI does not wait for mouse clicks and makes @tt{delay} moves per real time second.
-In fact slightly slower, because the delay is not corrected for
+If the delay is a non-negative real number, say d,
+the GUI waits d seconds between successive moves, id est 1/(d+ε) moves per second.
+ε being the minimum time for a single move, which is not zero because the delay is not corrected for
 the real time lost on calculations and graphical rendering or
 the real time no processor was evailable for the GUI.
 This time depends on your CPU and GPU and may be in the order of magnitude of 1 ms per move.
