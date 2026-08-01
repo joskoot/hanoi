@@ -24,7 +24,7 @@
   (in-range (sub1 n) -1 -1))
 
 ;=====================================================================================================
-; Main procedure. 
+; Main procedure.
 
 (define (play)
   (initialize)
@@ -40,24 +40,24 @@
 (define (main)
   (define pos (mouse-click-posn (get-mouse-click vp)))
   (dispatch pos
-    (height-button (do-height)                                                   (main))
-    (  mode-button (do-mode  )                                                   (main))
-    ( delay-button (do-delay )                                                   (main))
-    ( reset-button (do-reset )                                                   (main))
-    ( setup-button (do-setup )                                                   (main))
+    (height-button (do-height) (main))
+    ( mode-button (do-mode) (main))
+    ( delay-button (do-delay) (main))
+    ( reset-button (do-reset) (main))
+    ( setup-button (do-setup) (main))
     ( pile1-button (when (eq? (mode-button 'get-content) 'manual) (do-manual 0)) (main))
     ( pile2-button (when (eq? (mode-button 'get-content) 'manual) (do-manual 1)) (main))
     ( pile3-button (when (eq? (mode-button 'get-content) 'manual) (do-manual 2)) (main))
-    (  quit-button (void))
-    (else                                                  (main))))
+    ( quit-button (void))
+    (else (main))))
 
 ;=====================================================================================================
 ; A button is displayed on the screen. It has procedure property can have a content.
 ; It is called as follows:
 ;
-;    (button command arg ...) --> any/c
-;    command : (or/c 'button-name 'in-button? 'disable 'enable 'get-content 'put-content)
-;    arg : any/c
+; (button command arg ...) --> any/c
+; command : (or/c 'button-name 'in-button? 'disable 'enable 'get-content 'put-content)
+; arg : any/c
 ;
 ; 'get-content and 'put-content are for buttons with content only.
 
@@ -148,43 +148,43 @@
 (define (in-region? pos region)
   (define x (posn-x pos))
   (define y (posn-y pos))
-  (define x-min (posn-x  (region-pos    region)))
-  (define y-min (posn-y  (region-pos    region)))
-  (define x-max (+ x-min (region-width  region)))
+  (define x-min (posn-x (region-pos region)))
+  (define y-min (posn-y (region-pos region)))
+  (define x-max (+ x-min (region-width region)))
   (define y-max (+ y-min (region-height region)))
   (and (<= x-min x x-max) (<= y-min y y-max)))
 
 ;=====================================================================================================
 ; Some constants required in early stage. Never mutated.
 
-(define height-str   "Height"  )
-(define mode-str     "Mode"    )
-(define delay-str    "Delay"   )
-(define reset-str    "Reset"   )
-(define setup-str    "Setup"   )
-(define quit-str     "Quit"    )
-(define undo-str     "Undo"    )
-(define manual-str   "manual"  )
-(define short-str    "short"   )
-(define long-str     "long"    )
+(define height-str "Height")
+(define mode-str "Mode")
+(define delay-str "Delay")
+(define reset-str "Reset")
+(define setup-str "Setup")
+(define quit-str "Quit")
+(define undo-str "Undo")
+(define manual-str "manual")
+(define short-str "short")
+(define long-str "long")
 (define circular-str "circular")
-(define click-str    "click"   )
-(define click        'click    )
-(define red   (make-rgb 1   0   0  ))
-(define white (make-rgb 1   1   1  ))
-(define black (make-rgb 0   0   0  ))
-(define gray  (make-rgb 0.6 0.6 0.6))
-(define blue  (make-rgb 0   0   1  ))
-(define green (make-rgb 0   0.8 0  ))
+(define click-str "click")
+(define click 'click)
+(define red (make-rgb 1 0 0))
+(define white (make-rgb 1 1 1))
+(define black (make-rgb 0 0 0))
+(define gray (make-rgb 0.6 0.6 0.6))
+(define blue (make-rgb 0 0 1))
+(define green (make-rgb 0 0.8 0))
 
 ;=====================================================================================================
 ; Procedures to draw buttons and their contents. Computation of their sizes.
 ; A temporary pixmap is used to measure string sizes.
 
 (define-values-block (draw-button draw-button-content button-width button-height)
-  
+
   ; Measure the maximum size of strings used in buttons.
-  
+
   (define strings
     (list
       height-str
@@ -197,13 +197,13 @@
       long-str
       circular-str
       "999999"))
-  
+
   (define string-offset 4)
   (define *2string-offset (* 2 string-offset))
-  
+
   (open-graphics)
   (define vp (open-pixmap "string-sizes" 1000 500))
-  
+
   (define-values (button-width button-height)
     (for/fold ((w 0) (h 0) #:result (values (+ w *2string-offset) (+ h *2string-offset)))
       ((w/h
@@ -211,21 +211,21 @@
            (map (get-string-size vp)
              strings))))
       (values
-        (max w (inexact->exact (ceiling (car  w/h))))
+        (max w (inexact->exact (ceiling (car w/h))))
         (max h (inexact->exact (ceiling (cadr w/h)))))))
-  
+
   (close-viewport vp)
   (close-graphics)
-  
+
   ; Two procedures to draw buttons and their contents.
-  
+
   (define ((draw-button vp) pos str)
     (define x (posn-x pos))
     (define y (posn-y pos))
     ((draw-solid-rectangle vp) pos button-width button-height blue)
     ((draw-string vp)
      (make-posn (+ x string-offset) (+ y button-height (- string-offset))) str white))
-  
+
   (define ((draw-button-content vp) pos value)
     (define str (if (string? value) value (format "~a" value)))
     (define x (posn-x pos))
@@ -243,15 +243,15 @@
 (define block 20)
 (define border (* 3 block))
 (define height-pos (make-posn border border))
-(define   mode-pos (add-posn height-pos (+ button-width border) 0))
-(define  delay-pos (add-posn   mode-pos (+ button-width border) 0))
-(define  reset-pos (add-posn  delay-pos (+ button-width border) 0))
-(define  setup-pos (add-posn  reset-pos (+ button-width border) 0))
-(define   quit-pos (add-posn  setup-pos (+ button-width border) 0))
-(define  pile1-pos (add-posn   quit-pos (+ button-width border) 0))
-(define  pile2-pos (add-posn  pile1-pos (+ button-width border) 0))
-(define  pile3-pos (add-posn  pile2-pos (+ button-width border) 0))
-(define    msg-pos (add-posn  pile3-pos (+ button-width (/ border 2)) button-height))
+(define mode-pos (add-posn height-pos (+ button-width border) 0))
+(define delay-pos (add-posn mode-pos (+ button-width border) 0))
+(define reset-pos (add-posn delay-pos (+ button-width border) 0))
+(define setup-pos (add-posn reset-pos (+ button-width border) 0))
+(define quit-pos (add-posn setup-pos (+ button-width border) 0))
+(define pile1-pos (add-posn quit-pos (+ button-width border) 0))
+(define pile2-pos (add-posn pile1-pos (+ button-width border) 0))
+(define pile3-pos (add-posn pile2-pos (+ button-width border) 0))
+(define msg-pos (add-posn pile3-pos (+ button-width (/ border 2)) button-height))
 (define disk-height block)
 (define max-tower-height (* max-height disk-height))
 (define min-disk-width (* 3 block))
@@ -262,8 +262,8 @@
 (define pile-width 4)
 (define pile-y (* 2 (+ border button-height)))
 (define pile-height (+ pile-top max-tower-height))
-(define vp-width  (+ (* 3 max-disk-width) (* 2 block) (* 4 border)))
-(define vp-height (+ (* 2 button-height ) (* 3 border) pile-height block))
+(define vp-width (+ (* 3 max-disk-width) (* 2 block) (* 4 border)))
+(define vp-height (+ (* 2 button-height) (* 3 border) pile-height block))
 (define girder-pos (make-posn border (- vp-height border block)))
 
 (define (pile-x p)
@@ -348,8 +348,8 @@
       modes))
   (when choice
     (define ch (car choice))
-    (define do-mode (vector-ref  (vector       short long circular) ch))
-    (define    mode (vector-ref #(             short long circular) ch))
+    (define do-mode (vector-ref (vector short long circular) ch))
+    (define mode (vector-ref #( short long circular) ch))
     (mode-button 'put-content mode)
     (unless (eq? mode 'short) (do-reset))
     (prepare/finish-auto-move 'disable)
@@ -534,10 +534,10 @@
     (define d (car disks))
     (define pos (mouse-click-posn (get-mouse-click vp)))
     (dispatch pos
-      (pile1-button  (do-setup2 d 0) (do-setup1 (cdr disks)))
-      (pile2-button  (do-setup2 d 1) (do-setup1 (cdr disks)))
-      (pile3-button  (do-setup2 d 2) (do-setup1 (cdr disks)))
-      (quit-button   (clear-msg) (do-reset))
+      (pile1-button (do-setup2 d 0) (do-setup1 (cdr disks)))
+      (pile2-button (do-setup2 d 1) (do-setup1 (cdr disks)))
+      (pile3-button (do-setup2 d 2) (do-setup1 (cdr disks)))
+      (quit-button (clear-msg) (do-reset))
       (else (do-setup1 disks)))))
 
 (define (do-setup2 d p)
@@ -645,22 +645,22 @@
 ; play is called more than once because the procedure may mutate them. Notice that syntax make-button
 ; needs the viewport too. Therefore the buttons are included in the initialization.
 
-(define vp            'yet-to-be-initialized)
-(define height        'yet-to-be-initialized)
-(define delay         'yet-to-be-initialized)
-(define disk-distr    'yet-to-be-initialized)
+(define vp 'yet-to-be-initialized)
+(define height 'yet-to-be-initialized)
+(define delay 'yet-to-be-initialized)
+(define disk-distr 'yet-to-be-initialized)
 (define height-button 'yet-to-be-initialized)
-(define mode-button   'yet-to-be-initialized)
-(define delay-button  'yet-to-be-initialized)
-(define reset-button  'yet-to-be-initialized)
-(define setup-button  'yet-to-be-initialized)
-(define quit-button   'yet-to-be-initialized)
-(define pile1-button  'yet-to-be-initialized)
-(define pile2-button  'yet-to-be-initialized)
-(define pile3-button  'yet-to-be-initialized)
-(define msg-str       'yet-to-be-initialized)
-(define clock         'yet-to-be-initialized)
-(define move-count    'yet-to-be-initialized)
+(define mode-button 'yet-to-be-initialized)
+(define delay-button 'yet-to-be-initialized)
+(define reset-button 'yet-to-be-initialized)
+(define setup-button 'yet-to-be-initialized)
+(define quit-button 'yet-to-be-initialized)
+(define pile1-button 'yet-to-be-initialized)
+(define pile2-button 'yet-to-be-initialized)
+(define pile3-button 'yet-to-be-initialized)
+(define msg-str 'yet-to-be-initialized)
+(define clock 'yet-to-be-initialized)
+(define move-count 'yet-to-be-initialized)
 
 (define (initialize)
   ; Store variables not yet initialized.
@@ -668,23 +668,23 @@
   (set! height max-height)
   (set! delay click)
   (set! disk-distr (vector (range height) '() '()))
-  (set! msg-str    ""     )
-  (set! msg-str    ""     )
-  (set! clock      0      )
-  (set! move-count 0      )
+  (set! msg-str "")
+  (set! msg-str "")
+  (set! clock 0)
+  (set! move-count 0)
   ; Open graphics and the viewport.
   (open-graphics)
   (set! vp (open-viewport "Tower of Hanoi" vp-width vp-height))
   ; Initalize and draw the buttons.
-  (set! height-button (make-button height   height-pos max-height))
-  (set! mode-button   (make-button mode     mode-pos  'manual))
-  (set! delay-button  (make-button delay    delay-pos  click))
-  (set! reset-button  (make-button reset    reset-pos))
-  (set! setup-button  (make-button setup    setup-pos))
-  (set! quit-button   (make-button quit     quit-pos ))
-  (set! pile1-button  (make-button |pile 1| pile1-pos))
-  (set! pile2-button  (make-button |pile 2| pile2-pos))
-  (set! pile3-button  (make-button |pile 3| pile3-pos))
+  (set! height-button (make-button height height-pos max-height))
+  (set! mode-button (make-button mode mode-pos 'manual))
+  (set! delay-button (make-button delay delay-pos click))
+  (set! reset-button (make-button reset reset-pos))
+  (set! setup-button (make-button setup setup-pos))
+  (set! quit-button (make-button quit quit-pos))
+  (set! pile1-button (make-button |pile 1| pile1-pos))
+  (set! pile2-button (make-button |pile 2| pile2-pos))
+  (set! pile3-button (make-button |pile 3| pile3-pos))
   ; Draw a girder.
   ((draw-solid-rectangle vp) girder-pos (- vp-width (* 2 border)) block gray)
   ; Procedure do-reset draws the piles and the initial distribution of disks at the pile at the left.
