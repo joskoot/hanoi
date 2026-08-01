@@ -125,11 +125,13 @@ The delay is specified by means of a modal dialog.
 It is either @tt{click} or a non-negative real number
 written with not more than 6 characters.
 It applies to @elemref["Mode"]{modes} short, long and circular.
-When the delay is @tt{click} a move is made after each mouse click at arbitrary position in the window
-of the GUI.
+When the delay is @tt{click} a move is made after each mouse click
+at arbitrary position in the window of the GUI.
 If the delay is a non-negative real number, say d,
-the GUI makes 1/(d+ε) moves per second,
-ε being the minimum time for a single move, which is not zero because the delay is not corrected for
+the GUI waits d seconds between successive moves.
+In fact the GUI makes 1/(d+ε) moves per second,
+ε being the minimum time for a single move,
+which is not zero because the delay is not corrected for
 the real time lost on calculations and graphical rendering or
 the real time no processor was evailable for the GUI.
 This time depends on your CPU and GPU and may be in the order of magnitude of 1 ms per move.

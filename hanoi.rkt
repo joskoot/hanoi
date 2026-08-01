@@ -1,18 +1,19 @@
 ;=====================================================================================================
-; A GUI playing the game of The Toer of Hanoi. Moves can be made manually but also automatically by
+; A GUI playing the game of The Tower of Hanoi. Moves can be made manually but also automatically by
 ; the GUI. It has clickable buttons height, mode, delay, reset, setup, quit, pile1, pile2 and pile3.
 ; A click on such button initiates an action. During an action some buttons may be disabled and
-; disappear tmporarily from the screen.
+; disappear temporarily from the screen.
 ;=====================================================================================================
-; First import all needed stuff and define two general purpose macros.
 
 #lang racket
 
+; One binding exported only.
+
 (provide play)
 
-(require graphics/graphics racket/gui/base)
+; First import all needed bindings and define two general purpose macros.
 
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+(require graphics/graphics racket/gui/base)
 
 (define-syntax-rule
   (define-values-block (value ...) expr ...)
@@ -90,8 +91,8 @@
                             ((draw-button-content vp) pos (car args))))
                          ; Command get-content currently is not used,
                          ; but may be needed in future versions.
-                         (syntax
-                           ((get-content) (button-content button))))))
+                         #;(syntax
+                             ((get-content) (button-content button))))))
                    ((disable)
                     (set! enabled? #f)
                     ((clear-solid-rectangle vp) pos button-width button-height))
@@ -204,6 +205,7 @@
   
   (open-graphics)
   (define vp (open-pixmap "string-sizes" 1000 500))
+  
   (define-values (button-width button-height)
     (for/fold ((w 0) (h 0) #:result (values (+ w *2string-offset) (+ h *2string-offset)))
       ((w/h
@@ -211,8 +213,9 @@
            (map (get-string-size vp)
              strings))))
       (values
-        (max w (inexact->exact (ceiling (car w/h))))
+        (max w (inexact->exact (ceiling (car  w/h))))
         (max h (inexact->exact (ceiling (cadr w/h)))))))
+  
   (close-viewport vp)
   (close-graphics)
   
@@ -384,6 +387,8 @@
            pile2-button
            pile3-button))))
     (button enable/disable)))
+
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 (define (short)
   (reset-time-and-move-counter)
@@ -703,7 +708,7 @@
   (set! pile3-button  (make-button |pile 3| pile3-pos))
   ; Draw a girder.
   ((draw-solid-rectangle vp) girder-pos (- vp-width (* 2 border)) block gray)
-  ; Procedure do-reset draws the piles and disks.
+  ; Procedure do-reset draws the piles and the initial distribution of disks at the pile at the left.
   (do-reset))
 
 ;=====================================================================================================
