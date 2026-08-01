@@ -702,7 +702,7 @@
   (set! pile2-button  (make-button |pile 2| pile2-pos))
   (set! pile3-button  (make-button |pile 3| pile3-pos))
   ; Draw a girder.
-  ((draw-solid-rectangle vp) (girder-pos (- vp-width (* 2 border)) block gray))
+  ((draw-solid-rectangle vp) girder-pos (- vp-width (* 2 border)) block gray)
   ; Procedure do-reset draws the piles and disks.
   (do-reset))
 
