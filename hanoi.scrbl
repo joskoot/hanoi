@@ -128,7 +128,7 @@ It applies to @elemref["Mode"]{modes} short, long and circular.
 When the delay is @tt{click} a move is made after each mouse click at arbitrary position in the window
 of the GUI.
 If the delay is a non-negative real number, say d,
-the GUI waits d seconds between successive moves, id est 1/(d+ε) moves per second.
+the GUI makes 1/(d+ε) moves per second,
 ε being the minimum time for a single move, which is not zero because the delay is not corrected for
 the real time lost on calculations and graphical rendering or
 the real time no processor was evailable for the GUI.

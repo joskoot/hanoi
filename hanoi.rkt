@@ -4,7 +4,7 @@
 ; A click on such button initiates an action. During an action some buttons may be disabled and
 ; disappear tmporarily from the screen.
 ;=====================================================================================================
-; First import all needed stuff and define two macros.
+; First import all needed stuff and define two general purpose macros.
 
 #lang racket
 
@@ -88,7 +88,8 @@
                            ((put-content)
                             (set-button-content! button (car args))
                             ((draw-button-content vp) pos (car args))))
-                         ; Command get-content is not used, but may be used in future versions.
+                         ; Command get-content currently is not used,
+                         ; but may be needed in future versions.
                          (syntax
                            ((get-content) (button-content button))))))
                    ((disable)
@@ -179,7 +180,7 @@
 
 ;=====================================================================================================
 ; Procedures to draw buttons and their contents. Computation of their sizes.
-; A temporary viewport is used to measure string sizes.
+; A temporary pismap is used to measure string sizes.
 
 (define-values-block (draw-button draw-button-content button-width button-height)
   
@@ -234,7 +235,7 @@
      (make-posn (+ x string-offset) (+ y button-height (- (* 2 string-offset)))) str blue)))
 
 ;=====================================================================================================
-; Layout of the GUI. Computation of the coordinates of all elements in the viewport of the GUI.
+; Layout of the GUI. Computation of coordinates and sizes of all elements in the viewport of the GUI.
 
 (define (add-posn pos width height) (make-posn (+ (posn-x pos) width) (+ (posn-y pos) height)))
 (define max-height 9)
@@ -262,6 +263,7 @@
 (define pile-height (+ pile-top max-tower-height))
 (define vp-width  (+ (* 3 max-disk-width) (* 2 block) (* 4 border)))
 (define vp-height (+ (* 2 button-height ) (* 3 border) pile-height block))
+(define girder-pos (make-posn border (- vp-height border block)))
 
 (define (pile-x p)
   (+ border
@@ -700,8 +702,7 @@
   (set! pile2-button  (make-button |pile 2| pile2-pos))
   (set! pile3-button  (make-button |pile 3| pile3-pos))
   ; Draw a girder.
-  ((draw-solid-rectangle vp)
-   (make-posn border (- vp-height border block)) (- vp-width (* 2 border)) block gray)
+  ((draw-solid-rectangle vp) (girder-pos (- vp-width (* 2 border)) block gray))
   ; Procedure do-reset draws the piles and disks.
   (do-reset))
 
