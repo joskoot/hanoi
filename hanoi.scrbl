@@ -31,20 +31,20 @@
 @section[#:style '(unnumbered)]{Introduction}
 
 The Tower of Hanoi is a game.
-It has 3 piles, one at the left, one in the middle and one at the right.
+It has 3 pegs, one at the left, one in the middle and one at the right.
 It has a number of disks. Let @tt{h} be this number.
 The disks have different sizes and a hole in the center.
-They are put on the piles.
+They are put on the pegs.
 A disk never rests upon a smaller disk.
-Initially all disks are on the pile at the left,
+Initially all disks are on the peg at the left,
 forming a conical tower with the disks in order of decreasing size from bottom to top.
-The goal of the game is to move all disks to the pile at the right by making successive moves.
-A move is made by taking the top disk of a non-empty pile and putting it on top onto another pile
-or just putting there if the pile of destination currently has no disks.
+The goal of the game is to move all disks to the peg at the right by making successive moves.
+A move is made by taking the top disk of a non-empty peg and putting it on top onto another peg
+or just putting there if the peg of destination currently has no disks.
 However, it is not allowed to put a disk upon a smaller one.
 Hence a disk never rests upon a smaller one.
 
-The disks can be distributed among the piles in 3@superscript{@tt{h}} ways.
+The disks can be distributed among the pegs in 3@superscript{@tt{h}} ways.
 The distributions can be taken as the vertices of a connected graph
 with the moves as bidirectional edges of length one.
 Connectivity means that there is at least one path between every two vertices.
@@ -58,12 +58,13 @@ In contrast to a
 @hyperlink["https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle"]{Sierpińsky triangle}
 the vertices of the triangles of a Hanoi graph do not coincide with the vertices of other triangles.
 The vertices of two triangles are separated by at least one edge.
-The three vertices of the largest triangle represent distributions of all disks on the same pile.
+The three vertices of the largest triangle represent distributions of all disks on the same peg.
 These have two edges only,
-the two with the smallest disk from the non-empty pile to one of the two empty piles.
-All other vertices of the graph represent distributions without empty piles.
-@nb{A vertex} without empty piles has three edges. Let Pa, Pb and Pc
-be the three piles in increasing order of the size of the disk on top.
+the two moving the smallest disk to one of the two empty pegs.
+All other vertices of the graph represent distributions without at most one empty peg.
+Such a vertex has three edges. Let Pa, Pb and Pc
+be the three pegs in increasing order of the size of the disk on top,
+regarding an empty peg as having the largest disk on top.
 Then there are three edges: Pa→Pb, Pa→Pc and Pb→Pc.
 The graph has
 @nb{@tt{(3(3@superscript{h}@(minus)3)+3×2)/2)}} =
@@ -72,24 +73,24 @@ edges because it has @tt{h}@superscript{3} vertices, of which
 @tt{h@superscript{3}@(minus)3} have @nb{3 edges} and 3 vertices have 2 edges only.
 The division by 2 is needed because every edge connects 2 vertices.
 
-Consider paths from a distribution of all disks on the same pile
-to a distribution with all disk on another pile.
+Consider paths from a distribution of all disks on the same peg
+to a distribution with all disk on another peg.
 These distributions are represented by the vertices of the largest triangle.
 The least number of moves required is @tt{h}@superscript{2}@tt{-}1 with uniquely defined
 sequence of moves. This is the short mode, in the graph shown by the sides of the largest triangle.
 
-The largest number of moves without passing a distribution of disks among the piles more than once
+The largest number of moves without passing a distribution of disks among the pegs more than once
 is @tt{h}@superscript{3}@(minus)1, implying that every feasible distribution is visited exactly once.
 This is the long mode and is uniquely defined too.
 
 Another interesting way is the circular mode, moving the disks such as to visit all feasible
-distributions of disks among the piles exactly once
-and finishing with all disks on the starting pile.
+distributions of disks among the pegs exactly once
+and finishing with all disks on the starting peg.
 This takes @tt{h}@superscript{3} moves. The circular mode is uniquely defined too when disregarding
 the fact that the path can be followed in opposit direction too.
 
-The number of distinct non self-crossing paths from a distribution with all disks on the same pile
-to one with all disks on another pile, those not visiting all vertices included,
+The number of distinct non self-crossing paths from a distribution with all disks on the same peg
+to one with all disks on another peg, those not passing all vertices included,
 is a(n) with @nb{a(0)=1} and
 @nb{a(n+1)=a(n)@superscript{2}+a(n)@superscript{3}}.
 This is a very fast increasing sequence.
@@ -100,8 +101,12 @@ See @hyperlink["https://oeis.org/A125295"]{A125295} of @hyperlink["https://oeis.
 @defproc[(play) void?]{
  Opens a GUI for playing the game of the
  @hyperlink["https://en.wikipedia.org/wiki/Tower_of_Hanoi"]{Tower of Hanoi}.
- The GUI shows buttons which are described below.
- A button can temporarily be absent when not allowed by the current action instructed by the user.}
+ The user can instruct the GUI what to do by means of the buttons described below.
+ A button can temporarily be absent when not allowed by the current action instructed by the user.
+ For some actions the GUI asks a question in a separate dialog window.
+ Instructions given before the question is answered are ignored.
+ It may happen that the dialog is hidden behind that of the GUI.
+ When the GUI does not respond to buttons, look for the hidden dialog.}
 
 @elemtag["Height" ""]
 @bold{@tt{Height}}@(lb)
@@ -114,24 +119,24 @@ Initially the height is 9.
 Opens a modal dialog for selection of the mode, which is manual, short, long or circular.
 Initially the mode is manual.
 
-In manual mode the user is supposed to click the @elemref["Pile n"]{pile button}
+In manual mode the user is supposed to click the @elemref["Peg n"]{peg button}
 the disk is to be taken from
-followed by a click on the @elemref["Pile n"]{pile button} of destination.
+followed by a click on the @elemref["Peg n"]{peg button} of destination.
 An attempt to make an illegal move is ignored.
 
-In short mode the disks are moved by the GUI to the pile at the right
+In short mode the disks are moved by the GUI to the peg at the right
 with the least possible number of moves,
 at most @nb{@tt{(@racket[sub1] (@racket[expt 2] @elemref["Height"]{height}))}} moves.
 
-When the long mode is selected, first all disks are placed on the pile at the left and
-subsequently moved to the pile at the right with the largest number of moves possible
+When the long mode is selected, first all disks are placed on the peg at the left and
+subsequently moved to the peg at the right with the largest number of moves possible
 without passing any distribution of disks more than once.
 @nb{@tt{(@racket[sub1] (@racket[expt 3] @elemref["Height"]{height}))}} moves.
 In fact every feasible distribution of disks is visited.
 
-When the circular mode is selected, first all disks are placed on the pile at the left and
+When the circular mode is selected, first all disks are placed on the peg at the left and
 subsequently moved such as to pass exactly once along
-every feasible distribution of disks and finishing with all disks at the pile started from.
+every feasible distribution of disks and finishing with all disks at the peg started from.
 @nb{@tt{(@racket[expt 3] @elemref["Height"]{height})}} moves.
 
 The short, long and circular mode can be aborted by clicking the
@@ -162,14 +167,14 @@ This time depends on your CPU and GPU and may be in the order of magnitude of 1 
  
 @elemtag["Reset" ""]
 @bold{@tt{Reset}}@(lb)
-Puts all disks on the pile at the left.
+Puts all disks on the peg at the left.
 
 @elemtag["Setup" ""]
 @bold{@tt{Setup}}@(lb)
-Removes all disks and subsequently places disks on the piles in a distribution chosen by the user.
+Removes all disks and subsequently places disks on the pegs in a distribution chosen by the user.
 Disks are placed in order of decreasing size.
-The user is supposed to click a @elemref["Pile n"]{pile button}
-indicating on which pile the next disk is to be placed.
+The user is supposed to click a @elemref["Peg n"]{peg button}
+indicating on which peg the next disk is to be placed.
 Requires @elemref["Height"]{height} such clicks.
 Click the @elemref["Reset"]{reset} or @elemref["Quit"]{quit} button to cancel setup.
 
@@ -189,8 +194,8 @@ However, after closing the GUI window, no such mouse-click can be made.
  I have not found a mean to check the state of a viewport.@(lb)
  (open, hidden or closed)}
 
-@elemtag["Pile n" ""]
-@bold{@tt{Pile n}}, @tt{n} being 1, 2 or 3.@(lb)
+@elemtag["Peg n" ""]
+@bold{@tt{Peg n}}, @tt{n} being 1, 2 or 3.@(lb)
 Used to make moves manually and for @elemref["Setup"]{setup} of a distribution of disks.
 
 @section[#:style '(unnumbered)]{Appendix}
@@ -230,7 +235,7 @@ Written in @hyperlink["https://www.scheme.org/"]{Scheme} or
 @tt{(disk m)} identifies the disk being moved during move @tt{m}
 and is the number of times m can be divided by 2.
 @tt{from}, @tt{onto} and @tt{thrd} are the
-peg the disk is taken from, the pile it is moved to and the remaining third pile.
+peg the disk is taken from, the peg it is moved to and the remaining third peg.
 @tt{posi} computes the position of disk @tt{d} after move @tt{m}.
                                         
 Similar formulas exist for the longest path from @tt{f} to @tt{t}:

@@ -1,6 +1,6 @@
 ;=====================================================================================================
 ; A GUI playing the game of The Tower of Hanoi. Moves can be made manually but also automatically by
-; the GUI. It has clickable buttons height, mode, delay, reset, setup, quit, pile1, pile2 and pile3.
+; the GUI. It has clickable buttons height, mode, delay, reset, setup, quit, peg1, peg2 and peg3.
 ; A click on such button initiates an action. During an action some buttons may be disabled and
 ; disappear temporarily from the screen.
 ;=====================================================================================================
@@ -44,10 +44,10 @@
     (delay-button  (do-delay   ) (main))
     (reset-button  (do-reset   ) (main))
     (setup-button  (do-setup   ) (main))
-    (pile1-button  (do-manual 0) (main))
-    (pile2-button  (do-manual 1) (main))
-    (pile3-button  (do-manual 2) (main))
-    (quit-button (void))
+    (peg1-button   (do-manual 0) (main))
+    (peg2-button   (do-manual 1) (main))
+    (peg3-button   (do-manual 2) (main))
+    (quit-button   (void       )       )
     (else (main))))
 
 ;=====================================================================================================
@@ -249,29 +249,29 @@
 (define reset-pos  (add-posn delay-pos  (+ button-width border) 0))
 (define setup-pos  (add-posn reset-pos  (+ button-width border) 0))
 (define quit-pos   (add-posn setup-pos  (+ button-width border) 0))
-(define pile1-pos  (add-posn quit-pos   (+ button-width border) 0))
-(define pile2-pos  (add-posn pile1-pos  (+ button-width border) 0))
-(define pile3-pos  (add-posn pile2-pos  (+ button-width border) 0))
-(define msg-pos    (add-posn pile3-pos  (+ button-width border (- block)) button-height))
+(define peg1-pos   (add-posn quit-pos   (+ button-width border) 0))
+(define peg2-pos   (add-posn peg1-pos  (+ button-width border) 0))
+(define peg3-pos   (add-posn peg2-pos  (+ button-width border) 0))
+(define msg-pos    (add-posn peg3-pos  (+ button-width border (- block)) button-height))
 (define disk-height block)
 (define max-tower-height (* max-height disk-height))
 (define min-disk-width (* 3 block))
 (define disk-width-incr block)
 (define (disk-width d) (+ min-disk-width (* 2 d disk-width-incr)))
 (define max-disk-width (disk-width (sub1 max-height)))
-(define pile-top (* 2 block))
-(define pile-width 4)
-(define pile-y (* 2 (+ border button-height)))
-(define pile-height (+ pile-top max-tower-height))
+(define peg-top (* 2 block))
+(define peg-width 4)
+(define peg-y (* 2 (+ border button-height)))
+(define peg-height (+ peg-top max-tower-height))
 (define vp-width (+ (* 3 max-disk-width) (* 2 block) (* 4 border)))
-(define vp-height (+ (* 2 button-height) (* 3 border) pile-height block))
+(define vp-height (+ (* 2 button-height) (* 3 border) peg-height block))
 (define girder-pos (make-posn border (- vp-height border block)))
 
-(define (pile-x p)
+(define (peg-x p)
   (+ border
     block
     (* p (+ border max-disk-width))
-    (/ (- max-disk-width pile-width) 2)))
+    (/ (- max-disk-width peg-width) 2)))
 
 ;=====================================================================================================
 ; Action : respons to click on button height.
@@ -298,37 +298,37 @@
     (do-reset)))
 
 ;=====================================================================================================
-; Action : respons to click on a pile button in manual mode.
+; Action : respons to click on a peg button in manual mode.
 
 (define (do-manual p)
-  (define pile (vector-ref disk-distr p))
-  (unless (null? pile)
-    (define d (car pile))
-    (define h (sub1 (length pile)))
+  (define peg (vector-ref disk-distr p))
+  (unless (null? peg)
+    (define d (car peg))
+    (define h (sub1 (length peg)))
     (mark-disk d h p)
     (do-manual1 d h p)))
 
 (define (do-manual1 d h p)
   (dispatch (mouse-click-posn (get-mouse-click vp))
-    (pile1-button (do-manual2 d h p 0))
-    (pile2-button (do-manual2 d h p 1))
-    (pile3-button (do-manual2 d h p 2))
+    (peg1-button (do-manual2 d h p 0))
+    (peg2-button (do-manual2 d h p 1))
+    (peg3-button (do-manual2 d h p 2))
     (else (draw-disk d h p))))
 
 (define (do-manual2 d h p dest-p)
   (cond
     ((= dest-p p) (draw-disk d h p))
     (else
-      (define pile (vector-ref disk-distr dest-p))
+      (define peg (vector-ref disk-distr dest-p))
       (cond
-        ((null? pile)
+        ((null? peg)
          (remove-disk d h p)
          (vector-set! disk-distr p (cdr (vector-ref disk-distr p)))
          (draw-disk d 0 dest-p)
          (vector-set! disk-distr dest-p (cons d (vector-ref disk-distr dest-p))))
         (else
-          (define dest-d (car pile))
-          (define dest-h (length pile))
+          (define dest-d (car peg))
+          (define dest-h (length peg))
           (cond
             ((< d dest-d)
              (remove-disk d h p)
@@ -367,9 +367,9 @@
            mode-button
            delay-button
            setup-button
-           pile1-button
-           pile2-button
-           pile3-button))))
+           peg1-button
+           peg2-button
+           peg3-button))))
     (button enable/disable)))
 
 (define (finish who)
@@ -541,16 +541,16 @@
   (unless (null? disks)
     (define d (car disks))
     (dispatch (mouse-click-posn (get-mouse-click vp))
-      (pile1-button (do-setup2 d 0) (do-setup1 (cdr disks)))
-      (pile2-button (do-setup2 d 1) (do-setup1 (cdr disks)))
-      (pile3-button (do-setup2 d 2) (do-setup1 (cdr disks)))
+      (peg1-button (do-setup2 d 0) (do-setup1 (cdr disks)))
+      (peg2-button (do-setup2 d 1) (do-setup1 (cdr disks)))
+      (peg3-button (do-setup2 d 2) (do-setup1 (cdr disks)))
       (quit-button (clear-msg) (do-reset))
       (else (do-setup1 disks)))))
 
 (define (do-setup2 d p)
-  (define pile (vector-ref disk-distr p))
-  (vector-set! disk-distr p (cons d pile))
-  (draw-disk d (length pile) p))
+  (define peg (vector-ref disk-distr p))
+  (vector-set! disk-distr p (cons d peg))
+  (draw-disk d (length peg) p))
 
 ;=====================================================================================================
 ; Move-count and real time clock.
@@ -579,40 +579,40 @@
 ;=====================================================================================================
 ; Drawing procedure.
 
-(define (draw-piles)
+(define (draw-pegs)
   (for ((p (in-range 3)))
     ((draw-solid-rectangle vp)
-     (make-posn (pile-x p) pile-y)
-     pile-width pile-height green)))
+     (make-posn (peg-x p) peg-y)
+     peg-width peg-height green)))
 
 (define (remove-all-disks)
   ((clear-solid-rectangle vp)
    (make-posn (+ block border) (- vp-height border block max-tower-height))
    (+ (* 3 max-disk-width) (* 2 border))
    max-tower-height)
-  (draw-piles))
+  (draw-pegs))
 
 (define (draw-disk d h p (color black))
   (define width (disk-width d))
-  (define center (+ (pile-x p) (/ pile-width 2)))
+  (define center (+ (peg-x p) (/ peg-width 2)))
   (define x (- center (/ width 2)))
   (define y (- vp-height border block (* (add1 h) disk-height)))
   (define pos (make-posn x y))
   ((draw-solid-rectangle vp) pos width disk-height color)
   ((draw-rectangle vp) pos width disk-height white)
-  ((draw-string vp) (make-posn (- (pile-x p) 2) (+ y block -3)) (format "~s" (add1 d)) white))
+  ((draw-string vp) (make-posn (- (peg-x p) 2) (+ y block -3)) (format "~s" (add1 d)) white))
 
 (define (mark-disk d h p) (draw-disk d h p red))
 
 (define (remove-disk d h p)
   (define width (disk-width d))
-  (define center (+ (pile-x p) (/ pile-width 2)))
+  (define center (+ (peg-x p) (/ peg-width 2)))
   (define x (- center (/ width 2)))
   (define y (- vp-height border block (* (add1 h) disk-height)))
   (define pos (make-posn x y))
   ((clear-solid-rectangle vp) pos width disk-height)
   ((draw-solid-rectangle vp)
-   (make-posn (- center (/ pile-width 2)) y) pile-width disk-height green))
+   (make-posn (- center (/ peg-width 2)) y) peg-width disk-height green))
 
 (define (move-disk f t exit)
   (define ff (vector-ref disk-distr f))
@@ -662,9 +662,9 @@
 (define reset-button  'yet-to-be-initialized)
 (define setup-button  'yet-to-be-initialized)
 (define quit-button   'yet-to-be-initialized)
-(define pile1-button  'yet-to-be-initialized)
-(define pile2-button  'yet-to-be-initialized)
-(define pile3-button  'yet-to-be-initialized)
+(define peg1-button   'yet-to-be-initialized)
+(define peg2-button   'yet-to-be-initialized)
+(define peg3-button   'yet-to-be-initialized)
 (define msg-str       'yet-to-be-initialized)
 (define clock         'yet-to-be-initialized)
 (define move-count    'yet-to-be-initialized)
@@ -683,18 +683,18 @@
   (open-graphics)
   (set! vp (open-viewport "Tower of Hanoi" vp-width vp-height))
   ; Initalize and draw the buttons.
-  (set! height-button (make-button height   height-pos max-height))
-  (set! mode-button   (make-button mode     mode-pos   'manual   ))
-  (set! delay-button  (make-button delay    delay-pos  click     ))
-  (set! reset-button  (make-button reset    reset-pos            ))
-  (set! setup-button  (make-button setup    setup-pos            ))
-  (set! quit-button   (make-button quit     quit-pos             ))
-  (set! pile1-button  (make-button |pile 1| pile1-pos            ))
-  (set! pile2-button  (make-button |pile 2| pile2-pos            ))
-  (set! pile3-button  (make-button |pile 3| pile3-pos            ))
+  (set! height-button (make-button height  height-pos max-height))
+  (set! mode-button   (make-button mode    mode-pos   'manual   ))
+  (set! delay-button  (make-button delay   delay-pos  click     ))
+  (set! reset-button  (make-button reset   reset-pos            ))
+  (set! setup-button  (make-button setup   setup-pos            ))
+  (set! quit-button   (make-button quit    quit-pos             ))
+  (set! peg1-button   (make-button |peg 1| peg1-pos            ))
+  (set! peg2-button   (make-button |peg 2| peg2-pos            ))
+  (set! peg3-button   (make-button |peg 3| peg3-pos            ))
   ; Draw a girder.
   ((draw-solid-rectangle vp) girder-pos (- vp-width (* 2 border)) block gray)
-  ; Procedure do-reset draws the piles and the initial distribution of disks at the pile at the left.
+  ; Procedure do-reset draws the pegs and the initial distribution of disks at the peg at the left.
   (do-reset))
 
 ;=====================================================================================================
