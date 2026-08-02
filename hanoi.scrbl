@@ -48,6 +48,16 @@ The disks can be distributed among the piles in 3@superscript{@tt{h}} ways.
 The distributions can be taken as the vertices of a connected graph
 with the moves as bidirectional edges of length one.
 Connectivity means that there is at least one path between every two vertices.
+The graph can be drawn such as to resemble a
+@hyperlink["https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle"]{Sierpińsky triangle}.
+For example, for 5 disks:
+
+@(hspace 5) @image["hanoi-whole-5.gif" #:scale 0.25]
+
+In contrast to a
+@hyperlink["https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle"]{Sierpińsky triangle}
+the vertices of the triangles of a Hanoi graph do not coincide with the vertices of other triangles.
+The vertices of two triangles are separated by at least one edge.
 The three vertices of the largest triangle represent distributions of all disks on the same pile.
 These have two edges only,
 the two with the smallest disk from the non-empty pile to one of the two empty piles.
@@ -61,16 +71,6 @@ The graph has
 edges because it has @tt{h}@superscript{3} vertices, of which
 @tt{h@superscript{3}@(minus)3} have @nb{3 edges} and 3 vertices have 2 edges only
 The division by 2 is needed because every edge connects 2 vertices.
-The graph resembles a
-@hyperlink["https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle"]{Sierpińsky triangle}.
-For example, for 5 disks the graph is:
-
-@(hspace 5) @image["hanoi-whole-5.gif" #:scale 0.25]
-
-In contrast to a
-@hyperlink["https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle"]{Sierpińsky triangle}
-the vertices of the triangles of a Hanoi graph do not coincide with the vertices of other triangles.
-The vertices of two triangles are separated by at least one edge.
 
 Consider paths from a distribution of all disks on the same pile
 to a distribution with all disk on another pile.
@@ -215,18 +215,18 @@ Written in @hyperlink["https://www.scheme.org/"]{Scheme} or
  #:sep (hspace 2)]
 
 @RACKETBLOCK[#:escape unsyntax
-(define (exp2 n(unsyntax (hspace 8))) (expt   2 n))
-(define (mod2 n(unsyntax (hspace 8))) (modulo n 2))
-(define (mod3 n(unsyntax (hspace 8))) (modulo n 3))
-(define (pari n(unsyntax (hspace 8))) (add1 (mod2 (add1 n))))
-(define (rotd   h d f t) (mod3 (* (- t f) (pari (- h d)))))
-(define (rotr   h   f t) (rotd h 0 t f))
-(define (mcnt m   d(unsyntax (hspace 4))) (quotient (+ m (exp2 d)) (exp2 (add1 d))))
-(define (thrd m h   f t) (mod3 (+ f (* m (rotr h f t)))))
-(define (onto m h   f t) (mod3 (- (thrd m h f t) (rotd h (disk m) f t))))
-(define (from m h   f t) (mod3 (+ (thrd m h f t) (rotd h (disk m) f t))))
-(define (posi m h d f t) (mod3 (+ f (* (rotd h d f t) (mcnt m d)))))
-(define (disk m(unsyntax (hspace 8)))) (sub1 (integer-length (bitwise-xor m (sub1 m))))]
+ (define (exp2 n(unsyntax (hspace 8))) (expt   2 n))
+ (define (mod2 n(unsyntax (hspace 8))) (modulo n 2))
+ (define (mod3 n(unsyntax (hspace 8))) (modulo n 3))
+ (define (pari n(unsyntax (hspace 8))) (add1 (mod2 (add1 n))))
+ (define (rotd   h d f t) (mod3 (* (- t f) (pari (- h d)))))
+ (define (rotr   h   f t) (rotd h 0 t f))
+ (define (mcnt m   d(unsyntax (hspace 4))) (quotient (+ m (exp2 d)) (exp2 (add1 d))))
+ (define (thrd m h   f t) (mod3 (+ f (* m (rotr h f t)))))
+ (define (onto m h   f t) (mod3 (- (thrd m h f t) (rotd h (disk m) f t))))
+ (define (from m h   f t) (mod3 (+ (thrd m h f t) (rotd h (disk m) f t))))
+ (define (posi m h d f t) (mod3 (+ f (* (rotd h d f t) (mcnt m d)))))
+ (define (disk m(unsyntax (hspace 8))) (sub1 (integer-length (bitwise-xor m (sub1 m)))))]
 
 @tt{(disk m)} identifies the disk being moved during move @tt{m}
 and is the number of times m can be divided by 2.
@@ -237,24 +237,24 @@ peg the disk is taken from, the pile it is moved to and the remaining third pile
 Similar formulas exist for the longest path from @tt{f} to @tt{t}:
 
 @RACKETBLOCK[#:escape unsyntax
-(define (exp3 n(unsyntax (hspace 6))) (expt   3 n))
-(define (mod3 n(unsyntax (hspace 6))) (modulo n 3))
-(define (mod4 n(unsyntax (hspace 6))) (modulo n 4))
-(define (thrd m   f t) (if (odd? m) t f))
-(define (onto m h f t) (posi m (disk m) f t))
-(define (from m h f t) (- 3 (onto m h f t) (thrd m f t)))
-(define (disk m(unsyntax (hspace 6))) (if (zero? (mod3 m)) (add1 (disk (quotient m 3))) 0))
+ (define (exp3 n(unsyntax (hspace 6))) (expt   3 n))
+ (define (mod3 n(unsyntax (hspace 6))) (modulo n 3))
+ (define (mod4 n(unsyntax (hspace 6))) (modulo n 4))
+ (define (thrd m   f t) (if (odd? m) t f))
+ (define (onto m h f t) (posi m (disk m) f t))
+ (define (from m h f t) (- 3 (onto m h f t) (thrd m f t)))
+ (define (disk m(unsyntax (hspace 6))) (if (zero? (mod3 m)) (add1 (disk (quotient m 3))) 0))
 
-(define (posi m d f t)
- (case (mod4 (mcnt m d))
-  ((0) f)
-  ((1 3) (- 3 f t))
-  ((2) t)))
+ (define (posi m d f t)
+   (case (mod4 (mcnt m d))
+     ((0) f)
+     ((1 3) (- 3 f t))
+     ((2) t)))
 
-(define (mcnt m d)
- (+
-  (* 2 (quotient m (exp3 (add1 d))))
-  (mod3 (quotient m (exp3 d)))))]
+ (define (mcnt m d)
+   (+
+     (* 2 (quotient m (exp3 (add1 d))))
+     (mod3 (quotient m (exp3 d)))))]
 
 The formulas are not used by procedure @racket[play].
 When walking a whole path, recursion is faster because it can use information about
