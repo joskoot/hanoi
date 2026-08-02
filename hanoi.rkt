@@ -19,19 +19,6 @@
   (in-reversed-range n)
   (in-range (sub1 n) -1 -1))
 
-(define (get-choices . x)
-  (parameterize ((disable-all #t))
-    (apply get-choices-from-user x)))
-
-(define (show-message-box . x)
-  (parameterize ((disable-all #t))
-    (apply message-box x)))
-
-(define (get-text #:validate validate . x)
-  (parameterize ((disable-all #t))
-    (apply get-text-from-user #:validate validate x)))
-  
-
 ;=====================================================================================================
 ; Main procedure.
 
@@ -145,17 +132,15 @@
   (syntax-case stx (else)
     ((_ pos (button do-button ...) ... (else else-clause ...))
      (syntax
-       (unless (disable-all)
-         (let ((p pos))
-           (cond
-             ((button 'in-button? p) do-button ...) ...
-             (else else-clause ...))))))
+       (let ((p pos))
+         (cond
+           ((button 'in-button? p) do-button ...) ...
+           (else else-clause ...)))))
     ((_ pos (button do-button ...) ...)
      (syntax
-       (unless (disable-all)
-         (let ((p pos))
-           (cond
-             ((button 'in-button? p) do-button ...) ...)))))))
+       (let ((p pos))
+         (cond
+           ((button 'in-button? p) do-button ...) ...))))))
 
 (struct region (pos width height)
   #:omit-define-syntaxes
@@ -267,7 +252,7 @@
 (define pile1-pos  (add-posn quit-pos   (+ button-width border) 0))
 (define pile2-pos  (add-posn pile1-pos  (+ button-width border) 0))
 (define pile3-pos  (add-posn pile2-pos  (+ button-width border) 0))
-(define msg-pos (add-posn pile3-pos    (+ button-width (/ border 2)) button-height))
+(define msg-pos    (add-posn pile3-pos  (+ button-width border (- block)) button-height))
 (define disk-height block)
 (define max-tower-height (* max-height disk-height))
 (define min-disk-width (* 3 block))
@@ -295,7 +280,7 @@
   (define (validate-height str)
     (and (= (string-length str) 1) (char<=? #\1 (string-ref str 0) #\9)))
   (define str
-    (get-text
+    (get-text-from-user
       height-str
       (string-append
         "How many disks do you want.\n"
@@ -305,6 +290,7 @@
       "9"
       '(disallow-invalid)
       #:validate validate-height))
+  (viewport-flush-input vp)
   (when str
     (define h (- (char->integer (string-ref str 0)) (char->integer #\0)))
     (set! height h)
@@ -357,10 +343,11 @@
 (define (do-mode)
   (define modes (list short-str long-str circular-str))
   (define choice
-    (get-choices
+    (get-choices-from-user
       mode-str
       "Select a mode\nCancel in order to remain in manual mode."
       modes))
+  (viewport-flush-input vp)
   (when choice
     (define ch (car choice))
     (define do-mode (vector-ref  (vector short long circular) ch))
@@ -386,7 +373,8 @@
     (button enable/disable)))
 
 (define (finish who)
-  (show-message-box who "finished" #f '(ok))
+  (message-box who "finished" #f '(ok))
+  (viewport-flush-input vp)
   ; Ignore clicks on reset and quit button while the message box is waiting.
   ; Clicks on other buttons already were ignored because they still are disabled.
   (viewport-flush-input vp)
@@ -504,7 +492,7 @@
             ((and (real? delay) (>= delay 0)))
             (else #f))))))
   (define str
-    (get-text
+    (get-text-from-user
       delay-str
       (string-append
         "Enter a non-negative real number for the\n"
@@ -515,6 +503,7 @@
       click-str	
       '(disallow-invalid)	
       #:validate validate-delay))
+  (viewport-flush-input vp)
   (cond
     ((equal? str click-str)
      (set! delay click)
@@ -679,7 +668,6 @@
 (define msg-str       'yet-to-be-initialized)
 (define clock         'yet-to-be-initialized)
 (define move-count    'yet-to-be-initialized)
-(define disable-all   'yet-to-be-initialized)
 
 (define (initialize)
   ; Store variables not yet initialized.
@@ -691,10 +679,6 @@
   (set! clock      0         )
   (set! move-count 0         )
   (set! disk-distr (vector (range height) '() '()))
-  (set! disable-all
-    (make-derived-parameter (make-parameter #f)
-      (λ (x) (viewport-flush-input vp) x)
-      (λ (x) (viewport-flush-input vp) x)))
   ; Open graphics and the viewport.
   (open-graphics)
   (set! vp (open-viewport "Tower of Hanoi" vp-width vp-height))
