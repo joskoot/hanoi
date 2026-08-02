@@ -201,7 +201,7 @@ all information about the m@superscript{th} move
 along the shortest path from @tt{f} to @tt{t}
 and the resulting distribution of disks
 can be computed without recursion.
-Written in a @hyperlink["https://www.scheme.org/"]{Scheme} or
+Written in @hyperlink["https://www.scheme.org/"]{Scheme} or
 @hyperlink["https://racket-lang.org/"]{Racket}:
 
 @; @image["formulas.gif" #:scale 0.6]
