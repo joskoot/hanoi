@@ -28,7 +28,7 @@
 
 @(Defmodule)
 
-@section{Introduction}
+@section[#:style '(unnumbered)]{Introduction}
 
 The Tower of Hanoi is a game.
 It has 3 piles, one at the left, one in the middle and one at the right.
@@ -69,7 +69,7 @@ The graph has
 @nb{@tt{(3(3@superscript{h}@(minus)3)+3×2)/2)}} =
 @nb{@tt{(3@superscript{h+1}@(minus)@smaller{3})/2}}
 edges because it has @tt{h}@superscript{3} vertices, of which
-@tt{h@superscript{3}@(minus)3} have @nb{3 edges} and 3 vertices have 2 edges only
+@tt{h@superscript{3}@(minus)3} have @nb{3 edges} and 3 vertices have 2 edges only.
 The division by 2 is needed because every edge connects 2 vertices.
 
 Consider paths from a distribution of all disks on the same pile
@@ -95,7 +95,7 @@ is a(n) with @nb{a(0)=1} and
 This is a very fast increasing sequence.
 See @hyperlink["https://oeis.org/A125295"]{A125295} of @hyperlink["https://oeis.org/"]{OEIS}.
 
-@section{How to play}
+@section[#:style '(unnumbered)]{How to play}
 
 @defproc[(play) void?]{
  Opens a GUI for playing the game of the
@@ -204,7 +204,6 @@ can be computed without recursion.
 Written in @hyperlink["https://www.scheme.org/"]{Scheme} or
 @hyperlink["https://racket-lang.org/"]{Racket}:
 
-@; @image["formulas.gif" #:scale 0.6]
 @tabular[
  (list
    (list "Legend" @tt{m} "move number, starting from 1.")
