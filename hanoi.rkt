@@ -7,11 +7,7 @@
 
 #lang racket
 
-; One binding exported only.
-
 (provide play)
-
-; Import all needed bindings and define two general purpose macros.
 
 (require graphics/graphics racket/gui/base)
 
@@ -38,7 +34,8 @@
   (close-graphics))
 
 (define (main)
-  ; At this point the mode button always has state manual, but to be sure let's check it anyway.
+  ; At this point the GUI lways is in manual mode,
+  ; but to be sure let's check it anyway.
   (unless (eq? (mode-button 'get-content) 'manual)
     (error 'play "mode manual expected, but found: ~s" (mode-button 'get-content)))
   (dispatch (mouse-click-posn (get-mouse-click vp))
@@ -347,7 +344,7 @@
   (define choice
     (get-choices-from-user
       mode-str
-      "Select a mode"
+      "Select a mode\nCancel in order to remain in manual mode."
       modes))
   (when choice
     (define ch (car choice))
@@ -355,12 +352,11 @@
     (define mode    (vector-ref #(       short long circular) ch))
     (mode-button 'put-content mode)
     (unless (eq? mode 'short) (do-reset))
-    (prepare/finish-auto-move 'disable)
+    (prepare/finish-do-mode 'disable)
     (do-mode)
-    (prepare/finish-auto-move 'enable)
     (finish (symbol->string mode))))
 
-(define (prepare/finish-auto-move enable/disable)
+(define (prepare/finish-do-mode enable/disable)
   (for
     ((button
        (in-list
@@ -376,8 +372,11 @@
 
 (define (finish who)
   (message-box who "finished" #f '(ok))
-  ; (viewport-flush-input vp)
+  ; Ignore clicks on reset and quit button while the message box is waiting.
+  ; Clicks on other buttons already were ignored because they still are disabled.
+  (viewport-flush-input vp)
   (clear-msg)
+  (prepare/finish-do-mode 'enable)
   (mode-button 'put-content 'manual))
 
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

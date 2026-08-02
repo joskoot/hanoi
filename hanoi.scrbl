@@ -117,7 +117,8 @@ every feasible distribution of disks and finishing with all disks at the pile st
 @nonbreaking{@tt{(@racket[expt 3] @elemref["Height"]{height})}} moves.
 
 The short, long and circular mode can be aborted by clicking the
-@elemref["Reset"]{reset} or @elemref["Quit"]{quit} button.
+@elemref["Reset"]{reset} or @elemref["Quit"]{quit} button,
+which make the GUI return to manual mode.
 
 @elemtag["Delay" ""]
 @bold{@tt{Delay}}@(lb)
@@ -125,8 +126,13 @@ The delay is specified by means of a modal dialog.
 It is either @tt{click} or a non-negative real number
 written with not more than 6 characters.
 It applies to @elemref["Mode"]{modes} short, long and circular.
+
 When the delay is @tt{click} a move is made after each mouse click
-at arbitrary position in the window of the GUI.
+at arbitrary position in the window of the GUI
+but not on the @elemref["Reset"]{reset} or @elemref["Quit"]{quit} button,
+which terminate the @elemref["Mode"]{modes} short, long and circular
+and return to manual @elemref["Mode"]{mode}.
+
 If the delay is a non-negative real number, say d,
 the GUI waits d seconds between successive moves.
 In fact the GUI makes 1/(d+ε) moves per second,
