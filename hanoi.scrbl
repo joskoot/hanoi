@@ -287,7 +287,7 @@ Written in @hyperlink["https://www.scheme.org/"]{Scheme} or
      (define N-Avogadro #e6.02214076e23)
      (define f 0)
      (define t 2)
-     (printf "Length of the whole path: ~s~n" (sub1 (expt 3 h)))
+     (printf "Length of the whole path: ~s~n" (sub1 (expt 2 h)))
      (printf "Move : ~s~n"         N-Avogadro)
      (printf "Disk : ~s~n"   (disk N-Avogadro))
      (printf "From peg ~s~n" (from N-Avogadro h f t))
@@ -308,14 +308,14 @@ peg the disk is taken from, the peg it is moved to and the remaining third peg.
                                         
 Similar formulas exist for the longest path from @tt{f} to @tt{t}:
 
-@RACKETBLOCK[#:escape unsyntax
- (define (exp3 n(unsyntax (hspace 6))) (expt   3 n))
- (define (mod3 n(unsyntax (hspace 6))) (modulo n 3))
- (define (mod4 n(unsyntax (hspace 6))) (modulo n 4))
+@interaction[
+ (define (exp3 n) (expt   3 n))
+ (define (mod3 n) (modulo n 3))
+ (define (mod4 n) (modulo n 4))
  (define (thrd m   f t) (if (odd? m) t f))
  (define (onto m h f t) (posi m (disk m) f t))
  (define (from m h f t) (- 3 (onto m h f t) (thrd m f t)))
- (define (disk m(unsyntax (hspace 6))) (if (zero? (mod3 m)) (add1 (disk (quotient m 3))) 0))
+ (define (disk m) (if (zero? (mod3 m)) (add1 (disk (quotient m 3))) 0))
 
  (define (posi m d f t)
    (case (mod4 (mcnt m d))
@@ -326,7 +326,26 @@ Similar formulas exist for the longest path from @tt{f} to @tt{t}:
  (define (mcnt m d)
    (+
      (* 2  (quotient m (exp3 (add1 d))))
-     (mod3 (quotient m (exp3 d)))))]
+     (mod3 (quotient m (exp3 d)))))
+
+ (time
+   (let ()
+     (define h 80)
+     (define N-Avogadro #e6.02214076e23)
+     (define f 0)
+     (define t 2)
+     (printf "Length of the whole path: ~s~n" (sub1 (expt 3 h)))
+     (printf "Move : ~s~n"         N-Avogadro)
+     (printf "Disk : ~s~n"   (disk N-Avogadro))
+     (printf "From peg ~s~n" (from N-Avogadro h f t))
+     (printf "Onto peg ~s~n" (onto N-Avogadro h f t))
+     (printf "Thrd peg ~s~n" (thrd N-Avogadro   f t))
+     (printf "Positions of the disks in the resulting distribution~n")
+     (printf "of disks in increasing order their sizes~n")
+     (for ((d (in-range 40  ))) (printf "~s" (posi N-Avogadro d f t)))
+     (newline)
+     (for ((d (in-range 40 h))) (printf "~s" (posi N-Avogadro d f t)))
+     (printf "~nTimes in ms: ")))]
 
 The formulas are not used by procedure @racket[play].
 When walking a whole path, recursion is faster because it can use information about
