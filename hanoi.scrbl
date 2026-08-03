@@ -3,6 +3,7 @@
 @(require
    scribble/core
    scribble/eval
+   racket/sandbox
    racket
    ; "hanoi.rkt"
    (for-label
@@ -32,7 +33,7 @@
 
 The Tower of Hanoi is a game.
 It has 3 pegs, one at the left, one in the middle and one at the right.
-It has a number of disks. Let @tt{h} be this number.
+It has a number of disks.
 The disks have different sizes and a hole in the center.
 They are put on the pegs.
 A disk never rests upon a smaller disk.
@@ -44,58 +45,6 @@ or just putting there if the peg of destination currently has no disks.
 However, it is not allowed to put a disk upon a smaller one.
 Hence a disk never rests upon a smaller one.
 
-The disks can be distributed among the pegs in 3@superscript{@tt{h}} ways.
-The distributions can be taken as the vertices of a connected graph
-with the moves as bidirectional edges of length one.
-Connectivity means that there is at least one path between every two vertices.
-The graph can be drawn such as to resemble a
-@hyperlink["https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle"]{Sierpińsky triangle}.
-For example, for 5 disks:
-
-@(hspace 5) @image["hanoi-whole-5.gif" #:scale 0.25]
-
-In contrast to a
-@hyperlink["https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle"]{Sierpińsky triangle}
-the vertices of the triangles of a Hanoi graph do not coincide with the vertices of other triangles.
-The vertices of two triangles are separated by at least one edge.
-The three vertices of the largest triangle represent distributions of all disks on the same peg.
-These have two edges only,
-the two moving the smallest disk to one of the two empty pegs.
-All other vertices of the graph represent distributions with at most one empty peg.
-Such a vertex has three edges. Let Pa, Pb and Pc
-be the three pegs in increasing order of the size of the disk on top,
-regarding an empty peg as having the largest disk on top.
-Then there are three edges: Pa→Pb, Pa→Pc and Pb→Pc.
-The graph has
-@nb{@tt{(3(3@superscript{h}@(minus)3)+3×2)/2)}} =
-@nb{@tt{(3@superscript{h+1}@(minus)@smaller{3})/2}}
-edges because it has @tt{h}@superscript{3} vertices, of which
-@tt{h@superscript{3}@(minus)3} have @nb{3 edges} and 3 vertices have 2 edges only.
-The division by 2 is needed because every edge connects 2 vertices.
-
-Consider paths from a distribution of all disks on the same peg
-to a distribution with all disks on another peg.
-These distributions are represented by the vertices of the largest triangle.
-The least number of moves required is @tt{h}@superscript{2}@tt{-}1 with uniquely defined
-sequence of moves. This is the short mode, in the graph shown by the sides of the largest triangle.
-
-The largest number of moves without passing a distribution of disks among the pegs more than once
-is @tt{h}@superscript{3}@(minus)1, implying that every feasible distribution is visited exactly once.
-This is the long mode and is uniquely defined too.
-
-Another interesting way is the circular mode, moving the disks such as to visit all feasible
-distributions of disks among the pegs exactly once
-and finishing with all disks on the starting peg.
-This takes @tt{h}@superscript{3} moves. The circular mode is uniquely defined too when disregarding
-the fact that the path can be followed in opposit direction too.
-
-The number of distinct non self-crossing paths from a distribution with all disks on the same peg
-to one with all disks on another peg, those not passing all vertices included,
-is a(n) with @nb{a(0)=1} and
-@nb{a(n+1)=a(n)@superscript{2}+a(n)@superscript{3}}.
-This is a very fast increasing sequence.
-See @hyperlink["https://oeis.org/A125295"]{A125295} of @hyperlink["https://oeis.org/"]{OEIS}.
-
 @section[#:style '(unnumbered)]{How to play}
 
 @defproc[(play) void?]{
@@ -104,9 +53,7 @@ See @hyperlink["https://oeis.org/A125295"]{A125295} of @hyperlink["https://oeis.
  The user can instruct the GUI what to do by means of the buttons described below.
  A button can temporarily be absent when not allowed by the current action instructed by the user.
  For some actions the GUI asks a question in a separate dialog window.
- Instructions given before the question is answered are ignored.
- It may happen that the dialog is hidden behind that of the GUI.
- When the GUI does not respond to buttons, look for the hidden dialog.}
+ Instructions given before the question is answered are ignored.}
 
 @elemtag["Height" ""]
 @bold{@tt{Height}}@(lb)
@@ -200,6 +147,59 @@ Used to make moves manually and for @elemref["Setup"]{setup} of a distribution o
 
 @section[#:style '(unnumbered)]{Appendix}
 
+Let @tt{h} be the number of disks.
+The disks can be distributed among the pegs in 3@superscript{@tt{h}} ways.
+The distributions can be taken as the vertices of a connected graph
+with the moves as bidirectional edges of length one.
+Connectivity means that there is at least one path between every two vertices.
+The graph can be drawn such as to resemble a
+@hyperlink["https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle"]{Sierpińsky triangle}.
+For example, for 5 disks:
+
+@(hspace 5) @image["hanoi-whole-5.gif" #:scale 0.25]
+
+In contrast to a
+@hyperlink["https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle"]{Sierpińsky triangle}
+the vertices of the triangles of a Hanoi graph do not coincide with the vertices of other triangles.
+The vertices of two triangles are separated by at least one edge.
+The three vertices of the largest triangle represent distributions of all disks on the same peg.
+These have two edges only,
+the two moving the smallest disk to one of the two empty pegs.
+All other vertices of the graph represent distributions with at most one empty peg.
+Such a vertex has three edges. Let Pa, Pb and Pc
+be the three pegs in increasing order of the size of the disk on top,
+regarding an empty peg as having the largest disk on top.
+Then there are three edges: Pa→Pb, Pa→Pc and Pb→Pc.
+The graph has
+@nb{@tt{(3(3@superscript{h}@(minus)3)+3×2)/2)}} =
+@nb{@tt{(3@superscript{h+1}@(minus)@smaller{3})/2}}
+edges because it has @tt{h}@superscript{3} vertices, of which
+@tt{h@superscript{3}@(minus)3} have @nb{3 edges} and 3 vertices have 2 edges only.
+The division by 2 is needed because every edge connects 2 vertices.
+
+Consider paths from a distribution of all disks on the same peg
+to a distribution with all disks on another peg.
+These distributions are represented by the vertices of the largest triangle.
+The least number of moves required is @tt{h}@superscript{2}@tt{-}1 with uniquely defined
+sequence of moves. This is the short mode, in the graph shown by the sides of the largest triangle.
+
+The largest number of moves without passing a distribution of disks among the pegs more than once
+is @tt{h}@superscript{3}@(minus)1, implying that every feasible distribution is visited exactly once.
+This is the long mode and is uniquely defined too.
+
+Another interesting way is the circular mode, moving the disks such as to visit all feasible
+distributions of disks among the pegs exactly once
+and finishing with all disks on the starting peg.
+This takes @tt{h}@superscript{3} moves. The circular mode is uniquely defined too when disregarding
+the fact that the path can be followed in opposit direction too.
+
+The number of distinct non self-crossing paths from a distribution with all disks on the same peg
+to one with all disks on another peg, those not passing all vertices included,
+is a(n) with @nb{a(0)=1} and
+@nb{a(n+1)=a(n)@superscript{2}+a(n)@superscript{3}}.
+This is a very fast increasing sequence.
+See @hyperlink["https://oeis.org/A125295"]{A125295} of @hyperlink["https://oeis.org/"]{OEIS}.
+
 Regarding elementary arithmetic operations as non-recursive,
 given height @tt{h}, starting peg @tt{f} and destination peg @tt{t},
 all information about the m@superscript{th} move
@@ -209,31 +209,93 @@ can be computed without recursion.
 Written in @hyperlink["https://www.scheme.org/"]{Scheme} or
 @hyperlink["https://racket-lang.org/"]{Racket}:
 
+@elemtag["example" ""]
+
 @tabular[
  (list
-   (list "Legend" @tt{m} "move number, starting from 1.")
-   (list ""       @tt{h} "height of the tower, id est the number of disks.")
-   (list ""       @tt{f} "starting peg, 0, 1 or 2.")
-   (list ""       @tt{t} "destination peg, 0, 1 or 2, but t≠f.")
-   (list ""       @tt{d} "disk, 0≤d<h, in order of size, 0 being the smallest disk."))
+   (list "Legend" @tt{m}
+     (element #f
+       (list
+         "move number, starting from "
+         @tt{1}
+         ".")))
+   (list "" @tt{h}
+     (element #f
+       (list
+         "height of the tower, id est the number of disks. "
+         @tt{h}
+         ">"
+         @tt{0}
+         ".")))
+   (list "" @tt{f}
+     (element #f
+       (list
+         "starting peg, "
+         @tt{0}
+         ", "
+         @tt{1}
+         " or "
+         @tt{2}
+         ".")))
+   (list "" @tt{t}
+     (element #f
+       (list
+         "destination peg, "
+         @tt{0}
+         ", "
+         @tt{1}
+         " or "
+         @tt{2}
+         ", but "
+         @tt{t}
+         "≠"
+         @tt{f} ".")))
+   (list "" @tt{d}
+     (element #f
+       (list
+         "disk, "
+         @tt{0} "≤"
+         @tt{d}"<"
+         @tt{h}
+         ", in order of size, "
+         @tt{0}
+         " being the smallest disk."))))
  #:sep (hspace 2)]
 
-@RACKETBLOCK[#:escape unsyntax
- (define (exp2 n(unsyntax (hspace 8))) (expt   2 n))
- (define (mod2 n(unsyntax (hspace 8))) (modulo n 2))
- (define (mod3 n(unsyntax (hspace 8))) (modulo n 3))
- (define (pari n(unsyntax (hspace 8))) (add1 (mod2 (add1 n))))
+@interaction[
+ (define (exp2 n        ) (expt   2 n))
+ (define (mod2 n        ) (modulo n 2))
+ (define (mod3 n        ) (modulo n 3))
+ (define (pari n        ) (add1 (mod2 (add1 n))))
  (define (rotd   h d f t) (mod3 (* (- t f) (pari (- h d)))))
  (define (rotr   h   f t) (rotd h 0 t f))
- (define (mcnt m   d(unsyntax (hspace 4))) (quotient (+ m (exp2 d)) (exp2 (add1 d))))
+ (define (mcnt m   d    ) (quotient (+ m (exp2 d)) (exp2 (add1 d))))
  (define (thrd m h   f t) (mod3 (+ f (* m (rotr h f t)))))
  (define (onto m h   f t) (mod3 (- (thrd m h f t) (rotd h (disk m) f t))))
  (define (from m h   f t) (mod3 (+ (thrd m h f t) (rotd h (disk m) f t))))
  (define (posi m h d f t) (mod3 (+ f (* (rotd h d f t) (mcnt m d)))))
- (define (disk m(unsyntax (hspace 8))) (sub1 (integer-length (bitwise-xor m (sub1 m)))))]
+ (define (disk m        ) (sub1 (integer-length (bitwise-xor m (sub1 m)))))
+ (time
+   (begin
+     (define h 80)
+     (define N-Avogadro #e6.02214076e23)
+     (define f 0)
+     (define t 2)
+     (printf "Length of the whole path: ~s~n" (sub1 (expt 3 h)))
+     (printf "Move : ~s~n"         N-Avogadro)
+     (printf "Disk : ~s~n"   (disk N-Avogadro)))
+     (printf "From peg ~s~n" (from N-Avogadro h f t))
+     (printf "Onto peg ~s~n" (onto N-Avogadro h f t))
+     (printf "Thrd peg ~s~n" (thrd N-Avogadro h f t))
+     (printf "Positions of the disks in the resulting distribution~n")
+     (printf "of disks in increasing order their sizes~n")
+     (for ((d (in-range 40  ))) (printf "~s" (posi N-Avogadro h d f t)))
+     (newline)
+     (for ((d (in-range 40 h))) (printf "~s" (posi N-Avogadro h d f t)))
+     (printf "~nTimes in ms: "))]
 
 @tt{(disk m)} identifies the disk being moved during move @tt{m}
-and is the number of times m can be divided by 2.
+and is the number of times @tt{m} can be divided by @tt{2}.
 @tt{from}, @tt{onto} and @tt{thrd} are the
 peg the disk is taken from, the peg it is moved to and the remaining third peg.
 @tt{posi} computes the position of disk @tt{d} after move @tt{m}.
@@ -266,6 +328,7 @@ what happened during previous moves,
 but when wanting the information for one move only, for example
 move 6.02214076×10@superscript{23} (Avogadro's number) for a tower of 80 disks,
 the formulas produce results instantaneously without the need to pass along previous moves.
+See the @elemref["example"]{example above}.
 
 @bold{@larger{@larger{The end}}}
 @(collect-garbage)
