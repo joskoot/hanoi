@@ -61,7 +61,7 @@ The vertices of two triangles are separated by at least one edge.
 The three vertices of the largest triangle represent distributions of all disks on the same peg.
 These have two edges only,
 the two moving the smallest disk to one of the two empty pegs.
-All other vertices of the graph represent distributions without at most one empty peg.
+All other vertices of the graph represent distributions with at most one empty peg.
 Such a vertex has three edges. Let Pa, Pb and Pc
 be the three pegs in increasing order of the size of the disk on top,
 regarding an empty peg as having the largest disk on top.
@@ -74,7 +74,7 @@ edges because it has @tt{h}@superscript{3} vertices, of which
 The division by 2 is needed because every edge connects 2 vertices.
 
 Consider paths from a distribution of all disks on the same peg
-to a distribution with all disk on another peg.
+to a distribution with all disks on another peg.
 These distributions are represented by the vertices of the largest triangle.
 The least number of moves required is @tt{h}@superscript{2}@tt{-}1 with uniquely defined
 sequence of moves. This is the short mode, in the graph shown by the sides of the largest triangle.
@@ -257,7 +257,7 @@ Similar formulas exist for the longest path from @tt{f} to @tt{t}:
 
  (define (mcnt m d)
    (+
-     (* 2 (quotient m (exp3 (add1 d))))
+     (* 2  (quotient m (exp3 (add1 d))))
      (mod3 (quotient m (exp3 d)))))]
 
 The formulas are not used by procedure @racket[play].
