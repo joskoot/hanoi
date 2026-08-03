@@ -105,7 +105,7 @@ and return to manual @elemref["Mode"]{mode}.
 
 If the delay is a non-negative real number, say d,
 the GUI waits d seconds between successive moves.
-In fact the GUI makes 1/(d+ε) moves per second,
+In fact the delay d+ε seconds,
 ε being the minimum time for a single move,
 which is not zero because the delay is not corrected for
 the real time lost on calculations and graphical rendering or
@@ -121,22 +121,24 @@ Puts all disks on the peg at the left.
 Removes all disks and subsequently places disks on the pegs in a distribution chosen by the user.
 Disks are placed in order of decreasing size.
 The user is supposed to click a @elemref["Peg n"]{peg button}
-indicating on which peg the next disk is to be placed.
+indicating on which peg each next disk is to be placed.
 Requires @elemref["Height"]{height} such clicks.
 Click the @elemref["Reset"]{reset} or @elemref["Quit"]{quit} button to cancel setup.
 
 @elemtag["Quit" ""]
 @bold{@tt{Quit}}@(lb)
-Closes and terminates the GUI, but during @elemref["Setup"]{setup}
-cancels the setup without closing the GUI.
-The GUI window can be closed by means of the close button in the title bar (at the top-right corner),
-but procedure @racket[play] may remain running when waiting for a mouseclick
-because it may have called procedure
-@seclink["Mouse_Operations"
-         #:doc '(lib "graphics/scribblings/graphics.scrbl")]{get-mouse-click}.
+Closes and terminates the GUI, but during @elemref["Mode"]{modes} short, long and circular and
+during @elemref["Setup"]{setup} returns to @elemref["Mode"]{mode} manual
+without closing the GUI.
+
+The window of the GUI window can be closed by means of the close button in the title bar
+(at the top-right corner),
+but procedure @racket[play] probably is not terminated because it may keep waiting for a mouseclick.
 However, after closing the GUI window, no such mouse-click can be made.
+
 @(define (note . x) (inset (apply smaller x)))
 @(define (inset . x) (apply nested #:style 'inset x))
+
 @note{In @other-doc['(lib "graphics/scribblings/graphics.scrbl")]
  I have not found a mean to check the state of a viewport.@(lb)
  (open, hidden or closed)}
@@ -148,8 +150,8 @@ Used to make moves manually and for @elemref["Setup"]{setup} of a distribution o
 @section[#:style '(unnumbered)]{Appendix}
 
 Let @tt{h} be the number of disks.
-The disks can be distributed among the pegs in 3@superscript{@tt{h}} ways.
-The distributions can be taken as the vertices of a connected graph
+@nb{The disks} can be distributed among the pegs in 3@superscript{@tt{h}} ways.
+@nb{The distributions} can be taken as the vertices of a connected graph
 with the moves as bidirectional edges of length one.
 Connectivity means that there is at least one path between every two vertices.
 The graph can be drawn such as to resemble a
@@ -185,13 +187,17 @@ sequence of moves. This is the short mode, in the graph shown by the sides of th
 
 The largest number of moves without passing a distribution of disks among the pegs more than once
 is @tt{h}@superscript{3}@(minus)1, implying that every feasible distribution is visited exactly once.
-This is the long mode and is uniquely defined too.
+This is the long mode and is uniquely defined too. For three disks:
+
+@(hspace 5) @image["long-3.gif" #:scale 0.3]
 
 Another interesting way is the circular mode, moving the disks such as to visit all feasible
 distributions of disks among the pegs exactly once
 and finishing with all disks on the starting peg.
 This takes @tt{h}@superscript{3} moves. The circular mode is uniquely defined too when disregarding
-the fact that the path can be followed in opposit direction too.
+the fact that the path can be followed in opposit direction too. For three disks:
+
+@(hspace 5) @image["circular3.gif" #:scale 0.3]
 
 The number of distinct non self-crossing paths from a distribution with all disks on the same peg
 to one with all disks on another peg, those not passing all vertices included,
@@ -283,7 +289,7 @@ Written in @hyperlink["https://www.scheme.org/"]{Scheme} or
      (define t 2)
      (printf "Length of the whole path: ~s~n" (sub1 (expt 3 h)))
      (printf "Move : ~s~n"         N-Avogadro)
-     (printf "Disk : ~s~n"   (disk N-Avogadro)))
+     (printf "Disk : ~s~n"   (disk N-Avogadro))
      (printf "From peg ~s~n" (from N-Avogadro h f t))
      (printf "Onto peg ~s~n" (onto N-Avogadro h f t))
      (printf "Thrd peg ~s~n" (thrd N-Avogadro h f t))
@@ -292,7 +298,7 @@ Written in @hyperlink["https://www.scheme.org/"]{Scheme} or
      (for ((d (in-range 40  ))) (printf "~s" (posi N-Avogadro h d f t)))
      (newline)
      (for ((d (in-range 40 h))) (printf "~s" (posi N-Avogadro h d f t)))
-     (printf "~nTimes in ms: "))]
+     (printf "~nTimes in ms: ")))]
 
 @tt{(disk m)} identifies the disk being moved during move @tt{m}
 and is the number of times @tt{m} can be divided by @tt{2}.
