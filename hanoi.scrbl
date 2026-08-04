@@ -14,10 +14,39 @@
 
 @(define-for-syntax local #f)
 
+@(define-syntax-rule
+   (Interaction x ...)
+   (interaction/no-prompt
+     #:eval
+     (make-base-eval
+       #:pretty-print? #f
+       #:lang
+       '(begin
+          (require racket/base)
+          (print-reader-abbreviations #f)
+          (define (hex str) (read (open-input-string str)))))
+     x ...))
+
+@(define-syntax-rule
+   (Interaction* x ...)
+   (interaction/no-prompt #:eval evaller x ...))
+
+@(define (make-evaller)
+   (make-base-eval
+     #:pretty-print? #f
+     #:lang
+     '(begin
+        (require racket)
+        (print-reader-abbreviations #f)
+        (define (hex str) (read (open-input-string str))))))
 @(define-syntax (Defmodule stx)
    (if local
      #'(defmodule "hanoi.rkt" #:packages ())
      #'(defmodule hanoi/hanoi #:packages ())))
+
+@(define (reset-Interaction*) (set! evaller (make-evaller)))
+
+@(define evaller (make-evaller))
 
 @(define nb nonbreaking)
 
@@ -73,18 +102,18 @@ An attempt to make an illegal move is ignored.
 
 In short mode the disks are moved by the GUI to the peg at the right
 with the least possible number of moves,
-at most @nb{@tt{(@racket[sub1] (@racket[expt 2] @elemref["Height"]{height}))}} moves.
+at most @tt{2@superscript{h}-1} moves, where @tt{h} is the @elemref["Height"]{height}.
 
 When the long mode is selected, first all disks are placed on the peg at the left and
 subsequently moved to the peg at the right with the largest number of moves possible
 without passing any distribution of disks more than once.
-@nb{@tt{(@racket[sub1] (@racket[expt 3] @elemref["Height"]{height}))}} moves.
+@tt{3@superscript{h}-1} moves, where @tt{h} is the @elemref["Height"]{height}.
 In fact every feasible distribution of disks is visited.
 
 When the circular mode is selected, first all disks are placed on the peg at the left and
 subsequently moved such as to pass exactly once along
 every feasible distribution of disks and finishing with all disks at the peg started from.
-@nb{@tt{(@racket[expt 3] @elemref["Height"]{height})}} moves.
+@tt{3@superscript{h}} moves, where @tt{h} is the @elemref["Height"]{height}.
 
 The short, long and circular mode can be aborted by clicking the
 @elemref["Reset"]{reset} or @elemref["Quit"]{quit} button,
@@ -105,12 +134,11 @@ and return to manual @elemref["Mode"]{mode}.
 
 If the delay is a non-negative real number, say d,
 the GUI waits d seconds between successive moves.
-In fact the delay d+ε seconds,
+In fact the delay is d+ε seconds,
 ε being the minimum time for a single move,
-which is not zero because the delay is not corrected for
-the real time lost on calculations and graphical rendering or
-the real time no processor was evailable for the GUI.
-This time depends on your CPU and GPU and may be in the order of magnitude of 1 ms per move.
+which is the non-zero real time needed for calculations and graphical rendering and
+the real time lost while no processor was evailable for the GUI.
+ε depends on your CPU and GPU and the load by other programs. It may be about 1 ms.
  
 @elemtag["Reset" ""]
 @bold{@tt{Reset}}@(lb)
@@ -131,15 +159,14 @@ Closes and terminates the GUI, but during @elemref["Mode"]{modes} short, long an
 during @elemref["Setup"]{setup} returns to @elemref["Mode"]{mode} manual
 without closing the GUI.
 
-The window of the GUI window can be closed by means of the close button in the title bar
-(at the top-right corner),
-but procedure @racket[play] probably is not terminated because it may keep waiting for a mouseclick.
-However, after closing the GUI window, no such mouse-click can be made.
-
 @(define (note . x) (inset (apply smaller x)))
 @(define (inset . x) (apply nested #:style 'inset x))
 
-@note{In @other-doc['(lib "graphics/scribblings/graphics.scrbl")]
+@note{The window of the GUI window can be closed by means of the close button in the title bar
+ (at the top-right corner),
+ but procedure @racket[play] probably is not terminated because it may keep waiting for a mouseclick.
+ However, after closing the GUI window, no such mouse-click can be made.
+ In @other-doc['(lib "graphics/scribblings/graphics.scrbl")]
  I have not found a mean to check the state of a viewport.@(lb)
  (open, hidden or closed)}
 
@@ -242,7 +269,7 @@ Written in @hyperlink["https://www.scheme.org/"]{Scheme} or
          @tt{1}
          " or "
          @tt{2}
-         ".")))
+         ". More convenient than ordinals " @tt{1} ", " @tt{2} " and "@tt{3} ".")))
    (list "" @tt{t}
      (element #f
        (list
@@ -268,7 +295,11 @@ Written in @hyperlink["https://www.scheme.org/"]{Scheme} or
          " being the smallest disk."))))
  #:sep (hspace 2)]
 
-@interaction[
+Notice that in the formulas the pegs have ordinals @tt{0}, @tt{1} and @tt{2}.@(lb)
+For the formulas this is more convenient than the ordinals @tt{1}, @tt{2} and @tt{3}@(lb)
+as used in the GUI.
+
+@Interaction*[
  (define (exp2 n        ) (expt   2 n))
  (define (mod2 n        ) (modulo n 2))
  (define (mod3 n        ) (modulo n 3))
@@ -280,7 +311,15 @@ Written in @hyperlink["https://www.scheme.org/"]{Scheme} or
  (define (onto m h   f t) (mod3 (- (thrd m h f t) (rotd h (disk m) f t))))
  (define (from m h   f t) (mod3 (+ (thrd m h f t) (rotd h (disk m) f t))))
  (define (posi m h d f t) (mod3 (+ f (* (rotd h d f t) (mcnt m d)))))
- (define (disk m        ) (sub1 (integer-length (bitwise-xor m (sub1 m)))))
+ (define (disk m        ) (sub1 (integer-length (bitwise-xor m (sub1 m)))))]
+
+@tt{(disk m)} identifies the disk being moved during move @tt{m}
+and is the number of times @tt{m} can be divided by @tt{2}.
+@tt{from}, @tt{onto} and @tt{thrd} are the
+peg the disk is taken from, the peg it is moved to and the remaining third peg.
+@tt{posi} computes the position of disk @tt{d} after move @tt{m}.
+                                        
+@Interaction*[
  (time
    (begin
      (define h 80)
@@ -300,15 +339,11 @@ Written in @hyperlink["https://www.scheme.org/"]{Scheme} or
      (for ((d (in-range 40 h))) (printf "~s" (posi N-Avogadro h d f t)))
      (printf "~nTimes in ms: ")))]
 
-@tt{(disk m)} identifies the disk being moved during move @tt{m}
-and is the number of times @tt{m} can be divided by @tt{2}.
-@tt{from}, @tt{onto} and @tt{thrd} are the
-peg the disk is taken from, the peg it is moved to and the remaining third peg.
-@tt{posi} computes the position of disk @tt{d} after move @tt{m}.
-                                        
+@(reset-Interaction*)
+
 Similar formulas exist for the longest path from @tt{f} to @tt{t}:
 
-@interaction[
+@Interaction*[
  (define (exp3 n) (expt   3 n))
  (define (mod3 n) (modulo n 3))
  (define (mod4 n) (modulo n 4))
@@ -316,20 +351,25 @@ Similar formulas exist for the longest path from @tt{f} to @tt{t}:
  (define (onto m h f t) (posi m (disk m) f t))
  (define (from m h f t) (- 3 (onto m h f t) (thrd m f t)))
  (define (disk m) (if (zero? (mod3 m)) (add1 (disk (quotient m 3))) 0))
-
+ (code:comment " ")
  (define (posi m d f t)
    (case (mod4 (mcnt m d))
      ((0) f)
      ((1 3) (- 3 f t))
      ((2) t)))
-
+ (code:comment " ")
  (define (mcnt m d)
    (+
      (* 2  (quotient m (exp3 (add1 d))))
-     (mod3 (quotient m (exp3 d)))))
+     (mod3 (quotient m (exp3 d)))))]
 
+The following example resembles the one for the shortest path,
+but the differences are such that making a procedure that can handle both examples
+would make the code less easy to read.
+
+@Interaction*[
  (time
-   (let ()
+   (begin
      (define h 80)
      (define N-Avogadro #e6.02214076e23)
      (define f 0)
