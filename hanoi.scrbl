@@ -394,7 +394,7 @@ what happened during previous moves,
 but when wanting the information for one move only, for example
 move 6.02214076×10@superscript{23} (Avogadro's number) for a tower of 80 disks,
 the formulas produce results instantaneously without the need to pass along previous moves.
-See the @elemref["example"]{example above}.
+See the @elemref["example"]{examples above}.
 
 @bold{@larger{@larger{The end}}}
 @(collect-garbage)
