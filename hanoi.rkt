@@ -182,7 +182,7 @@
 ; Procedures to draw buttons and their contents. Computation of their sizes.
 ; A temporary pixmap is used to measure string sizes.
 
-(define-values-block (draw-button draw-button-content button-width button-height)
+(define-values-block (draw-button draw-button-content button-width button-height string-offset)
 
   ; Measure the maximum size of strings used in buttons.
 
@@ -694,6 +694,14 @@
   (set! peg3-button   (make-button |peg 3| peg3-pos            ))
   ; Draw a girder.
   ((draw-solid-rectangle vp) girder-pos (- vp-width (* 2 border)) block gray)
+  (for ((p (in-range 0 3)))
+    (define str (format "Peg ~s" (add1 p)))
+    (define size (car ((get-string-size vp) str)))
+    ((draw-string vp)
+     (add-posn (make-posn (peg-x p) (- vp-height border))
+       (- (/ size 2))
+       (- (/ string-offset 2)))
+     str white))
   ; Procedure do-reset draws the pegs and the initial distribution of disks at the peg at the left.
   (do-reset))
 

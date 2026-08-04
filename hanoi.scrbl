@@ -295,9 +295,10 @@ Written in @hyperlink["https://www.scheme.org/"]{Scheme} or
          " being the smallest disk."))))
  #:sep (hspace 2)]
 
-Notice that in the formulas the pegs have ordinals @tt{0}, @tt{1} and @tt{2}.@(lb)
-For the formulas this is more convenient than the ordinals @tt{1}, @tt{2} and @tt{3}@(lb)
+Notice that in the formulas the pegs have ordinals @tt{0}, @tt{1} and @tt{2}.
+For the formulas this is more convenient than the ordinals @tt{1}, @tt{2} and @tt{3}
 as used in the GUI.
+The disks are numbered starting from 0 for the smallest one, whereas the GIU starts from 1.
 
 @Interaction*[
  (define (exp2 n        ) (expt   2 n))
@@ -327,11 +328,11 @@ peg the disk is taken from, the peg it is moved to and the remaining third peg.
      (define f 0)
      (define t 2)
      (printf "Length of the whole path: ~s~n" (sub1 (expt 2 h)))
-     (printf "Move : ~s~n"         N-Avogadro)
-     (printf "Disk : ~s~n"   (disk N-Avogadro))
-     (printf "From peg ~s~n" (from N-Avogadro h f t))
-     (printf "Onto peg ~s~n" (onto N-Avogadro h f t))
-     (printf "Thrd peg ~s~n" (thrd N-Avogadro h f t))
+     (printf "Move     : ~s~n"       N-Avogadro)
+     (printf "Disk     : ~s~n" (disk N-Avogadro))
+     (printf "From peg : ~s~n" (from N-Avogadro h f t))
+     (printf "Onto peg : ~s~n" (onto N-Avogadro h f t))
+     (printf "Thrd peg : ~s~n" (thrd N-Avogadro h f t))
      (printf "Positions of the disks in the resulting distribution~n")
      (printf "of disks in increasing order their sizes~n")
      (for ((d (in-range 40  ))) (printf "~s" (posi N-Avogadro h d f t)))
@@ -375,11 +376,11 @@ would make the code less easy to read.
      (define f 0)
      (define t 2)
      (printf "Length of the whole path: ~s~n" (sub1 (expt 3 h)))
-     (printf "Move : ~s~n"         N-Avogadro)
-     (printf "Disk : ~s~n"   (disk N-Avogadro))
-     (printf "From peg ~s~n" (from N-Avogadro h f t))
-     (printf "Onto peg ~s~n" (onto N-Avogadro h f t))
-     (printf "Thrd peg ~s~n" (thrd N-Avogadro   f t))
+     (printf "Move     : ~s~n"       N-Avogadro)
+     (printf "Disk     : ~s~n" (disk N-Avogadro))
+     (printf "From peg : ~s~n" (from N-Avogadro h f t))
+     (printf "Onto peg : ~s~n" (onto N-Avogadro h f t))
+     (printf "Thrd peg : ~s~n" (thrd N-Avogadro   f t))
      (printf "Positions of the disks in the resulting distribution~n")
      (printf "of disks in increasing order their sizes~n")
      (for ((d (in-range 40  ))) (printf "~s" (posi N-Avogadro d f t)))
