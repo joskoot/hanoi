@@ -166,7 +166,7 @@ without closing the GUI.
  (at the top-right corner),
  but procedure @racket[play] probably is not terminated because it may keep waiting for a mouseclick.
  However, after closing the GUI window, no such mouse-click can be made.
- In @other-doc['(lib "graphics/scribblings/graphics.scrbl")]
+ @nb{In @other-doc['(lib "graphics/scribblings/graphics.scrbl")]}
  I have not found a mean to check the state of a viewport.@(lb)
  (open, hidden or closed)}
 
@@ -214,7 +214,8 @@ sequence of moves. This is the short mode, in the graph shown by the sides of th
 
 The largest number of moves without passing a distribution of disks among the pegs more than once
 is @tt{h}@superscript{3}@(minus)1, implying that every feasible distribution is visited exactly once.
-This is the long mode and is uniquely defined too. For three disks:
+This is the long mode and is uniquely defined too.
+For three disks and labeling the vertices such as to show on which pegs the disks are: 
 
 @(hspace 5) @image["long-3.gif" #:scale 0.3]
 
@@ -235,7 +236,7 @@ See @hyperlink["https://oeis.org/A125295"]{A125295} of @hyperlink["https://oeis.
 
 Regarding elementary arithmetic operations as non-recursive,
 given height @tt{h}, starting peg @tt{f} and destination peg @tt{t},
-all information about the m@superscript{th} move
+all information about the @tt{m}@superscript{th} move
 along the shortest path from @tt{f} to @tt{t}
 and the resulting distribution of disks
 can be computed without recursion.
@@ -335,14 +336,15 @@ peg the disk is taken from, the peg it is moved to and the remaining third peg.
      (printf "Thrd peg : ~s~n" (thrd N-Avogadro h f t))
      (printf "Positions of the disks in the resulting distribution~n")
      (printf "of disks in increasing order their sizes~n")
-     (for ((d (in-range 40  ))) (printf "~s" (posi N-Avogadro h d f t)))
+     (for ((d (in-range 80)))
+       (when (= d 40) (newline))
+       (printf "~s" (posi N-Avogadro h d f t)))
      (newline)
-     (for ((d (in-range 40 h))) (printf "~s" (posi N-Avogadro h d f t)))
      (printf "~nTimes in ms: ")))]
 
 @(reset-Interaction*)
 
-Similar formulas exist for the longest path from @tt{f} to @tt{t}:
+Similar formulas exist for the longest non-selfcrossing path from @tt{f} to @tt{t}:
 
 @Interaction*[
  (define (exp3 n) (expt   3 n))
@@ -383,7 +385,9 @@ would make the code less easy to read.
      (printf "Thrd peg : ~s~n" (thrd N-Avogadro   f t))
      (printf "Positions of the disks in the resulting distribution~n")
      (printf "of disks in increasing order their sizes~n")
-     (for ((d (in-range 40  ))) (printf "~s" (posi N-Avogadro d f t)))
+     (for ((d (in-range 80)))
+       (when (= d 40) (newline))
+       (printf "~s" (posi N-Avogadro d f t)))
      (newline)
      (for ((d (in-range 40 h))) (printf "~s" (posi N-Avogadro d f t)))
      (printf "~nTimes in ms: ")))]

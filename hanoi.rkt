@@ -47,7 +47,7 @@
     (peg1-button   (do-manual 0) (main))
     (peg2-button   (do-manual 1) (main))
     (peg3-button   (do-manual 2) (main))
-    (quit-button   (void       )       )
+    (quit-button   (void       ) #;exit)
     (else (main))))
 
 ;=====================================================================================================
