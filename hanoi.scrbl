@@ -418,8 +418,12 @@ these two pegs. However, two of these distributions leave the other peg empty.
 Hence given a selection of the two pegs we find @nb{2@superscript{h}@(minus)2} distributions and
 because the two pegs can be chosen in three ways, we find a total of @nb{3(2@superscript{h}@(minus)2)}
 distributions with one peg empty.
-The number of
-distributions without empty pegs is 3@superscript{h} minus the former two quantities.
+@nb{The total} number of distributions is 3@superscript{h}. Hence there are
+@nb{3@superscript{h}@(minus)3(2@superscript{h}@(minus)2)@(minus)3}
+distributions without empty pegs.
+Contemlating separately all distributions for h=1 and h=2,
+the formulas appear to be correct for these two cases too,
+although this does not follow from the above deduction.
 
 @bold{@larger{@larger{The end}}}
 @(collect-garbage)
