@@ -397,8 +397,6 @@ would make the code less easy to read.
      (for ((d (in-range 80)))
        (when (= d 40) (newline))
        (printf "~s" (posi N-Avogadro d f t)))
-     (newline)
-     (for ((d (in-range 40 h))) (printf "~s" (posi N-Avogadro d f t)))
      (printf "~nTimes in ms: ")))]
 
 The formulas are not used by procedure @racket[play].
