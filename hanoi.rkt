@@ -1,23 +1,35 @@
+
 ;=====================================================================================================
+;
 ; A GUI playing the game of The Tower of Hanoi. Moves can be made manually but also automatically by
 ; the GUI. It has clickable buttons height, mode, delay, reset, setup, quit, peg1, peg2 and peg3.
 ; A click on such button initiates an action. During an action some buttons may be disabled and
 ; disappear temporarily from the screen.
+;
 ;=====================================================================================================
 
 #lang racket
 
 (provide play)
 
-(require graphics/graphics racket/gui/base)
+;=====================================================================================================
+; Imports and two simple macros.
 
-(define-syntax-rule
-  (define-values-block (value ...) expr ...)
-  (define-values (value ...) (let () expr ... (values value ...))))
+(require
+  graphics/graphics
+  racket/gui/base
+  (for-syntax
+    racket/syntax
+    syntax/transformer
+    (only-in racket remove-duplicates)))
 
 (define-syntax-rule
   (in-reversed-range n)
   (in-range (sub1 n) -1 -1))
+
+(define-syntax-rule
+  (define-values-block (value ...)         def/expr ...)
+  (define-values       (value ...) (let () def/expr ... (values value ...))))
 
 ;=====================================================================================================
 ; Main procedure.
@@ -34,11 +46,9 @@
   (close-graphics))
 
 (define (main)
-  ; At this point the GUI lways is in manual mode,
-  ; but to be sure let's check it anyway.
-  (unless (eq? (mode-button 'get-content) 'manual)
-    (error 'play "mode manual expected, but found: ~s" (mode-button 'get-content)))
-  (dispatch (mouse-click-posn (get-mouse-click vp))
+  ; At this point the GUI always is in manual mode,
+  (define pos (mouse-click-posn (get-mouse-click vp))) 
+  (dispatch-button pos
     (height-button (do-height  ) (main))
     (mode-button   (do-mode    ) (main))
     (delay-button  (do-delay   ) (main))
@@ -47,15 +57,18 @@
     (peg1-button   (do-manual 0) (main))
     (peg2-button   (do-manual 1) (main))
     (peg3-button   (do-manual 2) (main))
-    (quit-button   (void       ) #;exit)
-    (else (main))))
+    (quit-button   (void       )       ) ; Exit from the game.
+    (else
+      (define p (dispatch-peg pos))
+      (when p (do-manual p))
+      (main))))
 
 ;=====================================================================================================
-; A button is displayed on the screen. It has procedure property can have a content.
+; A button is displayed on the screen. It has procedure property and can have a content.
 ; It is called as follows:
 ;
 ; (button command arg ...) --> any/c
-; command : (or/c 'button-name 'in-button? 'disable 'enable 'get-content 'put-content)
+; command : (or/c 'in-button? 'disable 'enable 'get-content 'put-content)
 ; arg : any/c
 ;
 ; 'get-content and 'put-content are for buttons with content only.
@@ -64,21 +77,20 @@
   (let ((no-kontent (string->uninterned-symbol "no-kontent")))
     (λ (stx)
       (syntax-case stx ()
-        ((_ name pos) (quasisyntax (make-button name pos (unsyntax no-kontent))))
-        ((_ name pos kontent)
+        ((_ name position) (quasisyntax (make-button name position (unsyntax no-kontent))))
+        ((_ name position kontent)
          (let
            ((no-kontent-condition
               (and
-                (identifier? #'kontent)
-                (eq? (syntax-e #'kontent) no-kontent))))
+                (identifier? (syntax kontent))
+                (eq? (syntax-e (syntax kontent)) no-kontent))))
            (quasisyntax
-             (let ()
+             (let ((pos position))
                (define region (make-region pos button-width button-height))
-               (define name-str (string-titlecase (format "~a" 'name)))
+               (define name-str (string-titlecase (format "~a" 'name)))    
                (define enabled? #t)
                (define (proc button action . args)
                  (case action
-                   ((button-name) 'name)
                    ((in-button?) (in-region? (car args) region))
                    (unsyntax-splicing
                      (if no-kontent-condition
@@ -100,7 +112,7 @@
                      (apply
                        raise-argument-error
                        'name
-                       "unknown button action"
+                       "(or/c 'in-button? 'disable 'enable 'get-content 'put-content)"
                        0 action args))))
                (struct button
                  (unsyntax
@@ -109,11 +121,11 @@
                      (syntax (pos (content #:mutable)))))
                  #:property prop:procedure proc
                  #:omit-define-syntaxes
-                 #:constructor-name make-button)
+                 #:constructor-name button-maker)
                (unsyntax
                  (if no-kontent-condition
-                   (syntax (define button (make-button pos)))
-                   (syntax (define button (make-button pos kontent)))))
+                   (syntax (define button (button-maker pos)))
+                   (syntax (define button (button-maker pos kontent)))))
                ; Draw the button and if it has content, the latter too.
                ((draw-button vp) pos name-str)
                (unsyntax-splicing
@@ -128,7 +140,7 @@
 ;=====================================================================================================
 ; Dispatching mouse clicks.
 
-(define-syntax (dispatch stx)
+(define-syntax (dispatch-button stx)
   (syntax-case stx (else)
     ((_ pos (button do-button ...) ... (else else-clause ...))
      (syntax
@@ -142,6 +154,13 @@
          (cond
            ((button 'in-button? p) do-button ...) ...))))))
 
+(define (dispatch-peg pos)
+  (cond
+    ((in-region? pos peg0-region) 0)
+    ((in-region? pos peg1-region) 1)
+    ((in-region? pos peg2-region) 2)
+    (else #f)))
+
 (struct region (pos width height)
   #:omit-define-syntaxes
   #:constructor-name make-region)
@@ -149,26 +168,26 @@
 (define (in-region? pos region)
   (define x (posn-x pos))
   (define y (posn-y pos))
-  (define x-min (posn-x (region-pos region)))
-  (define y-min (posn-y (region-pos region)))
-  (define x-max (+ x-min (region-width region)))
+  (define x-min (posn-x ( region-pos    region)))
+  (define y-min (posn-y  (region-pos    region)))
+  (define x-max (+ x-min (region-width  region)))
   (define y-max (+ y-min (region-height region)))
   (and (<= x-min x x-max) (<= y-min y y-max)))
 
 ;=====================================================================================================
 ; Some constants required in early stage. Never mutated.
 
-(define height-str   "Height"  )
-(define mode-str     "Mode"    )
-(define delay-str    "Delay"   )
-(define reset-str    "Reset"   )
-(define setup-str    "Setup"   )
-(define quit-str     "Quit"    )
-(define undo-str     "Undo"    )
-(define manual-str   "manual"  )
-(define short-str    "short"   )
-(define long-str     "long"    )
-(define circular-str "circular")
+(define height-str "Height"  )
+(define mode-str   "Mode"    )
+(define dlay-str   "Delay"   )
+(define reset-str  "Reset"   )
+(define setup-str  "Setup"   )
+(define quit-str   "Quit"    )
+(define undo-str   "Undo"    )
+(define manual-str "manual"  )
+(define shrt-str   "short"   )
+(define long-str   "long"    )
+(define circ-str   "circular")
 (define click 'click)
 (define click-str (symbol->string 'click))
 (define red   (make-rgb 1   0   0))
@@ -196,7 +215,7 @@
       undo-str
       manual-str
       long-str
-      circular-str
+      circ-str
       "999999"))
 
   (define string-offset 4)
@@ -244,15 +263,15 @@
 (define block 20)
 (define border (* 3 block))
 (define height-pos (make-posn border border))
-(define mode-pos   (add-posn height-pos (+ button-width border) 0))
-(define delay-pos  (add-posn mode-pos   (+ button-width border) 0))
-(define reset-pos  (add-posn delay-pos  (+ button-width border) 0))
-(define setup-pos  (add-posn reset-pos  (+ button-width border) 0))
-(define quit-pos   (add-posn setup-pos  (+ button-width border) 0))
-(define peg1-pos   (add-posn quit-pos   (+ button-width border) 0))
-(define peg2-pos   (add-posn peg1-pos  (+ button-width border) 0))
-(define peg3-pos   (add-posn peg2-pos  (+ button-width border) 0))
-(define msg-pos    (add-posn peg3-pos  (+ button-width border (- block)) button-height))
+(define mode-pos   (add-posn height-pos (+ button-width block ) 0))
+(define delay-pos  (add-posn mode-pos   (+ button-width block ) 0))
+(define reset-pos  (add-posn delay-pos  (+ button-width block ) 0))
+(define setup-pos  (add-posn reset-pos  (+ button-width block ) 0))
+(define quit-pos   (add-posn setup-pos  (+ button-width block ) 0))
+(define peg1-pos   (add-posn quit-pos   (+ button-width block ) 0))
+(define peg2-pos   (add-posn peg1-pos   (+ button-width block ) 0))
+(define peg3-pos   (add-posn peg2-pos   (+ button-width block ) 0))
+(define msg-pos    (add-posn peg3-pos   (+ button-width border) (- button-height string-offset)))
 (define disk-height block)
 (define max-tower-height (* max-height disk-height))
 (define min-disk-width (* 3 block))
@@ -266,6 +285,25 @@
 (define vp-width (+ (* 3 max-disk-width) (* 2 block) (* 4 border)))
 (define vp-height (+ (* 2 button-height) (* 3 border) peg-height block))
 (define girder-pos (make-posn border (- vp-height border block)))
+
+(define peg0-region
+  (make-region
+    (make-posn
+      (+ border block) (- vp-height border block max-tower-height))
+    max-disk-width
+    peg-height))
+
+(define peg1-region
+  (make-region
+    (add-posn (region-pos peg0-region) (+ max-disk-width border) 0)
+    max-disk-width
+    peg-height))
+
+(define peg2-region
+  (make-region
+    (add-posn (region-pos peg1-region) (+ max-disk-width border) 0)
+    max-disk-width
+    peg-height))
 
 (define (peg-x p)
   (+ border
@@ -309,11 +347,16 @@
     (do-manual1 d h p)))
 
 (define (do-manual1 d h p)
-  (dispatch (mouse-click-posn (get-mouse-click vp))
+  (define pos (mouse-click-posn (get-mouse-click vp)))
+  (dispatch-button pos
     (peg1-button (do-manual2 d h p 0))
     (peg2-button (do-manual2 d h p 1))
     (peg3-button (do-manual2 d h p 2))
-    (else (draw-disk d h p))))
+    (else
+      (define dest (dispatch-peg pos))
+      (if dest
+        (do-manual2 d h p dest)
+        (draw-disk d h p)))))
 
 (define (do-manual2 d h p dest-p)
   (cond
@@ -341,7 +384,7 @@
 ; Actions short, long and circular: Respons to click on button mode.
 
 (define (do-mode)
-  (define modes (list short-str long-str circular-str))
+  (define modes (list shrt-str long-str circ-str))
   (define choice
     (get-choices-from-user
       mode-str
@@ -373,7 +416,7 @@
     (button enable/disable)))
 
 (define (finish who)
-  (message-box who "finished" #f '(ok))
+  (message-box who "Finished" #f '(ok))
   (viewport-flush-input vp)
   ; Ignore clicks on reset and quit button while the message box is waiting.
   ; Clicks on other buttons already were ignored because they still are disabled.
@@ -479,11 +522,12 @@
 ; Action : respons to click on button delay.
 
 (define (do-delay)
+  (define (catcher e) #f)
   (define (validate-delay str)
     (and (<= 1 (string-length str) 6)
       (or
         (equal? str click-str)
-        (with-handlers ((exn:fail? (λ (e) #f)))
+        (with-handlers ((exn:fail? catcher))
           (define input (open-input-string str))
           (define delay (read input))
           (cond
@@ -493,7 +537,7 @@
             (else #f))))))
   (define str
     (get-text-from-user
-      delay-str
+      dlay-str
       (string-append
         "Enter a non-negative real number for the\n"
         "approximate delay in seconds between moves\n"
@@ -527,7 +571,7 @@
 ; Action : respons to click on button setup.
 
 (define (do-setup)
-  (define disabled-buttons (list height-button mode-button delay-button reset-button setup-button))
+  (define disabled-buttons (list height-button mode-button delay-button quit-button setup-button))
   (for ((button (in-list disabled-buttons))) (button 'disable))
   (set! msg-str "Setting up")
   (remove-all-disks)
@@ -540,12 +584,17 @@
 (define (do-setup1 disks)
   (unless (null? disks)
     (define d (car disks))
-    (dispatch (mouse-click-posn (get-mouse-click vp))
-      (peg1-button (do-setup2 d 0) (do-setup1 (cdr disks)))
-      (peg2-button (do-setup2 d 1) (do-setup1 (cdr disks)))
-      (peg3-button (do-setup2 d 2) (do-setup1 (cdr disks)))
-      (quit-button (clear-msg) (do-reset))
-      (else (do-setup1 disks)))))
+    (define pos (mouse-click-posn (get-mouse-click vp)))
+    (dispatch-button pos
+      (peg1-button  (do-setup2 d 0) (do-setup1 (cdr disks)))
+      (peg2-button  (do-setup2 d 1) (do-setup1 (cdr disks)))
+      (peg3-button  (do-setup2 d 2) (do-setup1 (cdr disks)))
+      (reset-button (clear-msg    ) (do-reset))
+      (else
+        (define p (dispatch-peg pos))
+        (cond
+          (p (do-setup2 d p) (do-setup1 (cdr disks)))
+          (else (do-setup1 disks)))))))
 
 (define (do-setup2 d p)
   (define peg (vector-ref disk-distr p))
@@ -639,7 +688,7 @@
   (define p (and pos (mouse-click-posn pos)))
   (cond
     (p
-      (dispatch p
+      (dispatch-button p
         (reset-button (do-reset) (exit))
         (quit-button (exit))))
     (else #t)))
@@ -652,10 +701,13 @@
 ; play is called more than once because the procedure may mutate them. Notice that syntax make-button
 ; needs the viewport too. Therefore the buttons are included in the initialization.
 
-(define vp 'yet-to-be-initialized)
+(define vp            'yet-to-be-initialized)
 (define height        'yet-to-be-initialized)
 (define delay         'yet-to-be-initialized)
 (define disk-distr    'yet-to-be-initialized)
+(define msg-str       'yet-to-be-initialized)
+(define clock         'yet-to-be-initialized)
+(define move-count    'yet-to-be-initialized)
 (define height-button 'yet-to-be-initialized)
 (define mode-button   'yet-to-be-initialized)
 (define delay-button  'yet-to-be-initialized)
@@ -665,9 +717,6 @@
 (define peg1-button   'yet-to-be-initialized)
 (define peg2-button   'yet-to-be-initialized)
 (define peg3-button   'yet-to-be-initialized)
-(define msg-str       'yet-to-be-initialized)
-(define clock         'yet-to-be-initialized)
-(define move-count    'yet-to-be-initialized)
 
 (define (initialize)
   ; Store variables not yet initialized.
@@ -684,14 +733,14 @@
   (set! vp (open-viewport "Tower of Hanoi" vp-width vp-height))
   ; Initalize and draw the buttons.
   (set! height-button (make-button height  height-pos max-height))
-  (set! mode-button   (make-button mode    mode-pos   'manual   ))
+  (set! mode-button   (make-button mode    mode-pos  'manual    ))
   (set! delay-button  (make-button delay   delay-pos  click     ))
   (set! reset-button  (make-button reset   reset-pos            ))
   (set! setup-button  (make-button setup   setup-pos            ))
   (set! quit-button   (make-button quit    quit-pos             ))
-  (set! peg1-button   (make-button |peg 1| peg1-pos            ))
-  (set! peg2-button   (make-button |peg 2| peg2-pos            ))
-  (set! peg3-button   (make-button |peg 3| peg3-pos            ))
+  (set! peg1-button   (make-button |peg 1| peg1-pos             ))
+  (set! peg2-button   (make-button |peg 2| peg2-pos             ))
+  (set! peg3-button   (make-button |peg 3| peg3-pos             ))
   ; Draw a girder.
   ((draw-solid-rectangle vp) girder-pos (- vp-width (* 2 border)) block gray)
   (for ((p (in-range 0 3)))

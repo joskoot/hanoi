@@ -79,7 +79,8 @@ Hence a disk never rests upon a smaller one.
 @defproc[(play) void?]{
  Opens a GUI for playing the game of the
  @hyperlink["https://en.wikipedia.org/wiki/Tower_of_Hanoi"]{Tower of Hanoi}.
- The user can instruct the GUI what to do by means of the buttons described below.
+ The user can instruct the GUI what to do by means of the buttons described below
+ and by clicking near a peg.
  A button can temporarily be absent when not allowed by the current action instructed by the user.
  For some actions the GUI asks a question in a separate dialog window.
  Instructions given before the question is answered are ignored.}
@@ -95,9 +96,12 @@ Initially the height is 9.
 Opens a modal dialog for selection of the mode, which is manual, short, long or circular.
 Initially the mode is manual.
 
-In manual mode the user is supposed to click the @elemref["Peg n"]{peg button}
+In manual mode the user is supposed to click the @elemref["Peg n"]{peg} button
 the disk is to be taken from
-followed by a click on the @elemref["Peg n"]{peg button} of destination.
+followed by a click on the @elemref["Peg n"]{peg} button of destination.
+In stead of clicking a @elemref["Peg n"]{peg} button one can click near the corresponding peg.
+The disk selected to be moved is colored red.
+The selection can be canceled by clicking the @elemref["Quit"]{quit} button.
 An attempt to make an illegal move is ignored.
 
 In short mode the disks are moved by the GUI to the peg at the right
@@ -143,21 +147,23 @@ the real time lost while no processor was evailable for the GUI.
 @elemtag["Reset" ""]
 @bold{@tt{Reset}}@(lb)
 Puts all disks on the peg at the left.
+May cancel a current action in order to return to @elemref["Mode"]{mode} manual.
 
 @elemtag["Setup" ""]
 @bold{@tt{Setup}}@(lb)
 Removes all disks and subsequently places disks on the pegs in a distribution chosen by the user.
 Disks are placed in order of decreasing size.
-The user is supposed to click a @elemref["Peg n"]{peg button}
-indicating on which peg each next disk is to be placed.
+The user is supposed to click a @elemref["Peg n"]{peg} button or nearby the corresponding peg
+indicating where each next disk is to be placed.
 Requires @elemref["Height"]{height} such clicks.
-Click the @elemref["Reset"]{reset} or @elemref["Quit"]{quit} button to cancel setup.
+Click the @elemref["Reset"]{reset} button to cancel setup.
 
 @elemtag["Quit" ""]
 @bold{@tt{Quit}}@(lb)
-Closes and terminates the GUI, but during @elemref["Mode"]{modes} short, long and circular and
-during @elemref["Setup"]{setup} returns to @elemref["Mode"]{mode} manual
-without closing the GUI.
+Closes and terminates the GUI, but can also be used to cancel an ongoing action.
+In that case, the GUI returns to manual mode and
+the GUI is neither closed nor terminated.
+
 
 @(define (note . x) (inset (apply smaller x)))
 @(define (inset . x) (apply nested #:style 'inset x))
@@ -173,6 +179,7 @@ without closing the GUI.
 @elemtag["Peg n" ""]
 @bold{@tt{Peg n}}, @tt{n} being 1, 2 or 3.@(lb)
 Used to make moves manually and for @elemref["Setup"]{setup} of a distribution of disks.
+The same can be done by clicking near the corresponding peg.
 
 @section[#:style '(unnumbered)]{Appendix}
 
