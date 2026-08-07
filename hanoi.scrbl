@@ -116,7 +116,8 @@ In fact every feasible distribution of disks is visited.
 
 When the circular mode is selected, first all disks are placed on the peg at the left and
 subsequently moved such as to pass exactly once along
-every feasible distribution of disks and finishing with all disks at the peg started from.
+every feasible distribution
+of disks and finishing with all disks at the peg started from.
 @tt{3@superscript{h}} moves, where @tt{h} is the @elemref["Height"]{height}.
 
 The short, long and circular mode can be aborted by clicking the
@@ -151,7 +152,8 @@ May cancel a current action in order to return to @elemref["Mode"]{mode} manual.
 
 @elemtag["Setup" ""]
 @bold{@tt{Setup}}@(lb)
-Removes all disks and subsequently places disks on the pegs in a distribution chosen by the user.
+Removes all disks and subsequently places disks on the pegs in a
+distribution chosen by the user.
 Disks are placed in order of decreasing size.
 The user is supposed to click a @elemref["Peg n"]{peg} button or nearby the corresponding peg
 indicating where each next disk is to be placed.
@@ -406,6 +408,18 @@ but when wanting the information for one move only, for example
 move 6.02214076×10@superscript{23} (Avogadro's number) for a tower of 80 disks,
 the formulas produce results instantaneously without the need to pass along previous moves.
 See the @elemref["example"]{examples above}.
+
+Let h be the number of disks, h≥3.
+A distribution of these h disks can have zero, one or two empty pegs.
+Obviously there are three distributions with two empty pegs.
+There are three ways to select two pegs out of three
+and 2@superscript{h} ways to distribute the disks among
+these two pegs. However, two of these distributions leave the other peg empty.
+Hence given a selection of the two pegs we find @nb{2@superscript{h}@(minus)2} distributions and
+because the two pegs can be chosen in three ways, we find a total of @nb{3(2@superscript{h}@(minus)2)}
+distributions with one peg empty.
+The number of
+distributions without empty pegs is 3@superscript{h} minus the former two quantities.
 
 @bold{@larger{@larger{The end}}}
 @(collect-garbage)
