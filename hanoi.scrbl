@@ -170,7 +170,7 @@ the GUI is neither closed nor terminated.
 @(define (note . x) (inset (apply smaller x)))
 @(define (inset . x) (apply nested #:style 'inset x))
 
-@note{The window of the GUI window can be closed by means of the close button in the title bar
+@note{The window of the GUI can be closed by means of the close button in the title bar
  (at the top-right corner),
  but procedure @racket[play] probably is not terminated because it may keep waiting for a mouseclick.
  However, after closing the GUI window, no such mouse-click can be made.
@@ -417,9 +417,8 @@ Hence given a selection of the two pegs we find @nb{2@superscript{h}@(minus)2} d
 because the two pegs can be chosen in three ways, we find a total of @nb{3(2@superscript{h}@(minus)2)}
 distributions with one peg empty.
 @nb{The total} number of distributions is 3@superscript{h}. Hence there are
-@nb{3@superscript{h}@(minus)3(2@superscript{h}@(minus)2)@(minus)3}
-distributions without empty pegs.
-Contemlating separately all distributions for h=1 and h=2,
+@nb{3@superscript{h}@(minus)3(2@superscript{h}@(minus)2)@(minus)3} ditributions without empty peg.
+Contemplating separately all distributions for h=1 and h=2,
 the formulas appear to be correct for these two cases too,
 although this does not follow from the above deduction.
 
