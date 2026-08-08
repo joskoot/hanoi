@@ -10,12 +10,10 @@
 
 #lang racket
 
-(provide play waiting-time)
+(provide play)
 
 ;=====================================================================================================
-; Imports, two simple macros and a time protected get-mouse-click called wait-mouse-click.
-; The protection makes sure procedure play is terminated after some time
-; when the GUI is closed by the upper right button in the title bar of th GUI.
+; Imports, two simple macros.
 
 (require
   graphics/graphics
@@ -33,31 +31,6 @@
   (define-values-block (value ...)         def/expr ...)
   (define-values       (value ...) (let () def/expr ... (values value ...))))
 
-(define (wait-mouse-click vp)
-  (define time (current-inexact-milliseconds))
-  (let loop ()
-    (define click (ready-mouse-click vp))
-    (cond
-      (click)
-      ((> (- (current-inexact-milliseconds) time) (raw-waiting-time))
-       (fprintf (current-error-port)
-         "No mouse-click within ~s seconds. Program terminated~n" (waiting-time))
-       (abort))
-      (else (sleep 0.1) (loop)))))
-
-(define abort 'yet-to-be-assigned)
-
-(define raw-waiting-time (make-parameter 60000))
-
-(define waiting-time
-  (make-derived-parameter
-    raw-waiting-time
-    (λ (t)
-      (cond
-        ((and (real? t) (positive? t)) (* t 1000))
-        (else (raise-argument-error 'waiting-time "Positive real number" t))))
-    (λ (t) (/ t 1000))))
-
 ;=====================================================================================================
 ; Main procedure.
 
@@ -65,13 +38,8 @@
   (initialize)
   (dynamic-wind
     void
-    premain
+    main
     close))
-
-(define (premain)
-  (let/ec ec
-    (set! abort ec)
-    (main)))
 
 (define (close)
   (close-viewport vp)
@@ -79,7 +47,7 @@
 
 (define (main)
   ; At this point the GUI always is in manual mode,
-  (define pos (mouse-click-posn (wait-mouse-click vp))) 
+  (define pos (mouse-click-posn (get-mouse-click vp))) 
   (dispatch-button pos
     (height-button (do-height  ) (main))
     (mode-button   (do-mode    ) (main))
@@ -379,7 +347,7 @@
     (do-manual1 d h p)))
 
 (define (do-manual1 d h p)
-  (define pos (mouse-click-posn (wait-mouse-click vp)))
+  (define pos (mouse-click-posn (get-mouse-click vp)))
   (dispatch-button pos
     (peg1-button (do-manual2 d h p 0))
     (peg2-button (do-manual2 d h p 1))
@@ -616,7 +584,7 @@
 (define (do-setup1 disks)
   (unless (null? disks)
     (define d (car disks))
-    (define pos (mouse-click-posn (wait-mouse-click vp)))
+    (define pos (mouse-click-posn (get-mouse-click vp)))
     (dispatch-button pos
       (peg1-button  (do-setup2 d 0) (do-setup1 (cdr disks)))
       (peg2-button  (do-setup2 d 1) (do-setup1 (cdr disks)))
@@ -716,7 +684,7 @@
 ; Procedure check-click enables abortion from short, long and circular mode.
 
 (define (check-click click-required? exit)
-  (define pos ((if click-required? wait-mouse-click ready-mouse-click) vp))
+  (define pos ((if click-required? get-mouse-click ready-mouse-click) vp))
   (define p (and pos (mouse-click-posn pos)))
   (cond
     (p

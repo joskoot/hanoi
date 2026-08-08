@@ -85,16 +85,6 @@ Hence a disk never rests upon a smaller one.
  For some actions the GUI asks a question in a separate modal dialog.
  Instructions given before the question is answered are ignored.}
 
-@defparam[waiting-time t (and/c real? positive?) #:value 60]{
- Sets a waiting time. Procedure @racket[play] halts when waiting for a mouse-click
- but the user does not click the mouse within @nb{@racket[t] seconds.}}
-
-@note{The window of the GUI can be closed by means of the close button in the title bar
- (at the top-right corner),
- but procedure @racket[play] probably is not terminated because it may keep waiting for a mouseclick.
- However, after closing the GUI window, no such mouse-click can be made.
- Parameter @racket[waiting-time] makes sure procedure @racket[play] eventually will terminate.}
-
 @subsection[#:tag "Height"]{Height}
 
 Opens a modal dialog for selection of the desired number of disks,
@@ -141,7 +131,7 @@ It is either @tt{click} or a non-negative real number
 written with not more than 6 characters.
 It applies to @seclink["Mode"]{modes} short, long and circular.
 
-When the delay is @tt{click} a move is made after each mouse click
+When the delay is @tt{click} a move is made after each mouseclick
 at arbitrary position in the window of the GUI
 but not on the @seclink["Reset"]{reset} or @seclink["Quit"]{quit} button,
 which terminate the @seclink["Mode"]{modes} short, long and circular
@@ -182,11 +172,10 @@ the GUI is neither closed nor terminated.
 @note{The window of the GUI can be closed by means of the close button in the title bar
  (at the top-right corner),
  but procedure @racket[play] probably is not terminated because it may keep waiting for a mouseclick.
- However, after closing the GUI window, no such mouse-click can be made.
+ However, after closing the GUI window, no such mouseclick can be made.
  @nb{In @other-doc['(lib "graphics/scribblings/graphics.scrbl")]}
  I have not found a mean to check the state of a viewport.@(lb)
- (open, hidden or closed)
- Parameter @racket[waiting-time] makes sure procedure @racket[play] eventually will terminate.}
+ (open, hidden or closed)}
 
 @subsection[#:tag "Peg n"]{Peg n}
 
