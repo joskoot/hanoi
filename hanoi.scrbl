@@ -416,7 +416,7 @@ See the @elemref["example"]{examples above}.
 @subsection{Counting distributions}
 
 Let h be the number of disks, h≥3.
-A distribution of these h disks can have zero, one or two empty pegs.
+A distribution of these h disks can have one or two empty pegs.
 Obviously there are three distributions with two empty pegs.
 There are three ways to select two pegs out of three
 and 2@superscript{h} ways to distribute the disks among
