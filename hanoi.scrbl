@@ -79,63 +79,73 @@ Hence a disk never rests upon a smaller one.
 @defproc[(play) void?]{
  Opens a GUI for playing the game of the
  @hyperlink["https://en.wikipedia.org/wiki/Tower_of_Hanoi"]{Tower of Hanoi}.
- The user can instruct the GUI what to do by means of the buttons described below
+ The user can instruct the GUI which action to take by means of the buttons described below
  and by clicking near a peg.
- A button can temporarily be absent when not allowed by the current action instructed by the user.
- For some actions the GUI asks a question in a separate dialog window.
+ A button can temporarily be absent when not applicable during the current action.
+ For some actions the GUI asks a question in a separate modal dialog.
  Instructions given before the question is answered are ignored.}
 
-@elemtag["Height" ""]
-@bold{@tt{Height}}@(lb)
+@defparam[waiting-time t (and/c real? positive?) #:value 60]{
+ Sets a waiting time. Procedure @racket[play] halts when waiting for a mouse-click
+ but the user does not click the mouse within @nb{@racket[t] seconds.}}
+
+@note{The window of the GUI can be closed by means of the close button in the title bar
+ (at the top-right corner),
+ but procedure @racket[play] probably is not terminated because it may keep waiting for a mouseclick.
+ However, after closing the GUI window, no such mouse-click can be made.
+ Parameter @racket[waiting-time] makes sure procedure @racket[play] eventually will terminate.}
+
+@subsection[#:tag "Height"]{Height}
+
 Opens a modal dialog for selection of the desired number of disks,
 at least one, at most nine.
 Initially the height is 9.
 
-@elemtag["Mode" ""]
-@bold{@tt{Mode}}@(lb)
+@subsection[#:tag "Mode" ""]{Mode}
+
 Opens a modal dialog for selection of the mode, which is manual, short, long or circular.
 Initially the mode is manual.
 
-In manual mode the user is supposed to click the @elemref["Peg n"]{peg} button
+In manual mode the user is supposed to click the @seclink["Peg n"]{peg} button
 the disk is to be taken from
-followed by a click on the @elemref["Peg n"]{peg} button of destination.
-In stead of clicking a @elemref["Peg n"]{peg} button one can click near the corresponding peg.
+followed by a click on the @seclink["Peg n"]{peg} button of destination.
+In stead of clicking a @seclink["Peg n"]{peg} button one can click near the corresponding peg.
 The disk selected to be moved is colored red.
-The selection can be canceled by clicking the @elemref["Quit"]{quit} button.
+The selection can be canceled by clicking the @seclink["Quit"]{quit} button.
 An attempt to make an illegal move is ignored.
 
 In short mode the disks are moved by the GUI to the peg at the right
 with the least possible number of moves,
-at most @tt{2@superscript{h}-1} moves, where @tt{h} is the @elemref["Height"]{height}.
+at most @tt{2@superscript{h}-1} moves, where @tt{h} is the @seclink["Height"]{height}.
 
 When the long mode is selected, first all disks are placed on the peg at the left and
 subsequently moved to the peg at the right with the largest number of moves possible
 without passing any distribution of disks more than once.
-@tt{3@superscript{h}-1} moves, where @tt{h} is the @elemref["Height"]{height}.
+@tt{3@superscript{h}-1} moves, where @tt{h} is the @seclink["Height"]{height}.
 In fact every feasible distribution of disks is visited.
 
 When the circular mode is selected, first all disks are placed on the peg at the left and
 subsequently moved such as to pass exactly once along
 every feasible distribution
 of disks and finishing with all disks at the peg started from.
-@tt{3@superscript{h}} moves, where @tt{h} is the @elemref["Height"]{height}.
+@tt{3@superscript{h}} moves, where @tt{h} is the @seclink["Height"]{height}.
 
 The short, long and circular mode can be aborted by clicking the
-@elemref["Reset"]{reset} or @elemref["Quit"]{quit} button,
+@seclink["Reset"]{reset} or @seclink["Quit"]{quit} button,
 which make the GUI return to manual mode.
 
-@elemtag["Delay" ""]
-@bold{@tt{Delay}}@(lb)
+@subsection[#:tag "Delay"]{Delay}
+
 The delay is specified by means of a modal dialog.
 It is either @tt{click} or a non-negative real number
 written with not more than 6 characters.
-It applies to @elemref["Mode"]{modes} short, long and circular.
+It applies to @seclink["Mode"]{modes} short, long and circular.
 
 When the delay is @tt{click} a move is made after each mouse click
 at arbitrary position in the window of the GUI
-but not on the @elemref["Reset"]{reset} or @elemref["Quit"]{quit} button,
-which terminate the @elemref["Mode"]{modes} short, long and circular
-and return to manual @elemref["Mode"]{mode}.
+but not on the @seclink["Reset"]{reset} or @seclink["Quit"]{quit} button,
+which terminate the @seclink["Mode"]{modes} short, long and circular
+and return to manual @seclink["Mode"]{mode}.
 
 If the delay is a non-negative real number, say d,
 the GUI waits d seconds between successive moves.
@@ -145,27 +155,26 @@ which is the non-zero real time needed for calculations and graphical rendering 
 the real time lost while no processor was evailable for the GUI.
 ε depends on your CPU and GPU and the load by other programs. It may be about 1 ms.
  
-@elemtag["Reset" ""]
-@bold{@tt{Reset}}@(lb)
-Puts all disks on the peg at the left.
-May cancel a current action in order to return to @elemref["Mode"]{mode} manual.
+@subsection[#:tag "Reset"]{Reset}
 
-@elemtag["Setup" ""]
-@bold{@tt{Setup}}@(lb)
+Puts all disks on the peg at the left.
+May cancel a current action in order to return to @seclink["Mode"]{mode} manual.
+
+@subsection[#:tag "Setup"]{Setup}
+
 Removes all disks and subsequently places disks on the pegs in a
 distribution chosen by the user.
 Disks are placed in order of decreasing size.
-The user is supposed to click a @elemref["Peg n"]{peg} button or nearby the corresponding peg
+The user is supposed to click a @seclink["Peg n"]{peg} button or nearby the corresponding peg
 indicating where each next disk is to be placed.
-Requires @elemref["Height"]{height} such clicks.
-Click the @elemref["Reset"]{reset} button to cancel setup.
+Requires @seclink["Height"]{height} such clicks.
+Click the @seclink["Reset"]{reset} button to cancel setup.
 
-@elemtag["Quit" ""]
-@bold{@tt{Quit}}@(lb)
+@subsection[#:tag "Quit"]{Quit}
+
 Closes and terminates the GUI, but can also be used to cancel an ongoing action.
 In that case, the GUI returns to manual mode and
 the GUI is neither closed nor terminated.
-
 
 @(define (note . x) (inset (apply smaller x)))
 @(define (inset . x) (apply nested #:style 'inset x))
@@ -176,14 +185,18 @@ the GUI is neither closed nor terminated.
  However, after closing the GUI window, no such mouse-click can be made.
  @nb{In @other-doc['(lib "graphics/scribblings/graphics.scrbl")]}
  I have not found a mean to check the state of a viewport.@(lb)
- (open, hidden or closed)}
+ (open, hidden or closed)
+ Parameter @racket[waiting-time] makes sure procedure @racket[play] eventually will terminate.}
 
-@elemtag["Peg n" ""]
-@bold{@tt{Peg n}}, @tt{n} being 1, 2 or 3.@(lb)
-Used to make moves manually and for @elemref["Setup"]{setup} of a distribution of disks.
+@subsection[#:tag "Peg n"]{Peg n}
+
+n is 1, 2 or 3.
+Used to make moves manually and for @seclink["Setup"]{setup} of a distribution of disks.
 The same can be done by clicking near the corresponding peg.
 
 @section[#:style '(unnumbered)]{Appendix}
+
+@subsection{Graphical representation}
 
 Let @tt{h} be the number of disks.
 @nb{The disks} can be distributed among the pegs in 3@superscript{@tt{h}} ways.
@@ -236,12 +249,16 @@ the fact that the path can be followed in opposit direction too. For three disks
 
 @(hspace 5) @image["circular3.gif" #:scale 0.3]
 
+@subsection{Number of paths}
+
 The number of distinct non self-crossing paths from a distribution with all disks on the same peg
 to one with all disks on another peg, those not passing all vertices included,
 is a(n) with @nb{a(0)=1} and
 @nb{a(n+1)=a(n)@superscript{2}+a(n)@superscript{3}}.
 This is a very fast increasing sequence.
 See @hyperlink["https://oeis.org/A125295"]{A125295} of @hyperlink["https://oeis.org/"]{OEIS}.
+
+@subsection{Non recursive formulas}
 
 Regarding elementary arithmetic operations as non-recursive,
 given height @tt{h}, starting peg @tt{f} and destination peg @tt{t},
@@ -406,6 +423,8 @@ but when wanting the information for one move only, for example
 move 6.02214076×10@superscript{23} (Avogadro's number) for a tower of 80 disks,
 the formulas produce results instantaneously without the need to pass along previous moves.
 See the @elemref["example"]{examples above}.
+
+@subsection{Counting distributions}
 
 Let h be the number of disks, h≥3.
 A distribution of these h disks can have zero, one or two empty pegs.
