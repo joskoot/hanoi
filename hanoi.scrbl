@@ -12,7 +12,7 @@
      (only-in typed/racket Setof Natural Sequenceof Index))
    (for-syntax racket))
 
-@(define-for-syntax local #t)
+@(define-for-syntax local #f)
 
 @(define-syntax-rule
    (Interaction x ...)
@@ -109,18 +109,21 @@ An attempt to make an illegal move is ignored.
 In short mode the disks are moved by the GUI to the peg at the right
 with the least possible number of moves,
 at most @tt{2@superscript{h}-1} moves, where @tt{h} is the @seclink["Height"]{height}.
+Exactly @tt{2@superscript{h}-1} moves when starting with all disks on @seclink["Peg n"]{peg} 1 or 2.
+The shortest way always is uniquely defined.
 
 When the long mode is selected, first all disks are placed on the peg at the left and
 subsequently moved to the peg at the right with the largest number of moves possible
 without passing any distribution of disks more than once.
 @tt{3@superscript{h}-1} moves, where @tt{h} is the @seclink["Height"]{height}.
-In fact every feasible distribution of disks is visited.
+In fact every legal distribution of disks is visited. The sequence of moves is uniquely defined.
 
 When the circular mode is selected, first all disks are placed on the peg at the left and
 subsequently moved such as to pass exactly once along
-every feasible distribution
+every legal distribution
 of disks and finishing with all disks at the peg started from.
 @tt{3@superscript{h}} moves, where @tt{h} is the @seclink["Height"]{height}.
+The sequence of moves is uniquely defined.
 
 The short, long and circular mode can be aborted by clicking the
 @seclink["Reset"]{reset} or @seclink["Quit"]{quit} button,
@@ -226,13 +229,13 @@ The least number of moves required is @tt{h}@superscript{2}@tt{-}1 with uniquely
 sequence of moves. This is the short mode, in the graph shown by the sides of the largest triangle.
 
 The largest number of moves without passing a distribution of disks among the pegs more than once
-is @tt{h}@superscript{3}@(minus)1, implying that every feasible distribution is visited exactly once.
+is @tt{h}@superscript{3}@(minus)1, implying that every legal distribution is visited exactly once.
 This is the long mode and is uniquely defined too.
 For three disks and labeling the vertices such as to show on which pegs the disks are: 
 
 @(hspace 5) @image["long-3.gif" #:scale 0.3]
 
-Another interesting way is the circular mode, moving the disks such as to visit all feasible
+Another interesting way is the circular mode, moving the disks such as to visit all legal
 distributions of disks among the pegs exactly once
 and finishing with all disks on the starting peg.
 This takes @tt{h}@superscript{3} moves. The circular mode is uniquely defined too when disregarding
@@ -372,22 +375,7 @@ Similar formulas exist for the longest non-selfcrossing path from @tt{f} to @tt{
  (define (from m h f t) (- 3 (onto m h f t) (thrd m f t)))
  (define (disk m) (if (zero? (mod3 m)) (add1 (disk (quotient m 3))) 0))
  (code:comment " ")
- (code:comment "(disk m) is recursive.")
- (code:comment "It gives the number of times m can be divided by 3.")
- (code:comment "One might write the following alternative:")
- (code:comment " ")
- (define (disk m)
-   (let*
-     ((log3 (inexact->exact (log 3)))
-      (first-guess (ceiling (/ (inexact->exact (log m)) log3)))
-      (upper-bound (expt 3 first-guess))
-      (lowest-power-3 (gcd m upper-bound)))
-     (inexact->exact (round (/ (log lowest-power-3) log3)))))
- (code:comment " ")
- (code:comment "Procedure alternative-disk does not call itself, hence seems not")
- (code:comment "recursive. However, it contains function gcd. One can argue whether")
- (code:comment "or not gcd can be regarded as a non-recursive elementary operator.")
- (code:comment "The same applies to function expt.")
+ (code:comment "(disk m) is recursive. There is no simple way to make it non-recursive.")
  (code:comment " ")
  (define (posi m d f t)
    (case (mod4 (mcnt m d))
