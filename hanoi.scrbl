@@ -80,10 +80,14 @@ Hence a disk never rests upon a smaller one.
  Opens a GUI for playing the game of the
  @hyperlink["https://en.wikipedia.org/wiki/Tower_of_Hanoi"]{Tower of Hanoi}.
  The user can instruct the GUI which action to take by means of the buttons described below
- and by clicking nearbyby a peg.
+ and by clicking nearby a peg.
  A button can temporarily be absent when not applicable during the current action.
  For some actions the GUI asks a question in a separate modal dialog.
  Instructions given before the question is answered are ignored.}
+
+@defparam[time-limit time (and/c real? positive?) #:value 60]{
+ The GUI waits at most @racket[time] seconds when needing a mouseclick or
+ answer to a modal dialog.}
 
 @subsection[#:tag "Height"]{Height}
 
