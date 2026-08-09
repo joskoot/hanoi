@@ -13,7 +13,7 @@
 (provide play)
 
 ;=====================================================================================================
-; Imports, two simple macros.
+; Imports and two simple macros.
 
 (require
   graphics/graphics

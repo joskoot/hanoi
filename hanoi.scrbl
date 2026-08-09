@@ -12,7 +12,7 @@
      (only-in typed/racket Setof Natural Sequenceof Index))
    (for-syntax racket))
 
-@(define-for-syntax local #f)
+@(define-for-syntax local #t)
 
 @(define-syntax-rule
    (Interaction x ...)
@@ -80,7 +80,7 @@ Hence a disk never rests upon a smaller one.
  Opens a GUI for playing the game of the
  @hyperlink["https://en.wikipedia.org/wiki/Tower_of_Hanoi"]{Tower of Hanoi}.
  The user can instruct the GUI which action to take by means of the buttons described below
- and by clicking near a peg.
+ and by clicking nearbyby a peg.
  A button can temporarily be absent when not applicable during the current action.
  For some actions the GUI asks a question in a separate modal dialog.
  Instructions given before the question is answered are ignored.}
@@ -99,9 +99,11 @@ Initially the mode is manual.
 In manual mode the user is supposed to click the @seclink["Peg n"]{peg} button
 the disk is to be taken from
 followed by a click on the @seclink["Peg n"]{peg} button of destination.
-In stead of clicking a @seclink["Peg n"]{peg} button one can click near the corresponding peg.
+In stead of clicking a @seclink["Peg n"]{peg} button one can click nearby the corresponding peg.
 The disk selected to be moved is colored red.
-The selection can be canceled by clicking the @seclink["Quit"]{quit} button.
+The selection can be canceled by clicking nearby the peg were it is
+or clicking the corresponding @seclink["Peg n"]{peg} button
+or by clicking the @seclink["Quit"]{quit} button.
 An attempt to make an illegal move is ignored.
 
 In short mode the disks are moved by the GUI to the peg at the right
@@ -181,7 +183,7 @@ the GUI is neither closed nor terminated.
 
 n is 1, 2 or 3.
 Used to make moves manually and for @seclink["Setup"]{setup} of a distribution of disks.
-The same can be done by clicking near the corresponding peg.
+The same can be done by clicking nearby the corresponding peg.
 
 @section[#:style '(unnumbered)]{Appendix}
 
@@ -370,6 +372,23 @@ Similar formulas exist for the longest non-selfcrossing path from @tt{f} to @tt{
  (define (from m h f t) (- 3 (onto m h f t) (thrd m f t)))
  (define (disk m) (if (zero? (mod3 m)) (add1 (disk (quotient m 3))) 0))
  (code:comment " ")
+ (code:comment "(disk m) is recursive.")
+ (code:comment "It gives the number of times m can be divided by 3.")
+ (code:comment "One might write the following alternative:")
+ (code:comment " ")
+ (define (disk m)
+   (let*
+     ((log3 (inexact->exact (log 3)))
+      (first-guess (ceiling (/ (inexact->exact (log m)) log3)))
+      (upper-bound (expt 3 first-guess))
+      (lowest-power-3 (gcd m upper-bound)))
+     (inexact->exact (round (/ (log lowest-power-3) log3)))))
+ (code:comment " ")
+ (code:comment "Procedure alternative-disk does not call itself, hence seems not")
+ (code:comment "recursive. However, it contains function gcd. One can argue whether")
+ (code:comment "or not gcd can be regarded as a non-recursive elementary operator.")
+ (code:comment "The same applies to function expt.")
+ (code:comment " ")
  (define (posi m d f t)
    (case (mod4 (mcnt m d))
      ((0) f)
@@ -425,7 +444,7 @@ Hence given a selection of the two pegs we find @nb{2@superscript{h}@(minus)2} d
 because the two pegs can be chosen in three ways, we find a total of @nb{3(2@superscript{h}@(minus)2)}
 distributions with one peg empty.
 @nb{The total} number of distributions is 3@superscript{h}. Hence there are
-@nb{3@superscript{h}@(minus)3(2@superscript{h}@(minus)2)@(minus)3} ditributions without empty peg.
+@nb{3@superscript{h}@(minus)3(2@superscript{h}@(minus)2)@(minus)3} distributions without empty peg.
 Contemplating separately all distributions for h=1 and h=2,
 the formulas appear to be correct for these two cases too,
 although this does not follow from the above deduction.
