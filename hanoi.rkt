@@ -761,13 +761,13 @@
 (define (move-disk f t exit)
   (define ff (vector-ref disk-distr f))
   (define tt (vector-ref disk-distr t))
-  (define first-doze-time (min delay 1))
   (unless (null? ff)
     (define d (car ff))
     (define move-to-be-made?
       (case delay
         ((click) (check-click #t exit))
         (else
+          (define first-doze-time (min delay 1))
           (cond
             ((= move-count 0) (doze first-doze-time exit) (check-click #f exit))
             (else (doze delay exit) (check-click #f exit))))))
@@ -875,3 +875,4 @@
 
 ;=====================================================================================================
 ; The end
+(play)
