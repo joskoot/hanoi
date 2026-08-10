@@ -12,7 +12,7 @@
      (only-in typed/racket Setof Natural Sequenceof Index))
    (for-syntax racket))
 
-@(define-for-syntax local #f)
+@(define-for-syntax local #t)
 
 @(define-syntax-rule
    (Interaction x ...)
@@ -85,9 +85,11 @@ Hence a disk never rests upon a smaller one.
  For some actions the GUI asks a question in a separate modal dialog.
  Instructions given before the question is answered are ignored.}
 
-@defparam[time-limit time (and/c real? positive?) #:value 60]{
- The GUI waits at most @racket[time] seconds when needing a mouseclick or
- answer to a modal dialog.}
+@defparam[time-limit time (and/c real? exact? (>=/c 5)) #:value 10]{
+ The GUI waits at most @racket[time] minutes when needing a mouseclick or
+ answer to a modal dialog. After this time has expired, the GUI aborts.
+ Within the GUI the limit can be adjusted by means of
+ the @seclink["Idle time"]{idle time} button.}
 
 @subsection[#:tag "Height"]{Height}
 
@@ -191,6 +193,13 @@ the GUI is neither closed nor terminated.
 n is 1, 2 or 3.
 Used to make moves manually and for @seclink["Setup"]{setup} of a distribution of disks.
 The same can be done by clicking nearby the corresponding peg.
+
+@subsection[#:tag "Idle time"]{Idle time}
+Opens a dialog to adjust the maximum idle time in minutes.
+When the GUI receives no mouseclick or no answer to a dialog within the idle time minutes, it halts.
+Initially the idle time is 10 minutes. When giving an idle time of less than 5 minutes,
+the time is set to 5 minutes.
+Outside the control of the GUI the idle time can be set by means of parameter @racket[time-limit].
 
 @section[#:style '(unnumbered)]{Appendix}
 

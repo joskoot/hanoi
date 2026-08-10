@@ -43,7 +43,7 @@
 
 (define (main)
   ; At this point the GUI always is in manual mode,
-  (define pos (mouse-click-posn (get-mouse vp)))
+  (define pos (mouse-click-posn (call-with-time-out (λ () (get-mouse-click vp)))))
   (dispatch-button pos
     (height-button (do-height  ) (main))
     (mode-button   (do-mode    ) (main))
@@ -60,72 +60,50 @@
       (main))))
 
 ;=====================================================================================================
-; Redefinition of procedures waiting for a mouseclick
-; such as to abort after waiting (time-limit) seconds.
+; Tool for aborting when waiting too long for for a mouseclick or answer to a dialog.
 
-(define dialog-custodian (make-custodian))
-(define default-time-limit 60000) ; milliseconds: one minute.
-(define raw-time-limit (make-parameter default-time-limit))
+(define default-time-limit 10) ; minutes.
+(define min-idle-minutes 5)
+
+(define time-limit ; minutes
+  (make-parameter
+    default-time-limit
+    (λ (t)
+      (cond
+        ((and (real? t) (>= t min-idle-minutes)) t)
+        (else
+          (raise-user-error 'time-limit
+            "~n  positive real number expected, at least 5. Given ~s" t))))
+    'time-limit))
 
 (define (abort)
   (error '|Tower of Hanoi|
     (string-append
-      "~n  No activity during ~s seconds."
-      "~n  GUI aborted."
-      "~n  Use parameter time-limit to increase the allowed idle time.")
+      "~n  No activity during ~s minutes. GUI aborted."
+      "~n  Use parameter time-limit to increase the allowed idle time"
+      "~n  or use the Idle time button.")
     (time-limit)))
 
-; Convert seconds to milliseconds.
-
-(define time-limit
-  (make-derived-parameter raw-time-limit
-    (λ (t)
-      (cond
-        ((and (real? t) (positive? t)) (* t 1000))
-        (else (raise-user-error 'time-limit "~n  positive real number expected~n  given ~s" t))))
-    (λ (t) (/ t 1000))))
-
-(define (limit-time thunk)
-  (define start-time (current-inexact-milliseconds))
-  (define limit (raw-time-limit))
-  (define finish-time (+ start-time limit))
-  (define (loop)
-    (define timer (current-inexact-milliseconds))
-    (cond
-      ((thunk))
-      ((> timer finish-time)
-       (close-viewport vp)
-       (error '|Tower of Hanoi|
-         (format
-           (string-append
-             "~n  Abort after waiting ~s seconds without receiving a mouseclick"
-             "~n  Use parameter time-limit to increase the allowed idle time.") (time-limit)))
-       (abort))
-      (else (sleep 0.1) (loop))))
-  (loop))
-
-(define (get-mouse vp) (limit-time (λ () (ready-mouse-click vp))))
-
-(define (dialog-with-time-out thunk)
-  (define dialog-custodian (make-custodian))
+(define (call-with-time-out thunk)
+  (define time-out-custodian (make-custodian))
   (define user-choice (box #f))
   (define result
-    (parameterize ((current-custodian dialog-custodian))
+    (parameterize ((current-custodian time-out-custodian))
       (define dialog-eventspace (make-eventspace))
-      (define dialog-thread
+      (define task-thread
         (parameterize ((current-eventspace dialog-eventspace))
           (thread
             (λ ()
               (define choice (thunk))
               (set-box! user-choice choice)))))
-      (sync/timeout (time-limit) dialog-thread)))
+      (sync/timeout (* (time-limit) 60) task-thread)))
   (cond
     ((not result)
-     (custodian-shutdown-all dialog-custodian) 
+     (custodian-shutdown-all time-out-custodian) 
      (abort))
     (else
       (define final-response (unbox user-choice))
-      (custodian-shutdown-all dialog-custodian)
+      (custodian-shutdown-all time-out-custodian)
       final-response)))
 
 ;=====================================================================================================
@@ -152,7 +130,7 @@
            (quasisyntax
              (let ((pos position))
                (define region (make-region pos button-width button-height))
-               (define name-str (string-titlecase (format "~a" 'name)))    
+               (define name-str (str-title-case (format "~a" 'name)))    
                (define enabled? #t)
                (define (proc button action . args)
                  (case action
@@ -202,6 +180,10 @@
                    (or enabled? (member action '(enable disable get-content put-content in-button?)))
                    (apply button action args)))))))))))
 
+(define (str-title-case str)
+  (define lst (string->list str))
+  (list->string (cons (char-upcase (car lst)) (cdr lst))))
+
 ;=====================================================================================================
 ; Dispatching mouse clicks.
 
@@ -211,12 +193,14 @@
      (syntax
        (let ((p pos))
          (cond
+           ((idle-button 'in-button? p) (do-idle) (main))
            ((button 'in-button? p) do-button ...) ...
            (else else-clause ...)))))
     ((_ pos (button do-button ...) ...)
      (syntax
        (let ((p pos))
          (cond
+           ((idle-button 'in-button? p) (do-idle) (main))
            ((button 'in-button? p) do-button ...) ...))))))
 
 (define (dispatch-peg pos)
@@ -234,7 +218,7 @@
   (define x (posn-x pos))
   (define y (posn-y pos))
   (define x-min (posn-x ( region-pos    region)))
-  (define y-min (posn-y  (region-pos    region)))
+  (define y-min (posn-y  (region-pos    region)))    
   (define x-max (+ x-min (region-width  region)))
   (define y-max (+ y-min (region-height region)))
   (and (<= x-min x x-max) (<= y-min y y-max)))
@@ -242,17 +226,18 @@
 ;=====================================================================================================
 ; Some constants required in early stage. Never mutated.
 
-(define height-str "Height"  )
-(define mode-str   "Mode"    )
-(define delay-str  "Delay"   )
-(define reset-str  "Reset"   )
-(define setup-str  "Setup"   )
-(define quit-str   "Quit"    )
-(define undo-str   "Undo"    )
-(define manual-str "manual"  )
-(define shrt-str   "short"   )
-(define long-str   "long"    )
-(define circ-str   "circular")
+(define height-str " Height "   )
+(define mode-str   " Mode "     )
+(define delay-str  " Delay "    )
+(define reset-str  " Reset "    )
+(define setup-str  " Setup "    )
+(define quit-str   " Quit "     )
+(define undo-str   " Undo "     )
+(define manual-str " manual "   )
+(define shrt-str   " short "    )
+(define long-str   " long "     )
+(define circ-str   " circular " )
+(define idle-str   " Idle time ")
 (define click 'click)
 (define click-str (symbol->string 'click))
 (define red   (make-rgb 1   0   0))
@@ -281,6 +266,7 @@
       manual-str
       long-str
       circ-str
+      idle-str
       "999999"))
 
   (define string-offset 4)
@@ -336,7 +322,8 @@
 (define peg1-pos   (add-posn quit-pos   (+ button-width blok) 0))
 (define peg2-pos   (add-posn peg1-pos   (+ button-width blok) 0))
 (define peg3-pos   (add-posn peg2-pos   (+ button-width blok) 0))
-(define msg-pos    (add-posn peg3-pos   (+ button-width border) (- button-height string-offset)))
+(define idle-pos   (add-posn peg3-pos   (+ button-width blok) 0))  
+(define msg-pos    (add-posn idle-pos   (+ button-width border) (- button-height string-offset)))
 (define disk-height blok)
 (define max-tower-height (* max-height disk-height))
 (define min-disk-width (* 3 blok))
@@ -383,7 +370,7 @@
   (define (validate-height str)
     (and (= (string-length str) 1) (char<=? #\1 (string-ref str 0) #\9)))
   (define str
-    (dialog-with-time-out
+    (call-with-time-out
       (λ ()
         (get-text-from-user
           height-str
@@ -414,7 +401,7 @@
     (do-manual1 d h p)))
 
 (define (do-manual1 d h p)
-  (define pos (mouse-click-posn (get-mouse vp)))
+  (define pos (mouse-click-posn (call-with-time-out (λ () (get-mouse-click vp)))))
   (dispatch-button pos
     (peg1-button (do-manual2 d h p 0))
     (peg2-button (do-manual2 d h p 1))
@@ -453,7 +440,7 @@
 (define (do-mode)
   (define modes (list shrt-str long-str circ-str))
   (define choice
-    (dialog-with-time-out
+    (call-with-time-out
       (λ ()
         (get-choices-from-user
           mode-str
@@ -481,11 +468,12 @@
            setup-button
            peg1-button
            peg2-button
-           peg3-button))))
+           peg3-button
+           idle-button))))
     (button enable/disable)))
 
 (define (finish who)
-  (dialog-with-time-out (λ () (message-box who "finished" #f '(ok))))
+  (call-with-time-out (λ () (message-box who "\n\n\nfinished\n\n\n" #f '(ok))))
   (viewport-flush-input vp)
   ; Ignore clicks on reset and quit button while the message box is waiting.
   ; Clicks on other buttons already were ignored because they still are disabled.
@@ -607,7 +595,7 @@
             ((and (real? delay) (>= delay 0)))
             (else #f))))))
   (define str
-    (dialog-with-time-out
+    (call-with-time-out
       (λ ()
         (get-text-from-user
           delay-str
@@ -657,7 +645,7 @@
 (define (do-setup1 disks)
   (unless (null? disks)
     (define d (car disks))
-    (define pos (mouse-click-posn (get-mouse vp)))
+    (define pos (mouse-click-posn (call-with-time-out (λ () (get-mouse-click vp)))))
     (dispatch-button pos
       (peg1-button  (do-setup2 d 0) (do-setup1 (cdr disks)))
       (peg2-button  (do-setup2 d 1) (do-setup1 (cdr disks)))
@@ -697,6 +685,39 @@
 
 (define (watch-clock)
   (~r #:precision 3 (/ (- (current-inexact-milliseconds) clock) 1000)))
+
+(define (do-idle)
+  (define (catcher e) #f)
+  (define (validate-delay str)
+    (and (<= 1 (string-length str) 6)
+      (or
+        (equal? str click-str)
+        (with-handlers ((exn:fail? catcher))
+          (define input (open-input-string str))
+          (define idle-time (read input))
+          (cond
+            ((not (eof-object? (read input))) #f)
+            ((infinite? idle-time) #f)
+            ((and (real? idle-time) (>= idle-time 0) (exact? idle-time)))
+            (else #f))))))
+  (define str
+    (call-with-time-out
+      (λ ()
+        (get-text-from-user
+          idle-str
+          (string-append
+            "Enter a non-negative exact real number for the\n"
+            "for the allowed idle time in minutes.\n"
+            "Do not enter more than 6 characters.\n"
+            "Idle times less than 5 minutes are set to 5 minutes.")
+          #f	
+          "10"	
+          '(disallow-invalid)	
+          #:validate validate-delay))))
+  (when str
+    (define minutes (max min-idle-minutes (read (open-input-string str))))
+    (time-limit minutes)
+    ((draw-button-content vp) idle-pos minutes)))
 
 ;=====================================================================================================
 ; Drawing procedure.
@@ -759,7 +780,7 @@
 
 (define (check-click click-required? exit)
   (define pos
-    (if click-required? (get-mouse vp) (ready-mouse-click vp)))
+    (if click-required? (call-with-time-out (λ () (get-mouse-click vp))) (ready-mouse-click vp)))
   (define p (and pos (mouse-click-posn pos)))
   (cond
     (p
@@ -792,10 +813,12 @@
 (define peg1-button   'yet-to-be-initialized)
 (define peg2-button   'yet-to-be-initialized)
 (define peg3-button   'yet-to-be-initialized)
+(define idle-button   'yet-to-be-initialized)
 
 (define (initialize)
   ; Store variables not yet initialized.
   ; Also needed for variables they may have been mutated in a previous call to procedure play.
+  (time-limit default-time-limit)
   (set! height     max-height)
   (set! delay      click     )
   (set! msg-str    ""        )
@@ -807,15 +830,16 @@
   (open-graphics)
   (set! vp (open-viewport "Tower of Hanoi" vp-width vp-height))
   ; Initalize and draw the buttons.
-  (set! height-button (make-button height  height-pos max-height))
-  (set! mode-button   (make-button mode    mode-pos  'manual    ))
-  (set! delay-button  (make-button delay   delay-pos  click     ))
-  (set! reset-button  (make-button reset   reset-pos            ))
-  (set! setup-button  (make-button setup   setup-pos            ))
-  (set! quit-button   (make-button quit    quit-pos             ))
-  (set! peg1-button   (make-button |peg 1| peg1-pos             ))
-  (set! peg2-button   (make-button |peg 2| peg2-pos             ))
-  (set! peg3-button   (make-button |peg 3| peg3-pos             ))
+  (set! height-button (make-button height      height-pos max-height))
+  (set! mode-button   (make-button mode        mode-pos  'manual    ))
+  (set! delay-button  (make-button delay       delay-pos  click     ))
+  (set! reset-button  (make-button reset       reset-pos            ))
+  (set! setup-button  (make-button setup       setup-pos            ))
+  (set! quit-button   (make-button quit        quit-pos             ))
+  (set! peg1-button   (make-button |peg 1|     peg1-pos             ))
+  (set! peg2-button   (make-button |peg 2|     peg2-pos             ))
+  (set! peg3-button   (make-button |peg 3|     peg3-pos             ))
+  (set! idle-button   (make-button |idle time| idle-pos  (time-limit)))
   ; Draw a girder.
   ((draw-solid-rectangle vp) girder-pos (- vp-width (* 2 border)) blok gray)
   (for ((p (in-range 0 3)))
