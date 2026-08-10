@@ -83,7 +83,10 @@ Hence a disk never rests upon a smaller one.
  and by clicking nearby a peg.
  A button can temporarily be absent when not applicable during the current action.
  For some actions the GUI asks a question in a separate modal dialog.
- Instructions given before the question is answered are ignored.}
+ Instructions given before the question is answered are ignored.
+ The GUI as opened by procedure @racket[play] looks like this:
+
+@(hspace 3)@image["gui-pict.gif" #:scale 0.5]}
 
 @defparam[time-limit time (and/c real? exact? (>=/c 5)) #:value 10]{
  The GUI waits at most @racket[time] minutes when needing a mouseclick or
