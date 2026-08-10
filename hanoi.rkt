@@ -761,12 +761,16 @@
 (define (move-disk f t exit)
   (define ff (vector-ref disk-distr f))
   (define tt (vector-ref disk-distr t))
+  (define first-doze-time (min delay 1))
   (unless (null? ff)
     (define d (car ff))
     (define move-to-be-made?
       (case delay
         ((click) (check-click #t exit))
-        (else (sleep delay) (check-click #f exit))))
+        (else
+          (cond
+            ((= move-count 0) (doze first-doze-time exit) (check-click #f exit))
+            (else (doze delay exit) (check-click #f exit))))))
     (cond
       (move-to-be-made?
         (remove-disk d (sub1 (length ff)) f)
@@ -775,6 +779,22 @@
         (vector-set! disk-distr t (cons d tt))
         (draw-msg))
       (else (move-disk f t exit)))))
+
+(define (doze t exit)
+  (define starting-time (current-inexact-milliseconds))
+  (define finish-time (+ starting-time (* 1000 t)))
+  (let loop ()
+    (cond
+      ((>= (current-inexact-milliseconds) finish-time))
+      (else
+        (define click (ready-mouse-click vp))
+        (cond
+          (click
+            (dispatch-button (mouse-click-posn click)
+              (reset-button (do-reset) (exit))
+              (quit-button (exit))
+              (else (sleep 1/4) (loop))))
+          (else (sleep 1/4) (loop)))))))
 
 ; Procedure check-click enables abortion from short, long and circular mode.
 
