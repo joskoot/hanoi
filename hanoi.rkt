@@ -10,7 +10,7 @@
 
 #lang racket
 
-(provide play time-limit)
+(provide play idle-limit)
 
 ;=====================================================================================================
 ; Imports and two simple macros.
@@ -62,12 +62,12 @@
 ;=====================================================================================================
 ; Tool for aborting when waiting too long for for a mouseclick or answer to a dialog.
 
-(define default-time-limit 10) ; minutes.
+(define default-idle-minutes 10) ; minutes.
 (define min-idle-minutes 5)
 
-(define time-limit ; minutes
+(define idle-limit ; minutes
   (make-parameter
-    default-time-limit
+    default-idle-minutes
     (λ (t)
       (cond
         ((and (real? t) (>= t min-idle-minutes)) t)
@@ -82,7 +82,7 @@
       "~n  No activity during ~s minutes. GUI aborted."
       "~n  Use parameter time-limit to increase the allowed idle time"
       "~n  or use the Idle time button.")
-    (time-limit)))
+    (idle-limit)))
 
 (define (call-with-time-out thunk)
   (define time-out-custodian (make-custodian))
@@ -96,7 +96,7 @@
             (λ ()
               (define choice (thunk))
               (set-box! user-choice choice)))))
-      (sync/timeout (* (time-limit) 60) task-thread)))
+      (sync/timeout (* (idle-limit) 60) task-thread)))
   (cond
     ((not result)
      (custodian-shutdown-all time-out-custodian) 
@@ -716,7 +716,7 @@
           #:validate validate-delay))))
   (when str
     (define minutes (max min-idle-minutes (read (open-input-string str))))
-    (time-limit minutes)
+    (idle-limit minutes)
     ((draw-button-content vp) idle-pos minutes)))
 
 ;=====================================================================================================
@@ -838,7 +838,7 @@
 (define (initialize)
   ; Store variables not yet initialized.
   ; Also needed for variables they may have been mutated in a previous call to procedure play.
-  (time-limit default-time-limit)
+  (idle-limit default-idle-minutes)
   (set! height     max-height)
   (set! delay      click     )
   (set! msg-str    ""        )
@@ -859,7 +859,7 @@
   (set! peg1-button   (make-button |peg 1|     peg1-pos             ))
   (set! peg2-button   (make-button |peg 2|     peg2-pos             ))
   (set! peg3-button   (make-button |peg 3|     peg3-pos             ))
-  (set! idle-button   (make-button |idle time| idle-pos  (time-limit)))
+  (set! idle-button   (make-button |idle time| idle-pos  (idle-limit)))
   ; Draw a girder.
   ((draw-solid-rectangle vp) girder-pos (- vp-width (* 2 border)) blok gray)
   (for ((p (in-range 0 3)))

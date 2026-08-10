@@ -96,11 +96,11 @@ of a peg would make the puzzle trivial.
 
 The blue rectangles are buttons that can be clicked to start an action.
 
-@defparam[time-limit time (and/c real? exact? (>=/c 5)) #:value 10]{
+@defparam[idle-limit time (and/c real? exact? (>=/c 5)) #:value 10]{
  When the GUI is waiting for a mouseclick or an answer to a modal dialog
  but receives no response within @racket[time] minutes, the GUI aborts.
  Within the GUI the limit can be adjusted by means of
- the @seclink["Idle time"]{idle time} button.}
+ the @seclink["Idle limit"]{idle limit} button.}
 
 @subsection[#:tag "Height"]{Height}
 
@@ -199,7 +199,7 @@ the GUI is neither closed nor terminated.
  However, after closing the GUI window, no such mouseclick can be made
  and answers to modal dialogs are not received.
  Nevertheless, the GUI eventually will terminate.
- See the @seclink["Idle time"]{idle time} button.}
+ See the @seclink["Idle limit"]{idle limit} button.}
 
 @subsection[#:tag "Peg n"]{Peg n}
 
@@ -207,14 +207,14 @@ n is 1, 2 or 3.
 Used to make moves manually and for @seclink["Setup"]{setup} of a distribution of disks.
 @nb{The same} can be done by clicking nearby the corresponding peg.
 
-@subsection[#:tag "Idle time"]{Idle time}
-Opens a dialog to adjust the maximum idle time in minutes.
+@subsection[#:tag "Idle limit"]{Idle limit}
+Opens a dialog to adjust the idle limit in minutes.
 When the GUI is waiting for a mouseclick or an answer to a dialog but
-does not receive such click or answer within the maximum idle time,
+does not receive such click or answer within the idle limit,
 it halts.
-Initially the idle time is 10 minutes. When giving an idle time of less than 5 minutes,
+Initially the idle limit is 10 minutes. When giving an idle limit of less than 5 minutes,
 the time is set to 5 minutes.
-Outside the control of the GUI the idle time can be set by means of parameter @racket[time-limit].
+Outside the control of the GUI the idle limit can be set by means of parameter @racket[idle-limit].
 
 @section[#:style '(unnumbered)]{Appendix}
 
