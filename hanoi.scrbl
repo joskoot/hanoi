@@ -12,7 +12,7 @@
      (only-in typed/racket Setof Natural Sequenceof Index))
    (for-syntax racket))
 
-@(define-for-syntax local #f)
+@(define-for-syntax local #t)
 
 @(define-syntax-rule
    (Interaction x ...)
@@ -68,11 +68,15 @@ They are put on the pegs.
 A disk never rests upon a smaller disk.
 Initially all disks are on the peg at the left,
 forming a conical tower with the disks in order of decreasing size from bottom to top.
+See the @elemref["figure"]{figure} below.
 The goal of the game is to move all disks to the peg at the right by making successive moves.
 A move is made by taking the top disk of a non-empty peg and putting it on top onto another peg
 or just putting there if the peg of destination currently has no disks.
 However, it is not allowed to put a disk upon a smaller one.
 Hence a disk never rests upon a smaller one.
+Except while being moved, a disk always resides on a peg, both before and after it is moved.
+Allowing to put a disk somewhere else than on a peg or allowing to move another peg than one on top
+of a peg would make the puzzle trivial.
 
 @section[#:style '(unnumbered)]{How to play}
 
@@ -84,13 +88,17 @@ Hence a disk never rests upon a smaller one.
  A button can temporarily be absent when not applicable during the current action.
  For some actions the GUI asks a question in a separate modal dialog.
  Instructions given before the question is answered are ignored.
- The GUI as opened by procedure @racket[play] looks like this:
+ The GUI as opened by procedure @racket[play] looks like this:}
 
-@(hspace 3)@image["gui-pict.gif" #:scale 0.5]}
+@elemtag["figure"]
+
+@(hspace 3)@image["gui-pict.gif" #:scale 0.5]
+
+The blue rectangles are buttons that can be clicked to start an action.
 
 @defparam[time-limit time (and/c real? exact? (>=/c 5)) #:value 10]{
- The GUI waits at most @racket[time] minutes when needing a mouseclick or
- answer to a modal dialog. After this time has expired, the GUI aborts.
+ When the GUI is waiting for a mouseclick or an answer to a modal dialog
+ but receives no response within @racket[time] minutes, the GUI aborts.
  Within the GUI the limit can be adjusted by means of
  the @seclink["Idle time"]{idle time} button.}
 
@@ -110,7 +118,7 @@ the disk is to be taken from
 followed by a click on the @seclink["Peg n"]{peg} button of destination.
 In stead of clicking a @seclink["Peg n"]{peg} button one can click nearby the corresponding peg.
 The disk selected to be moved is colored red.
-The selection can be canceled by clicking nearby the peg were it is
+@nb{The selection} can be canceled by clicking nearby the peg were it is
 or clicking the corresponding @seclink["Peg n"]{peg} button
 or by clicking the @seclink["Quit"]{quit} button.
 An attempt to make an illegal move is ignored.
@@ -125,14 +133,15 @@ When the long mode is selected, first all disks are placed on the peg at the lef
 subsequently moved to the peg at the right with the largest number of moves possible
 without passing any distribution of disks more than once.
 @tt{3@superscript{h}-1} moves, where @tt{h} is the @seclink["Height"]{height}.
-In fact every legal distribution of disks is visited. The sequence of moves is uniquely defined.
+In fact every legal distribution of disks is visited. @nb{The sequence} of moves is uniquely defined.
 
 When the circular mode is selected, first all disks are placed on the peg at the left and
 subsequently moved such as to pass exactly once along
 every legal distribution
 of disks and finishing with all disks at the peg started from.
 @tt{3@superscript{h}} moves, where @tt{h} is the @seclink["Height"]{height}.
-The sequence of moves is uniquely defined.
+@nb{The sequence} of moves is uniquely defined when we ignore the fact that the moves can be made
+in reversed order too.
 
 The short, long and circular mode can be aborted by clicking the
 @seclink["Reset"]{reset} or @seclink["Quit"]{quit} button,
@@ -169,7 +178,7 @@ May cancel a current action in order to return to @seclink["Mode"]{mode} manual.
 Removes all disks and subsequently places disks on the pegs in a
 distribution chosen by the user.
 Disks are placed in order of decreasing size.
-The user is supposed to click a @seclink["Peg n"]{peg} button or nearby the corresponding peg
+@nb{The user} is supposed to click a @seclink["Peg n"]{peg} button or nearby the corresponding peg
 indicating where each next disk is to be placed.
 Requires @seclink["Height"]{height} such clicks.
 Click the @seclink["Reset"]{reset} button to cancel setup.
@@ -185,21 +194,24 @@ the GUI is neither closed nor terminated.
 
 @note{The window of the GUI can be closed by means of the close button in the title bar
  (at the top-right corner),
- but procedure @racket[play] probably is not terminated because it may keep waiting for a mouseclick.
- However, after closing the GUI window, no such mouseclick can be made.
- @nb{In @other-doc['(lib "graphics/scribblings/graphics.scrbl")]}
- I have not found a mean to check the state of a viewport.@(lb)
- (open, hidden or closed)}
+ but procedure @racket[play] probably is not terminated immediately
+ because it may keep waiting for a mouseclick or an answer to a modal dialog.
+ However, after closing the GUI window, no such mouseclick can be made
+ and answers to modal dialogs are not received.
+ Nevertheless, the GUI eventually will terminate.
+ See the @seclink["Idle time"]{idle time} button.}
 
 @subsection[#:tag "Peg n"]{Peg n}
 
 n is 1, 2 or 3.
 Used to make moves manually and for @seclink["Setup"]{setup} of a distribution of disks.
-The same can be done by clicking nearby the corresponding peg.
+@nb{The same} can be done by clicking nearby the corresponding peg.
 
 @subsection[#:tag "Idle time"]{Idle time}
 Opens a dialog to adjust the maximum idle time in minutes.
-When the GUI receives no mouseclick or no answer to a dialog within the idle time minutes, it halts.
+When the GUI is waiting for a mouseclick or an answer to a dialog but
+does not receive such click or answer within the maximum idle time,
+it halts.
 Initially the idle time is 10 minutes. When giving an idle time of less than 5 minutes,
 the time is set to 5 minutes.
 Outside the control of the GUI the idle time can be set by means of parameter @racket[time-limit].
@@ -213,7 +225,7 @@ Let @tt{h} be the number of disks.
 @nb{The distributions} can be taken as the vertices of a connected graph
 with the moves as bidirectional edges of length one.
 Connectivity means that there is at least one path between every two vertices.
-The graph can be drawn such as to resemble a
+@nb{The graph} can be drawn such as to resemble a
 @hyperlink["https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle"]{Sierpińsky triangle}.
 For example, for 5 disks:
 
@@ -221,7 +233,8 @@ For example, for 5 disks:
 
 In contrast to a
 @hyperlink["https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle"]{Sierpińsky triangle}
-the vertices of the triangles of a Hanoi graph do not coincide with the vertices of other triangles.
+@nb{the vertices} of the triangles of a Hanoi graph do not coincide with the vertices
+of other triangles.
 The vertices of two triangles are separated by at least one edge.
 The three vertices of the largest triangle represent distributions of all disks on the same peg.
 These have two edges only,
@@ -254,8 +267,8 @@ For three disks and labeling the vertices such as to show on which pegs the disk
 Another interesting way is the circular mode, moving the disks such as to visit all legal
 distributions of disks among the pegs exactly once
 and finishing with all disks on the starting peg.
-This takes @tt{h}@superscript{3} moves. The circular mode is uniquely defined too when disregarding
-the fact that the path can be followed in opposit direction too. For three disks:
+This takes @tt{h}@superscript{3} moves. @nb{The circular} mode is uniquely defined too when
+disregarding the fact that the moves can be made in reversed order too. For three disks:
 
 @(hspace 5) @image["circular3.gif" #:scale 0.3]
 
