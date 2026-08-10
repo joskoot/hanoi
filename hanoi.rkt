@@ -806,7 +806,7 @@
     (p
       (dispatch-button p
         (reset-button (do-reset) (exit))
-        (quit-button (exit))))
+        (quit-button (displayln "quit") (exit))))
     (else #t)))
 
 ;=====================================================================================================
