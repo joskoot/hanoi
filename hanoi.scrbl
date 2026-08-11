@@ -239,9 +239,9 @@ These have two edges only,
 the two moving the smallest disk to one of the two empty pegs.
 All other vertices of the graph represent distributions with at most one empty peg.
 Such a vertex has three edges. Let Pa, Pb and Pc
-be the three pegs in increasing order of the size of the disk on top,
-regarding an empty peg as having the largest disk on top.
-Then there are three edges: Pa→Pb, Pa→Pc and Pb→Pc.
+be the three pegs in increasing order of the size of the disk on top.
+If there is an empty peg, take that one as Pc.
+There are three edges: Pa→Pb, Pa→Pc and Pb→Pc.
 The graph has
 @nb{@tt{(3(3@superscript{h}@(minus)3)+3×2)/2)}} =
 @nb{@tt{(3@superscript{h+1}@(minus)@smaller{3})/2}}
