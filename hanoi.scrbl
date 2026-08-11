@@ -1,9 +1,9 @@
 #lang scribble/manual
 @;----------------------------------------------------------------------------------------------------
 @(require
+   scribble/base
    scribble/core
    scribble/eval
-   racket/sandbox
    racket
    ; "hanoi.rkt"
    (for-label
@@ -71,12 +71,10 @@ forming a conical tower with the disks in order of decreasing size from bottom t
 See the @elemref["figure"]{figure} below.
 The goal of the game is to move all disks to the peg at the right by making successive moves.
 A move is made by taking the top disk of a non-empty peg and putting it on top onto another peg
-or just putting there if the peg of destination currently has no disks.
+or just putting it there if the peg of
+des@element['roman ?-]ti@element['roman ?-]na@element['roman ?-]tion has no disks.
 However, it is not allowed to put a disk upon a smaller one.
-Hence a disk never rests upon a smaller one.
-Except while being moved, a disk always resides on a peg, both before and after it is moved.
-Allowing to put a disk somewhere else than on a peg or allowing to move another peg than one on top
-of a peg would make the puzzle trivial.
+Except while being moved a disk always is on a peg and never rests upon a smaller one.
 
 @section[#:style '(unnumbered)]{How to play}
 
@@ -94,7 +92,7 @@ of a peg would make the puzzle trivial.
 
 @(hspace 3)@image["gui-pict.gif" #:scale 0.5]
 
-The blue rectangles are buttons that can be clicked to start an action.
+The blue rectangles are butt{?-}ons that can be clicked to start an action.
 
 @defparam[idle-limit time (and/c real? exact? (>=/c 1)) #:value 10]{
  When the GUI is waiting for a mouseclick or an answer to a modal dialog
