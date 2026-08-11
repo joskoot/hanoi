@@ -92,7 +92,7 @@ Except while being moved a disk always is on a peg and never rests upon a smalle
 
 @(hspace 3)@image["gui-pict.gif" #:scale 0.5]
 
-The blue rectangles are butt{?-}ons that can be clicked to start an action.
+The blue rectangles are buttons that can be clicked to start an action.
 
 @defparam[idle-limit time (and/c real? exact? (>=/c 1)) #:value 10]{
  When the GUI is waiting for a mouseclick or an answer to a modal dialog
