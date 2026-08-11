@@ -96,7 +96,7 @@ of a peg would make the puzzle trivial.
 
 The blue rectangles are buttons that can be clicked to start an action.
 
-@defparam[idle-limit time (and/c real? exact? (>=/c 5)) #:value 10]{
+@defparam[idle-limit time (and/c real? exact? (>=/c 1)) #:value 10]{
  When the GUI is waiting for a mouseclick or an answer to a modal dialog
  but receives no response within @racket[time] minutes, the GUI aborts.
  Within the GUI the limit can be adjusted by means of
@@ -212,8 +212,8 @@ Opens a dialog to adjust the idle limit in minutes.
 When the GUI is waiting for a mouseclick or an answer to a dialog but
 does not receive such click or answer within the idle limit,
 it halts.
-Initially the idle limit is 10 minutes. When giving an idle limit of less than 5 minutes,
-the time is set to 5 minutes.
+Initially the idle limit is 10 minutes. When giving an idle limit of less than 1 minute,
+the time is set to 1 minute.
 Outside the control of the GUI the idle limit can be set by means of parameter @racket[idle-limit].
 
 @section[#:style '(unnumbered)]{Appendix}

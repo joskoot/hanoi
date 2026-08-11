@@ -63,17 +63,17 @@
 ; Tool for aborting when waiting too long for for a mouseclick or answer to a dialog.
 
 (define default-idle-minutes 10) ; minutes.
-(define min-idle-minutes 5)
+(define min-idle-minutes 1)
 
 (define idle-limit ; minutes
   (make-parameter
     default-idle-minutes
     (λ (t)
       (cond
-        ((and (real? t) (>= t min-idle-minutes)) t)
+        ((and (real? t) (exact? t) (>= t min-idle-minutes)) t)
         (else
           (raise-user-error 'time-limit
-            "~n  positive real number expected, at least 5. Given ~s" t))))
+            "~n  positive exact real number expected, at least ~s. Given ~s" min-idle-minutes t))))
     'time-limit))
 
 (define (abort)
@@ -698,7 +698,7 @@
           (cond
             ((not (eof-object? (read input))) #f)
             ((infinite? idle-time) #f)
-            ((and (real? idle-time) (>= idle-time 0) (exact? idle-time)))
+            ((and (real? idle-time) (exact? idle-time) (>= idle-time 0)))
             (else #f))))))
   (define str
     (call-with-time-out
@@ -709,7 +709,7 @@
             "Enter a non-negative exact real number for the\n"
             "for the allowed idle time in minutes.\n"
             "Do not enter more than 6 characters.\n"
-            "Idle times less than 5 minutes are set to 5 minutes.")
+            "Idle times less than 1 minutes are set to 1 minutes.")
           #f	
           "10"	
           '(disallow-invalid)	
@@ -778,7 +778,7 @@
         (vector-set! disk-distr f (cdr ff))
         (vector-set! disk-distr t (cons d tt))
         (draw-msg))
-      (else (move-disk f t exit)))))
+      #;(else (move-disk f t exit)))))
 
 (define (doze t exit)
   (define starting-time (current-inexact-milliseconds))
@@ -793,8 +793,8 @@
             (dispatch-button (mouse-click-posn click)
               (reset-button (do-reset) (exit))
               (quit-button (exit))
-              (else (sleep 1/4) (loop))))
-          (else (sleep 1/4) (loop)))))))
+              (else (sleep (/ delay 10)) (loop))))
+          (else (sleep (/ delay 10)) (loop)))))))
 
 ; Procedure check-click enables abortion from short, long and circular mode.
 
@@ -806,7 +806,7 @@
     (p
       (dispatch-button p
         (reset-button (do-reset) (exit))
-        (quit-button (displayln "quit") (exit))))
+        (quit-button (exit))))
     (else #t)))
 
 ;=====================================================================================================
