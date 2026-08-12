@@ -2,9 +2,9 @@
 ;=====================================================================================================
 ;
 ; A GUI playing the game of The Tower of Hanoi. Moves can be made manually but also automatically by
-; the GUI. It has clickable buttons Height, Mode, Delay, Reset, Setup, Quit, Peg1, Peg2, Peg3 and Idle
-; time. A click on such button initiates an action. During an action some buttons may be disabled and
-; disappear temporarily from the screen.
+; the GUI. It has clickable buttons Height, Mode, Delay, Reset, Setup, Quit, Peg1, Peg2, Peg3, Idle-
+; time and Comp. A click on such button initiates an action. During an action some buttons may be
+; disabled and disappear temporarily from the screen.
 ;
 ;=====================================================================================================
 
@@ -56,7 +56,7 @@
     (  peg1-button (do-manual 0) (main))
     (  peg2-button (do-manual 1) (main))
     (  peg3-button (do-manual 2) (main))
-    (  move-button (do-move    ) (main))
+    (  comp-button (do-comp    ) (main))
     ( quit-button  (void       )       ) ; Exit from the game.
     (else
       (define p (dispatch-peg pos))
@@ -243,15 +243,15 @@
 (define long-str   " long "     )
 (define circ-str   " circular " )
 (define idle-str   " Idle time ")
-(define move-str   " Move "     )
+(define comp-str   " Comp "     )
 (define click 'click)
 (define click-str (symbol->string 'click))
-(define red   (make-rgb 1   0   0))
-(define white (make-rgb 1   1   1))
-(define black (make-rgb 0   0   0))
+(define red   (make-rgb 1.0 0.0 0.0))
+(define white (make-rgb 1.0 1.0 1.0))
+(define black (make-rgb 0.0 0.0 0.0))
 (define gray  (make-rgb 0.6 0.6 0.6))
-(define blue  (make-rgb 0   0   1))
-(define green (make-rgb 0 0.8   0))
+(define blue  (make-rgb 0.0 0.0 1.0))
+(define green (make-rgb 0.0 0.8 0.0))
 
 ;=====================================================================================================
 ; Procedures to draw buttons and their contents. Computation of their sizes.
@@ -329,8 +329,8 @@
 (define   peg2-pos (add-posn   peg1-pos (+ button-width blok) 0))
 (define   peg3-pos (add-posn   peg2-pos (+ button-width blok) 0))
 (define   idle-pos (add-posn   peg3-pos (+ button-width blok) 0))
-(define   move-pos (add-posn   idle-pos (+ button-width blok) 0))
-(define    msg-pos (add-posn   move-pos (+ button-width border) (- button-height string-offset)))
+(define   comp-pos (add-posn   idle-pos (+ button-width blok) 0))
+(define    msg-pos (add-posn   comp-pos (+ button-width border) (- button-height string-offset)))
 (define disk-height blok)
 (define max-tower-height (* max-height disk-height))
 (define min-disk-width (* 3 blok))
@@ -706,11 +706,11 @@
     ((draw-button-content vp) idle-pos minutes)))
 
 ;=====================================================================================================
-; Action move
+; Action comp
 
-(define (do-move)
+(define (do-comp)
   (define (catcher e) (values (quote not-ok) #f #f #f #f))
-  (define (validate-move str)
+  (define (validate-comp str)
     (with-handlers ((exn:fail? catcher))
       (define input (open-input-string str))
       (define L (read input))
@@ -739,7 +739,7 @@
   (when
     (call-with-time-out
       (λ ()
-        (message-box move-str
+        (message-box comp-str
           (string-append
             "Computation of move m:\n"
             "  which disk is moved,\n"
@@ -755,7 +755,7 @@
       (define str
         (call-with-time-out
           (λ ()
-            (get-text-from-user move-str
+            (get-text-from-user comp-str
               (if first?
                 "Give mode, height, move -r from-disk and onto-disk"
                 "Wrong data, try again\nGive mode, height, move -r from-disk and onto-disk")
@@ -763,7 +763,7 @@
               ""
               (quote ())))))
       (when str
-        (define-values (L h m f t) (validate-move str))
+        (define-values (L h m f t) (validate-comp str))
         (cond
           ((eq? L (quote not-ok)) (loop #f))
           (else
@@ -782,14 +782,15 @@
             (when d ; catch not yet implemented calc-circ, make without when after implementing.
               (call-with-time-out
                 (λ ()
-                  (message-box move-str
+                  (message-box comp-str
                     (string-append
                       (format
                         (string-append
-                          "Results~n~n"
+                          "Results for move ~s for path ~a from peg ~s to peg ~s with ~s disks.~n~n"
                           "Disk ~s from peg ~s onto peg ~s.~n"
-                          "Resulting distribution:~n~a~n")
-                        d ff tt
+                          "Resulting distribution: "
+                          "positions of disks in order of increasing size:~n~a~n")
+                        m L f t h d ff tt
                         (apply string-append
                           (for/fold ((result '()) #:result (reverse result)) ((p (in-list distr)))
                             (if (and (> p 0) (zero? (modulo p 30)))
@@ -823,6 +824,13 @@
   (define (thrd m   f t) (if (odd? m) t f))
   (define (onto m h f t) (posi m (disk m) f t))
   (define (from m h f t) (- 3 (onto m h f t) (thrd m f t)))
+  #;(define (disk m)
+      (let*
+        ((log3 (inexact->exact (log 3)))
+         (first-guess (ceiling (/ (inexact->exact (log m)) log3)))
+         (upper-bound (expt 3 first-guess))
+         (lowest-power-3 (gcd m upper-bound)))
+        (inexact->exact (round (/ (log lowest-power-3) log3)))))
   (define (disk m) (if (zero? (mod3 m)) (add1 (disk (quotient m 3))) 0))
   (define (posi m d f t)
     (case (mod4 (mcnt m d))
@@ -843,7 +851,7 @@
 (define (calc-circ h m f t)
   (call-with-time-out
     (λ ()
-      (message-box move-str "Circular not yet implemented")))
+      (message-box comp-str "Circular not yet implemented")))
   (values #f #f #f #f))
   
 ;=====================================================================================================
@@ -961,7 +969,7 @@
   (when p
     (dispatch-button p
       (reset-button (do-reset) (exit))
-      ( move-button (do-move) #f)
+      ( comp-button (do-comp) #f)
       ( quit-button (exit)))))
 
 ;=====================================================================================================
@@ -989,12 +997,11 @@
 (define   peg2-button 'yet-to-be-initialized)
 (define   peg3-button 'yet-to-be-initialized)
 (define   idle-button 'yet-to-be-initialized)
-(define   move-button 'yet-to-be-initialized)
+(define   comp-button 'yet-to-be-initialized)
 
 (define (initialize)
   ; Store variables not yet initialized.
   ; Also needed for variables they may have been mutated in a previous call to procedure play.
-  (idle-limit default-idle-minutes)
   (set! height     max-height)
   (set! delay      click     )
   (set! msg-str    ""        )
@@ -1016,7 +1023,7 @@
   (set!   peg2-button (make-button |peg 2|     peg2-pos             ))
   (set!   peg3-button (make-button |peg 3|     peg3-pos             ))
   (set!   idle-button (make-button |idle time| idle-pos (idle-limit)))
-  (set!   move-button (make-button move        move-pos             ))
+  (set!   comp-button (make-button comp        comp-pos             ))
   ; Draw a girder.
   ((draw-solid-rectangle vp) girder-pos (- vp-width (* 2 border)) blok gray)
   (for ((p (in-range 0 3)))

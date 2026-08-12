@@ -12,7 +12,7 @@
      (only-in typed/racket Setof Natural Sequenceof Index))
    (for-syntax racket))
 
-@(define-for-syntax local #f)
+@(define-for-syntax local #t)
 
 @(define-syntax-rule
    (Interaction x ...)
@@ -197,7 +197,7 @@ the GUI is neither closed nor terminated.
  However, after closing the GUI window, no such mouseclick can be made
  and answers to modal dialogs are not received.
  Nevertheless, the GUI eventually will terminate.
- See the @seclink["Idle limit"]{idle limit} button.}
+ See the @seclink["Idle limit"]{idle limit} button and parameter @racket[idle-limit].}
 
 @subsection[#:tag "Peg n"]{Peg n}
 
@@ -209,11 +209,10 @@ Used to make moves manually and for @seclink["Setup"]{setup} of a distribution o
 
 Opens a dialog to adjust the idle limit in minutes.
 When the GUI is waiting for a mouseclick or an answer to a dialog but
-does not receive such click or answer within the idle limit,
-it halts.
-Initially the idle limit is 10 minutes. When giving an idle limit of less than 1 minute,
+does not receive such click or answer within the idle limit, it halts.
+The initial idle limit is collected from parameter @racket[idle-limit].
+When giving an idle limit of less than 1 minute,
 the time is set to 1 minute.
-Outside the control of the GUI the idle limit can be set by means of parameter @racket[idle-limit].
 
 @subsection[#:tag "Move"]{Move}
 
