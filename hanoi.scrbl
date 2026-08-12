@@ -206,6 +206,7 @@ Used to make moves manually and for @seclink["Setup"]{setup} of a distribution o
 @nb{The same} can be done by clicking nearby the corresponding peg.
 
 @subsection[#:tag "Idle limit"]{Idle limit}
+
 Opens a dialog to adjust the idle limit in minutes.
 When the GUI is waiting for a mouseclick or an answer to a dialog but
 does not receive such click or answer within the idle limit,
@@ -213,6 +214,30 @@ it halts.
 Initially the idle limit is 10 minutes. When giving an idle limit of less than 1 minute,
 the time is set to 1 minute.
 Outside the control of the GUI the idle limit can be set by means of parameter @racket[idle-limit].
+
+@subsection[#:tag "Move"]{Move}
+
+Computes a move and the resulting distribution of disks
+for the shortest path, the longest path or the circular path,
+all three of them starting and ending with all disk on one peg.
+Opens some dialogs.
+The first is for information only.
+The second one asks some data:
+
+@(hspace 3)The mode (S for short, L for long and C for circular)@(lb)
+@(hspace 3)The number of disks (which can be more than 9, any positive number will do)@(lb)
+@(hspace 3)The move number (the first move has number 1)@(lb)
+@(hspace 3)The starting peg (1, 2 or 3)@(lb)
+@(hspace 3)The destination peg (1, 2 or 3, but not the same as the starting peg)
+
+For a circular path the destination determines the order of visited distributions
+with all disk on one peg: starting peg, destination peg,
+the remaining third peg and finally back to the starting peg.
+The computation is fast because it is not recursive, except that
+for the long and circular path the disk to be moved is computed recursively
+by dividing the move number by 3 until it is not a multiple of 3.
+This is slow when the move number is a very large power of 3.
+Computing which disk to move can be done without recursion, but that is rather complicated.
 
 @section[#:style '(unnumbered)]{Appendix}
 
