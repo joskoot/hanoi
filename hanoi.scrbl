@@ -49,9 +49,10 @@
 @(define evaller (make-evaller))
 
 @(define nb nonbreaking)
-
+@(define ↑ superscript)
+@(define ↓ subscript)
 @(define lb linebreak)
-@(define(minus) (tt "-"))
+@(define(minus) (larger (tt "-")))
 
 @title[#:version ""]{Tower of Hanoi}
 @author{Jacob J. A. Koot}
@@ -123,21 +124,21 @@ An attempt to make an illegal move is ignored.
 
 In short mode the disks are moved by the GUI to the peg at the right
 with the least possible number of moves,
-at most @tt{2@superscript{h}-1} moves, where @tt{h} is the @seclink["Height"]{height}.
-Exactly @tt{2@superscript{h}-1} moves when starting with all disks on @seclink["Peg n"]{peg} 1 or 2.
+at most @tt{2@↑{h}-1} moves, where @tt{h} is the @seclink["Height"]{height}.
+Exactly @tt{2@↑{h}-1} moves when starting with all disks on @seclink["Peg n"]{peg} 1 or 2.
 The shortest way always is uniquely defined.
 
 When the long mode is selected, first all disks are placed on the peg at the left and
 subsequently moved to the peg at the right with the largest number of moves possible
 without passing any distribution of disks more than once.
-@tt{3@superscript{h}-1} moves, where @tt{h} is the @seclink["Height"]{height}.
+@tt{3@↑{h}-1} moves, where @tt{h} is the @seclink["Height"]{height}.
 In fact every legal distribution of disks is visited. @nb{The sequence} of moves is uniquely defined.
 
 When the circular mode is selected, first all disks are placed on the peg at the left and
 subsequently moved such as to pass exactly once along
 every legal distribution
 of disks and finishing with all disks at the peg started from.
-@tt{3@superscript{h}} moves, where @tt{h} is the @seclink["Height"]{height}.
+@tt{3@↑{h}} moves, where @tt{h} is the @seclink["Height"]{height}.
 @nb{The sequence} of moves is uniquely defined when we ignore the fact that the moves can be made
 in reversed order too.
 
@@ -214,7 +215,7 @@ The initial idle limit is collected from parameter @racket[idle-limit].
 When giving an idle limit of less than 1 minute,
 the time is set to 1 minute.
 
-@subsection[#:tag "Move"]{Move}
+@subsection[#:tag "Comp"]{Comp}
 
 Computes a move and the resulting distribution of disks
 for the shortest path, the longest path or the circular path,
@@ -224,26 +225,23 @@ The first is for information only.
 The second one asks some data:
 
 @(hspace 3)The mode (S for short, L for long and C for circular)@(lb)
-@(hspace 3)The number of disks (which can be more than 9, any positive number will do)@(lb)
+@(hspace 3)The number of disks (which can be more than 9. Every positive number is accepted)@(lb)
 @(hspace 3)The move number (the first move has number 1)@(lb)
 @(hspace 3)The starting peg (1, 2 or 3)@(lb)
 @(hspace 3)The destination peg (1, 2 or 3, but not the same as the starting peg)
 
+The computation is fast because it is not recursive in the sense that
+it does not depend on preceding moves.
 For a circular path the destination determines the order of visited distributions
 with all disk on one peg: starting peg, destination peg,
 the remaining third peg and finally back to the starting peg.
-The computation is fast because it is not recursive, except that
-for the long and circular path the disk to be moved is computed recursively
-by dividing the move number by 3 until it is not a multiple of 3.
-This is slow when the move number is a very large power of 3.
-Computing which disk to move can be done without recursion, but that is rather complicated.
 
 @section[#:style '(unnumbered)]{Appendix}
 
 @subsection{Graphical representation}
 
 Let @tt{h} be the number of disks.
-@nb{The disks} can be distributed among the pegs in 3@superscript{@tt{h}} ways.
+@nb{The disks} can be distributed among the pegs in 3@↑{@tt{h}} ways.
 @nb{The distributions} can be taken as the vertices of a connected graph
 with the moves as bidirectional edges of length one.
 Connectivity means that there is at least one path between every two vertices.
@@ -267,20 +265,20 @@ be the three pegs in increasing order of the size of the disk on top.
 If there is an empty peg, take that one as Pc.
 There are three edges: Pa→Pb, Pa→Pc and Pb→Pc.
 The graph has
-@nb{@tt{(3(3@superscript{h}@(minus)3)+3×2)/2)}} =
-@nb{@tt{(3@superscript{h+1}@(minus)@smaller{3})/2}}
-edges because it has @tt{h}@superscript{3} vertices, of which
-@tt{h@superscript{3}@(minus)3} have @nb{3 edges} and 3 vertices have 2 edges only.
+@nb{@tt{(3(3@↑{h}@(minus)3)+3×2)/2)}} =
+@nb{@tt{(3@↑{h+1}@(minus)@smaller{3})/2}}
+edges because it has @tt{h}@↑{3} vertices, of which
+@tt{h@↑{3}@(minus)3} have @nb{3 edges} and 3 vertices have 2 edges only.
 The division by 2 is needed because every edge connects 2 vertices.
 
 Consider paths from a distribution of all disks on the same peg
 to a distribution with all disks on another peg.
 These distributions are represented by the vertices of the largest triangle.
-The least number of moves required is @tt{h}@superscript{2}@tt{-}1 with uniquely defined
+The least number of moves required is @tt{h}@↑{2}@tt{-}1 with uniquely defined
 sequence of moves. This is the short mode, in the graph shown by the sides of the largest triangle.
 
 The largest number of moves without passing a distribution of disks among the pegs more than once
-is @tt{h}@superscript{3}@(minus)1, implying that every legal distribution is visited exactly once.
+is @tt{h}@↑{3}@(minus)1, implying that every legal distribution is visited exactly once.
 This is the long mode and is uniquely defined too.
 For three disks and labeling the vertices such as to show on which pegs the disks are: 
 
@@ -289,7 +287,7 @@ For three disks and labeling the vertices such as to show on which pegs the disk
 Another interesting way is the circular mode, moving the disks such as to visit all legal
 distributions of disks among the pegs exactly once
 and finishing with all disks on the starting peg.
-This takes @tt{h}@superscript{3} moves. @nb{The circular} mode is uniquely defined too when
+This takes @tt{h}@↑{3} moves. @nb{The circular} mode is uniquely defined too when
 disregarding the fact that the moves can be made in reversed order too. For three disks:
 
 @(hspace 5) @image["circular3.gif" #:scale 0.3]
@@ -299,7 +297,7 @@ disregarding the fact that the moves can be made in reversed order too. For thre
 The number of distinct non self-crossing paths from a distribution with all disks on the same peg
 to one with all disks on another peg, those not passing all vertices included,
 is a(n) with @nb{a(0)=1} and
-@nb{a(n+1)=a(n)@superscript{2}+a(n)@superscript{3}}.
+@nb{a(n+1)=a(n)@↑{2}+a(n)@↑{3}}.
 This is a very fast increasing sequence.
 See @hyperlink["https://oeis.org/A125295"]{A125295} of @hyperlink["https://oeis.org/"]{OEIS}.
 
@@ -307,7 +305,7 @@ See @hyperlink["https://oeis.org/A125295"]{A125295} of @hyperlink["https://oeis.
 
 Regarding elementary arithmetic operations as non-recursive,
 given height @tt{h}, starting peg @tt{f} and destination peg @tt{t},
-all information about the @tt{m}@superscript{th} move
+all information about the @tt{m}@↑{th} move
 along the shortest path from @tt{f} to @tt{t}
 and the resulting distribution of disks
 can be computed without recursion.
@@ -400,7 +398,7 @@ peg the disk is taken from, the peg it is moved to and the remaining third peg.
      (define f 0)
      (define t 2)
      (printf "Length of the whole path: ~s~n" (sub1 (expt 2 h)))
-     (printf "Move     : ~s~n"       N-Avogadro)
+     (printf "Comp     : ~s~n"       N-Avogadro)
      (printf "Disk     : ~s~n" (disk N-Avogadro))
      (printf "From peg : ~s~n" (from N-Avogadro h f t))
      (printf "Onto peg : ~s~n" (onto N-Avogadro h f t))
@@ -451,7 +449,7 @@ would make the code less easy to read.
      (define f 0)
      (define t 2)
      (printf "Length of the whole path: ~s~n" (sub1 (expt 3 h)))
-     (printf "Move     : ~s~n"       N-Avogadro)
+     (printf "Comp     : ~s~n"       N-Avogadro)
      (printf "Disk     : ~s~n" (disk N-Avogadro))
      (printf "From peg : ~s~n" (from N-Avogadro h f t))
      (printf "Onto peg : ~s~n" (onto N-Avogadro h f t))
@@ -467,7 +465,7 @@ The formulas are not used by procedure @racket[play].
 When walking a whole path, recursion is faster because it can use information about
 what happened during previous moves,
 but when wanting the information for one move only, for example
-move 6.02214076×10@superscript{23} (Avogadro's number) for a tower of 80 disks,
+move 6.02214076×10@↑{23} (Avogadro's number) for a tower of 80 disks,
 the formulas produce results instantaneously without the need to pass along previous moves.
 See the @elemref["example"]{examples above}.
 
@@ -477,13 +475,13 @@ Let h be the number of disks, h≥3.
 A distribution of these h disks can have one or two empty pegs.
 Obviously there are three distributions with two empty pegs.
 There are three ways to select two pegs out of three
-and 2@superscript{h} ways to distribute the disks among
+and 2@↑{h} ways to distribute the disks among
 these two pegs. However, two of these distributions leave the other peg empty.
-Hence given a selection of the two pegs we find @nb{2@superscript{h}@(minus)2} distributions and
-because the two pegs can be chosen in three ways, we find a total of @nb{3(2@superscript{h}@(minus)2)}
+Hence given a selection of the two pegs we find @nb{2@↑{h}@(minus)2} distributions and
+because the two pegs can be chosen in three ways, we find a total of @nb{3(2@↑{h}@(minus)2)}
 distributions with one peg empty.
-@nb{The total} number of distributions is 3@superscript{h}. Hence there are
-@nb{3@superscript{h}@(minus)3(2@superscript{h}@(minus)2)@(minus)3} distributions without empty peg.
+@nb{The total} number of distributions is 3@↑{h}. Hence there are
+@nb{3@↑{h}@(minus)3(2@↑{h}@(minus)2)@(minus)3} distributions without empty peg.
 Contemplating separately all distributions for h=1 and h=2,
 the formulas appear to be correct for these two cases too,
 although this does not follow from the above deduction.
