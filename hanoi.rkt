@@ -7,13 +7,11 @@
 ; disabled and disappear temporarily from the screen.
 ;
 ;=====================================================================================================
+; Exports, imports and two simple macros.
 
 #lang racket
 
 (provide play idle-limit)
-
-;=====================================================================================================
-; Imports and two simple macros.
 
 (require
   graphics/graphics
@@ -72,7 +70,7 @@
      (syntax
        (let ((p pos))
          (cond
-           ((idle-button 'in-button? p) (do-idle) (main))
+           ;  ((idle-button 'in-button? p) (do-idle) (main))
            ((button 'in-button? p) do-button ...) ...
            (else else-clause ...)))))
     ((_ pos (button do-button ...) ...)
@@ -476,7 +474,8 @@
            peg1-button
            peg2-button
            peg3-button
-           idle-button))))
+           idle-button
+           comp-button))))
     (button enable/disable)))
 
 (define (finish who)
@@ -737,28 +736,31 @@
          (values L h m f t))
         (else (catcher #f)))))
   (when
-    (call-with-time-out
-      (λ ()
-        (message-box comp-str
-          (string-append
-            "Computation of move m:\n"
-            "  which disk is moved,\n"
-            "  from which peg it is taken,\n"
-            "  onto which peg it put\n"
-            "  and the resulting distribution of disks\n"
-            "You will be asked for the following details:\n"
-            "  mode  : capital letter: S for short, L for long and C for circular\n"
-            "  height: number of disks (can be greater than 9)\n"
-            "  from  : starting peg 1, 2 or 3\n"
-            "  onto  : destination-peg 1, 2 or 3, bur t≠f"))))
+    (eq? (quote ok)
+      (call-with-time-out
+        (λ ()
+          (message-box comp-str
+            (string-append
+              "Computation of move m:\n"
+              "  which disk is moved,\n"
+              "  from which peg it is taken,\n"
+              "  onto which peg it put\n"
+              "  and the resulting distribution of disks\n"
+              "You will be asked for the following details:\n"
+              "  mode  : capital letter: S for short, L for long and C for circular\n"
+              "  height: number of disks (can be greater than 9)\n"
+              "  from  : starting peg 1, 2 or 3\n"
+              "  onto  : destination-peg 1, 2 or 3, but t≠f")
+            #f
+            (quote (ok-cancel))))))
     (let loop ((first? #t))
       (define str
         (call-with-time-out
           (λ ()
             (get-text-from-user comp-str
-              (if first?
-                "Give mode, height, move -r from-disk and onto-disk"
-                "Wrong data, try again\nGive mode, height, move -r from-disk and onto-disk")
+              (string-append
+                (if first? "" "Wrong data, try again\n")
+                "Give mode, height, move -r from-disk and onto-disk")
               #f
               ""
               (quote ())))))
