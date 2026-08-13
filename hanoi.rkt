@@ -54,8 +54,9 @@
     (  peg1-button (do-manual 0) (main))
     (  peg2-button (do-manual 1) (main))
     (  peg3-button (do-manual 2) (main))
+    (  idle-button (do-idle    ) (main))
     (  comp-button (do-comp    ) (main))
-    ( quit-button  (void       )       ) ; Exit from the game.
+    (  quit-button (void       )       ) ; Exit from the game.
     (else
       (define p (dispatch-peg pos))
       (when p (do-manual p))
@@ -70,14 +71,12 @@
      (syntax
        (let ((p pos))
          (cond
-           ;  ((idle-button 'in-button? p) (do-idle) (main))
            ((button 'in-button? p) do-button ...) ...
            (else else-clause ...)))))
     ((_ pos (button do-button ...) ...)
      (syntax
        (let ((p pos))
          (cond
-           ((idle-button 'in-button? p) (do-idle) (main))
            ((button 'in-button? p) do-button ...) ...))))))
 
 (define (dispatch-peg pos)
@@ -480,7 +479,6 @@
 
 (define (finish who)
   (call-with-time-out (λ () (message-box who "\n\n\nfinished\n\n\n" #f '(ok))))
-  (viewport-flush-input vp)
   ; Ignore clicks on reset and quit button while the message box is waiting.
   ; Clicks on other buttons already were ignored because they still are disabled.
   (viewport-flush-input vp)
@@ -638,7 +636,8 @@
 ; Action setup.
 
 (define (do-setup)
-  (define disabled-buttons (list height-button mode-button delay-button quit-button setup-button))
+  (define disabled-buttons
+    (list height-button mode-button delay-button quit-button setup-button idle-button comp-button))
   (for ((button (in-list disabled-buttons))) (button 'disable))
   (set! msg-str "Setting up")
   (remove-all-disks)
@@ -706,6 +705,10 @@
 
 ;=====================================================================================================
 ; Action comp
+; calc-short, calc-long and calc-circ number disks from 0 and use pegs 0, 1 and 2.
+; When calling them the pegs must be decreased by 1 and upon return
+; the disk and returned pegs must be increased by 1, in the returned distribution too.
+; The three procedures start counting moves from 1, hence no modification of the move-count.
 
 (define (do-comp)
   (define (catcher e) (values (quote not-ok) #f #f #f #f))
@@ -735,24 +738,23 @@
              ((2) (<= 1 m       (expt 3 h)))))
          (values L h m f t))
         (else (catcher #f)))))
-  (when
-    (eq? (quote ok)
-      (call-with-time-out
-        (λ ()
-          (message-box comp-str
-            (string-append
-              "Computation of move m:\n"
-              "  which disk is moved,\n"
-              "  from which peg it is taken,\n"
-              "  onto which peg it put\n"
-              "  and the resulting distribution of disks\n"
-              "You will be asked for the following details:\n"
-              "  mode  : capital letter: S for short, L for long and C for circular\n"
-              "  height: number of disks (can be greater than 9)\n"
-              "  from  : starting peg 1, 2 or 3\n"
-              "  onto  : destination-peg 1, 2 or 3, but t≠f")
-            #f
-            (quote (ok-cancel))))))
+    (call-with-time-out
+      (λ ()
+        (message-box comp-str
+          (string-append
+            "Computation of move m:\n"
+            "  which disk is moved,\n"
+            "  from which peg it is taken,\n"
+            "  onto which peg it put\n"
+            "  and the resulting distribution of disks\n"
+            "You will be asked for the following details:\n"
+            "  mode  : capital letter: S for short, L for long and C for circular\n"
+            "  height: number of disks (can be greater than 9)\n"
+            "  from  : starting peg 1, 2 or 3\n"
+            "  onto  : destination-peg 1, 2 or 3, but t≠f")
+          #f
+          (quote (ok-cancel)))))
+    (viewport-flush-input vp)
     (let loop ((first? #t))
       (define str
         (call-with-time-out
@@ -764,6 +766,7 @@
               #f
               ""
               (quote ())))))
+      (viewport-flush-input vp)
       (when str
         (define-values (L h m f t) (validate-comp str))
         (cond
@@ -792,12 +795,15 @@
                           "Disk ~s from peg ~s onto peg ~s.~n"
                           "Resulting distribution: "
                           "positions of disks in order of increasing size:~n~a~n")
-                        m L f t h d ff tt
+                        m L f t h (add1 d) (add1 ff) (add1 tt)
                         (apply string-append
-                          (for/fold ((result '()) #:result (reverse result)) ((p (in-list distr)))
-                            (if (and (> p 0) (zero? (modulo p 30)))
-                              (cons "\n" (cons (format "~s" p) result))
-                              (cons (format "~s" p) result))))))))))))))))
+                          (for/fold
+                            ((result '()) #:result (reverse result))
+                            ((p (in-list distr)) (n (in-cycle (in-range 1 31))))
+                            (if (= n 30)
+                              (cons "\n" (cons (format "~s" (add1 p)) result))
+                              (cons (format "~s" (add1 p)) result)))))))))
+              (viewport-flush-input vp)))))))
 
 (define (calc-short h m f t)
   (define (exp2 n        ) (expt   2 n))
@@ -812,12 +818,11 @@
   (define (from m h   f t) (mod3 (+ (thrd m h f t) (rotd h (disk m) f t))))
   (define (posi m h d f t) (mod3 (+ f (* (rotd h d f t) (mcnt m d)))))
   (define (disk m        ) (sub1 (integer-length (bitwise-xor m (sub1 m)))))
-  (define d (disk m))
   (values
-    (add1 d)
-    (add1 (from m h f t))
+    (disk m)
+    (from m h f t)
     (add1 (onto m h f t))
-    (for/list ((p (in-range h))) (add1 (posi m h p f t)))))
+    (for/list ((p (in-range h))) (posi m h p f t))))
 
 (define (calc-long h m f t)
   (define (exp3 n      ) (expt   3 n))
@@ -843,17 +848,17 @@
     (+
       (* 2  (quotient m (exp3 (add1 d))))
       (mod3 (quotient m (exp3       d)))))
-  (define d (disk m))
   (values
-    (add1 d)
-    (add1 (from m h f t))
-    (add1 (onto m h f t))
-    (for/list ((p (in-range h))) (add1 (posi m p f t)))))
+    (disk m)
+    (from m h f t)
+    (onto m h f t)
+    (for/list ((p (in-range h))) (posi m p f t))))
 
 (define (calc-circ h m f t)
   (call-with-time-out
     (λ ()
       (message-box comp-str "Circular not yet implemented")))
+  (viewport-flush-input vp)
   (values #f #f #f #f))
   
 ;=====================================================================================================
@@ -972,6 +977,7 @@
     (dispatch-button p
       (reset-button (do-reset) (exit))
       ( comp-button (do-comp) #f)
+      
       ( quit-button (exit)))))
 
 ;=====================================================================================================
