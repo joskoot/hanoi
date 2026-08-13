@@ -61,7 +61,7 @@
 
 @section[#:style '(unnumbered)]{Introduction}
 
-The Tower of Hanoi is a game.
+The @hyperlink["https://en.wikipedia.org/wiki/Tower_of_Hanoi"]{Tower of Hanoi} is a game.
 It has 3 pegs, one at the left, one in the middle and one at the right.
 It has a number of disks.
 The disks have different sizes and a hole in the center.
@@ -462,7 +462,7 @@ would make the code less easy to read.
        (printf "~s" (posi N-Avogadro d f t)))
      (printf "~nTimes in ms: ")))]
 
-The formulas are not used by procedure @racket[play].
+The formulas are used for button @seclink["Comp"]{Comp} only.
 When walking a whole path, recursion is faster because it can use information about
 what happened during previous moves,
 but when wanting the information for one move only, for example
