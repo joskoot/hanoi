@@ -110,7 +110,8 @@ Initially the height is 9.
 @subsection[#:tag "Mode" ""]{Mode}
 
 Opens a modal dialog for selection of the mode, which is manual, short, long or circular.
-Initially the mode is manual.
+Initially the mode is manual. This mode is not included in the dialog.
+Actions short, long and circular return to manual mode after completion or cancelation.
 
 In manual mode the user is supposed to click the @seclink["Peg n"]{peg} button
 the disk is to be taken from
