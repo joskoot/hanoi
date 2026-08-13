@@ -99,6 +99,25 @@
   (define y-max (+ y-min (region-height region)))
   (and (<= x-min x x-max) (<= y-min y y-max)))
 
+(define (enable/disable-buttons buttons enable/disable)
+  (for ((button (in-list buttons))) (button enable/disable)))
+
+(define (enable/disable-all-buttons enable/disable)
+  (define buttons
+    (list
+      height-button
+      mode-button
+      delay-button
+      reset-button
+      setup-button
+      quit-button
+      peg1-button
+      peg2-button
+      peg3-button
+      idle-button
+      comp-button))
+  (enable/disable-buttons buttons enable/disable))
+
 ;=====================================================================================================
 ; Tool for aborting when waiting too long for for a mouseclick or answer to a dialog.
 
@@ -262,11 +281,14 @@
     (list
       height-str
       mode-str
+      delay-str
       reset-str
       setup-str
       quit-str
       undo-str
       manual-str
+      idle-str
+      comp-str
       long-str
       circ-str
       idle-str
@@ -416,6 +438,7 @@
 ; Action height.
 
 (define (do-height)
+  (enable/disable-all-buttons 'disable)
   (define (validate-height str)
     (and (= (string-length str) 1) (char<=? #\1 (string-ref str 0) #\9)))
   (define str
@@ -436,12 +459,13 @@
     (define h (- (char->integer (string-ref str 0)) (char->integer #\0)))
     (set! height h)
     (height-button 'put-content h)
-    (do-reset)))
-
+    (do-reset-help))
+  (enable/disable-all-buttons 'enable))
 ;=====================================================================================================
 ; Action mode
 
 (define (do-mode)
+  (prepare/finish-do-mode 'disable)
   (define modes (list shrt-str long-str circ-str))
   (define choice
     (call-with-time-out
@@ -456,26 +480,23 @@
     (define do-mode (vector-ref  (vector short long circular) ch))
     (define mode    (vector-ref #(       short long circular) ch))
     (mode-button 'put-content mode)
-    (unless (eq? mode 'short) (do-reset))
-    (prepare/finish-do-mode 'disable)
+    (unless (eq? mode 'short) (do-reset-help))
     (do-mode)
     (finish (symbol->string mode))))
 
 (define (prepare/finish-do-mode enable/disable)
-  (for
-    ((button
-       (in-list
-         (list
-           height-button
-           mode-button
-           delay-button
-           setup-button
-           peg1-button
-           peg2-button
-           peg3-button
-           idle-button
-           comp-button))))
-    (button enable/disable)))
+  (define buttons
+    (list
+      height-button
+      mode-button
+      delay-button
+      setup-button
+      peg1-button
+      peg2-button
+      peg3-button
+      idle-button
+      comp-button))
+  (enable/disable-buttons buttons enable/disable))
 
 (define (finish who)
   (call-with-time-out (λ () (message-box who "\n\n\nfinished\n\n\n" #f '(ok))))
@@ -514,7 +535,7 @@
 ; Action long.
 
 (define (long)
-  (do-reset)
+  (do-reset-help)
   (reset-time-and-move-counter)
   (let/ec ec
     (define (exit) (clear-msg) (ec))
@@ -541,7 +562,7 @@
 ; Action circular.
 
 (define (circular)
-  (do-reset)
+  (do-reset-help)
   (reset-time-and-move-counter)
   (let/ec ec
     (define (exit) (clear-msg) (ec))
@@ -585,6 +606,7 @@
 ; Action delay.
 
 (define (do-delay)
+  (enable/disable-all-buttons 'disable)
   (define (catcher e) #f)
   (define (validate-delay str)
     (and (<= 1 (string-length str) 6)
@@ -612,7 +634,6 @@
           click-str	
           '(disallow-invalid)	
           #:validate validate-delay))))
-  (viewport-flush-input vp)
   (cond
     ((equal? str click-str)
      (set! delay click)
@@ -621,30 +642,44 @@
     (else
       (define d (read (open-input-string str)))
       (set! delay d)
-      (delay-button 'put-content d))))
+      (delay-button 'put-content d)))
+  (enable/disable-all-buttons 'enable)
+  (viewport-flush-input vp))
 
 ;=====================================================================================================
 ; Action reset.
 
-(define (do-reset)
+(define (do-reset-help)
   (set! disk-distr (vector (range height) '() '()))
   (remove-all-disks)
   (for ((d (in-range height)) (h (in-reversed-range height)))
     (draw-disk d h 0)))
 
+(define (do-reset)
+  (enable/disable-all-buttons 'disable)
+  (do-reset-help)
+  (enable/disable-all-buttons 'enable))
+
 ;=====================================================================================================
 ; Action setup.
 
 (define (do-setup)
-  (define disabled-buttons
-    (list height-button mode-button delay-button quit-button setup-button idle-button comp-button))
-  (for ((button (in-list disabled-buttons))) (button 'disable))
+  (define buttons
+    (list
+      height-button
+      mode-button
+      delay-button
+      quit-button
+      setup-button
+      idle-button
+      comp-button))
+  (enable/disable-buttons buttons 'disable)
   (set! msg-str "Setting up")
   (remove-all-disks)
   (set! disk-distr (make-vector 3 '()))
   ((draw-string vp) msg-pos msg-str red)
   (do-setup1 (reverse (range height)))
-  (for ((button (in-list disabled-buttons))) (button 'enable))
+  (enable/disable-buttons buttons 'enable)
   (clear-msg))
 
 (define (do-setup1 disks)
@@ -655,7 +690,7 @@
       (peg1-button  (do-setup2 d 0) (do-setup1 (cdr disks)))
       (peg2-button  (do-setup2 d 1) (do-setup1 (cdr disks)))
       (peg3-button  (do-setup2 d 2) (do-setup1 (cdr disks)))
-      (reset-button (clear-msg    ) (do-reset))
+      (reset-button (clear-msg    ) (do-reset-help))
       (else
         (define p (dispatch-peg pos))
         (cond
@@ -671,6 +706,7 @@
 ; Action idle time
 
 (define (do-idle)
+  (enable/disable-all-buttons 'disable)
   (define (catcher e) #f)
   (define (validate-delay str)
     (and (<= 1 (string-length str) 6)
@@ -701,7 +737,9 @@
   (when str
     (define minutes (max min-idle-minutes (read (open-input-string str))))
     (idle-limit minutes)
-    ((draw-button-content vp) idle-pos minutes)))
+    ((draw-button-content vp) idle-pos minutes))
+  (viewport-flush-input vp)
+  (enable/disable-all-buttons 'enable))
 
 ;=====================================================================================================
 ; Action comp
@@ -711,6 +749,7 @@
 ; The three procedures start counting moves from 1, hence no modification of the move-count.
 
 (define (do-comp)
+  (enable/disable-all-buttons 'disable)
   (define (catcher e) (values (quote not-ok) #f #f #f #f))
   (define (validate-comp str)
     (with-handlers ((exn:fail? catcher))
@@ -738,6 +777,7 @@
              ((2) (<= 1 m       (expt 3 h)))))
          (values L h m f t))
         (else (catcher #f)))))
+  (define answer
     (call-with-time-out
       (λ ()
         (message-box comp-str
@@ -753,8 +793,8 @@
             "  from  : starting peg 1, 2 or 3\n"
             "  onto  : destination-peg 1, 2 or 3, but t≠f")
           #f
-          (quote (ok-cancel)))))
-    (viewport-flush-input vp)
+          (quote (ok-cancel))))))
+  (when (eq? answer 'ok)
     (let loop ((first? #t))
       (define str
         (call-with-time-out
@@ -802,8 +842,9 @@
                             ((p (in-list distr)) (n (in-cycle (in-range 1 31))))
                             (if (= n 30)
                               (cons "\n" (cons (format "~s" (add1 p)) result))
-                              (cons (format "~s" (add1 p)) result)))))))))
-              (viewport-flush-input vp)))))))
+                              (cons (format "~s" (add1 p)) result)))))))))))))))
+  (enable/disable-all-buttons 'enable)
+  (viewport-flush-input vp))
 
 (define (calc-short h m f t)
   (define (exp2 n        ) (expt   2 n))
@@ -976,8 +1017,6 @@
   (when p
     (dispatch-button p
       (reset-button (do-reset) (exit))
-      ( comp-button (do-comp) #f)
-      
       ( quit-button (exit)))))
 
 ;=====================================================================================================
