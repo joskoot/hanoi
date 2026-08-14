@@ -216,7 +216,7 @@ The initial idle limit is collected from parameter @racket[idle-limit].
 When giving an idle limit of less than 1 minute,
 the time is set to 1 minute.
 
-@subsection[#:tag "Comp"]{Comp}
+@subsection[#:tag "Compute"]{Compute}
 
 Computes a move and the resulting distribution of disks
 for the shortest path, the longest path or the circular path,
@@ -461,7 +461,7 @@ would make the code less easy to read.
        (printf "~s" (posi N-Avogadro d f t)))
      (printf "~nTimes in ms: ")))]
 
-The formulas are used for button @seclink["Comp"]{Comp} only.
+The formulas are used for button @seclink["Compute"]{Compute} only.
 When walking a whole path, recursion is faster because it can use information about
 what happened during previous moves,
 but when wanting the information for one move only, for example

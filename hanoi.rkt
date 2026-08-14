@@ -3,7 +3,7 @@
 ;
 ; A GUI playing the game of The Tower of Hanoi. Moves can be made manually but also automatically by
 ; the GUI. It has clickable buttons Height, Mode, Delay, Reset, Setup, Quit, Peg1, Peg2, Peg3, Idle-
-; limit and Comp. A click on such button initiates an action. During an action some buttons may be
+; limit and Compute. A click on such button initiates an action. During an action some buttons may be
 ; disabled and disappear temporarily from the screen.
 ;
 ;=====================================================================================================
@@ -261,7 +261,7 @@
 (define str-short  " short "     )
 (define str-long   " long "      )
 (define str-circ   " circular "  )
-(define str-comp   " Comp "      )
+(define str-comp   " Compute "   )
 (define str-warn   " A dialog is waiting. Look for it when you don't see it.")
 (define click (quote click))
 (define click-str (symbol->string 'click))
@@ -1090,7 +1090,7 @@
   (set! button-peg1   (make-button |peg 1|      pos-peg1               ))
   (set! button-peg2   (make-button |peg 2|      pos-peg2               ))
   (set! button-peg3   (make-button |peg 3|      pos-peg3               ))
-  (set! button-comp   (make-button comp         pos-comp               ))
+  (set! button-comp   (make-button compute      pos-comp               ))
   ; Draw a girder.
   ((draw-solid-rectangle vp) girder-pos (- vp-width (* 2 border)) blok gray)
   (for ((p (in-range 0 3)))
