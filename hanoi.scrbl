@@ -211,7 +211,7 @@ Used to make moves manually and for @seclink["Setup"]{setup} of a distribution o
 
 Opens a dialog to adjust the idle limit in minutes.
 When the GUI is waiting for a mouseclick or an answer to a dialog but
-does not receive such click or answer within the idle limit, it halts.
+does not receive such click or answer within the idle limit minutes, it halts.
 The initial idle limit is collected from parameter @racket[idle-limit].
 When giving an idle limit of less than 1 minute,
 the time is set to 1 minute.

@@ -3,7 +3,7 @@
 ;
 ; A GUI playing the game of The Tower of Hanoi. Moves can be made manually but also automatically by
 ; the GUI. It has clickable buttons Height, Mode, Delay, Reset, Setup, Quit, Peg1, Peg2, Peg3, Idle-
-; time and Comp. A click on such button initiates an action. During an action some buttons may be
+; limit and Comp. A click on such button initiates an action. During an action some buttons may be
 ; disabled and disappear temporarily from the screen.
 ;
 ;=====================================================================================================
@@ -131,19 +131,20 @@
       (cond
         ((and (real? t) (exact? t) (>= t min-idle-minutes)) t)
         (else
-          (raise-user-error 'time-limit
+          (raise-user-error 'idle-limit
             "~n  positive exact real number expected, at least ~s. Given ~s" min-idle-minutes t))))
-    'time-limit))
+    'idle-limit))
 
 (define (abort)
   (error '|Tower of Hanoi|
     (string-append
       "~n  No activity during ~s minutes. Game aborted."
-      "~n  Use parameter time-limit to increase the allowed idle time"
-      "~n  or use the Idle time button.")
+      "~n  Use parameter idle-limit to increase the allowed idle limit"
+      "~n  or use the Idle limit button.")
     (idle-limit)))
 
-(define (call-with-time-out thunk)
+(define (call-with-time-out thunk (warn? #f))
+  (when warn? ((draw-string vp) pos-warn str-warn red))
   (define time-out-custodian (make-custodian))
   (define user-choice (box #f))
   (define result
@@ -163,6 +164,7 @@
     (else
       (define final-response (unbox user-choice))
       (custodian-shutdown-all time-out-custodian)
+      (when warn? ((clear-string vp) pos-warn str-warn))
       final-response)))
 
 ;=====================================================================================================
@@ -207,7 +209,7 @@
                            ((get-content) (button-content button))))))
                    ((disable)
                     (set! enabled? #f)
-                    ((clear-solid-rectangle vp) pos button-width button-hight))
+                    ((draw-disabled-button vp) pos name-str))
                    ((enable)
                     (set! enabled? #t)
                     ((draw-button vp) pos name-str))
@@ -247,19 +249,20 @@
 ;=====================================================================================================
 ; Some constants required in early stage. Never mutated.
 
-(define str-height " Height "   )
-(define str-mode   " Mode "     )
-(define str-delay  " Delay "    )
-(define str-idle   " Idle time ")
-(define str-reset  " Reset "    )
-(define str-setup  " Setup "    )
-(define str-quit   " Quit "     )
-(define str-undo   " Undo "     )
-(define str-manual " manual "   )
-(define str-short  " short "    )
-(define str-long   " long "     )
-(define str-circ   " circular " )
-(define str-comp   " Comp "     )
+(define str-height " Height "    )
+(define str-mode   " Mode "      )
+(define str-delay  " Delay "     )
+(define str-idle   " Idle limit ")
+(define str-reset  " Reset "     )
+(define str-setup  " Setup "     )
+(define str-quit   " Quit "      )
+(define str-undo   " Undo "      )
+(define str-manual " manual "    )
+(define str-short  " short "     )
+(define str-long   " long "      )
+(define str-circ   " circular "  )
+(define str-comp   " Comp "      )
+(define str-warn   " A dialog is waiting. Look for it when you don't see it.")
 (define click (quote click))
 (define click-str (symbol->string 'click))
 (define red   (make-rgb 1.0 0.0 0.0))
@@ -273,7 +276,8 @@
 ; Procedures to draw buttons and their contents. Computation of their sizes.
 ; A temporary pixmap is used to measure string sizes.
 
-(define-values-block (draw-button draw-button-content button-width button-hight string-offset)
+(define-values-block
+  (draw-button draw-disabled-button draw-button-content button-width button-hight string-offset)
 
   ; Measure the maximum size of strings used in buttons.
 
@@ -321,6 +325,14 @@
     ((draw-string vp)
      (make-posn (+ x string-offset) (+ y button-hight (- string-offset))) str white))
 
+  (define ((draw-disabled-button vp) pos str)
+    (define x (posn-x pos))
+    (define y (posn-y pos))
+    ((clear-solid-rectangle vp) pos button-width button-hight)
+    ((draw-rectangle vp) pos button-width button-hight blue)
+    ((draw-string vp)
+     (make-posn (+ x string-offset) (+ y button-hight (- (* 2 string-offset)))) str blue))
+
   (define ((draw-button-content vp) pos value)
     (define str (if (string? value) value (format "~a" value)))
     (define x (posn-x pos))
@@ -349,6 +361,7 @@
 (define pos-peg3   (add-posn pos-peg2   (+ button-width blok) 0))
 (define pos-comp   (add-posn pos-peg3   (+ button-width blok) 0))
 (define pos-msg    (add-posn pos-comp   (+ button-width border) (- button-hight string-offset)))
+(define pos-warn   (add-posn pos-msg    0                       (+ button-hight string-offset)))
 (define disk-height blok)
 (define max-tower-height (* max-height disk-height))
 (define min-disk-width (* 3 blok))
@@ -452,7 +465,8 @@
           #f
           "9"
           '(disallow-invalid)
-          #:validate validate-height))))
+          #:validate validate-height))
+      #t))
   (viewport-flush-input vp)
   (when str
     (define h (- (char->integer (string-ref str 0)) (char->integer #\0)))
@@ -460,6 +474,7 @@
     (button-height 'put-content h)
     (do-reset-help))
   (enable/disable-all-buttons 'enable))
+
 ;=====================================================================================================
 ; Action mode
 
@@ -472,7 +487,8 @@
         (get-choices-from-user
           str-mode
           "Select a mode\nCancel in order to remain in manual mode."
-          modes))))
+          modes))
+      #t))
   (viewport-flush-input vp)
   (when choice
     (define ch (car choice))
@@ -502,7 +518,7 @@
   (enable/disable-buttons buttons enable/disable))
 
 (define (finish who)
-  (call-with-time-out (λ () (message-box who "\n\n\nfinished\n\n\n" #f '(ok))))
+  (call-with-time-out (λ () (message-box who "\n\n\nfinished\n\n\n" #f '(ok))) #t)
   ; Ignore clicks on reset and quit button while the message box is waiting.
   ; Clicks on other buttons already were ignored because they still are disabled.
   (viewport-flush-input vp)
@@ -636,7 +652,8 @@
           #f	
           click-str	
           '(disallow-invalid)	
-          #:validate validate-delay))))
+          #:validate validate-delay))
+      #t))
   (cond
     ((equal? str click-str)
      (set! delay click)
@@ -706,7 +723,7 @@
   (draw-disk d (length peg) p))
 
 ;=====================================================================================================
-; Action idle time
+; Action idle limit
 
 (define (do-idle)
   (enable/disable-all-buttons 'disable)
@@ -717,11 +734,11 @@
         (equal? str click-str)
         (with-handlers ((exn:fail? catcher))
           (define input (open-input-string str))
-          (define idle-time (read input))
+          (define idle-limit (read input))
           (cond
             ((not (eof-object? (read input))) #f)
-            ((infinite? idle-time) #f)
-            ((and (real? idle-time) (exact? idle-time) (>= idle-time 0)))
+            ((infinite? idle-limit) #f)
+            ((and (real? idle-limit) (exact? idle-limit) (>= idle-limit 0)))
             (else #f))))))
   (define str
     (call-with-time-out
@@ -732,11 +749,12 @@
             "Enter a non-negative exact real number for the\n"
             "for the allowed idle time in minutes.\n"
             "Do not enter more than 6 characters.\n"
-            "Idle times less than 1 minutes are set to 1 minutes.")
+            "Idle limits less than 1 minutes are set to 1 minutes.")
           #f	
           "10"	
           '(disallow-invalid)	
-          #:validate validate-delay))))
+          #:validate validate-delay))
+      #t))
   (when str
     (define minutes (max min-idle-minutes (read (open-input-string str))))
     (idle-limit minutes)
@@ -792,7 +810,8 @@
             "  from  : starting peg 1, 2 or 3\n"
             "  onto  : destination-peg 1, 2 or 3, but t≠f")
           #f
-          (quote (ok-cancel))))))
+          (quote (ok-cancel))))
+      #t))
   (when (eq? answer 'ok)
     (let loop ((first? #t))
       (define str
@@ -804,7 +823,8 @@
                 "Give mode, height, move -r from-disk and onto-disk")
               #f
               ""
-              (quote ())))))
+              (quote ())))
+          #t))
       (viewport-flush-input vp)
       (when str
         (define-values (L h m f t) (validate-comp str))
@@ -840,7 +860,8 @@
                           ((p (in-list distr)) (n (in-cycle (in-range 1 31))))
                           (if (= n 30)
                             (cons "\n" (cons (format "~s" (add1 p)) result))
-                            (cons (format "~s" (add1 p)) result))))))))))))))
+                            (cons (format "~s" (add1 p)) result))))))))
+              #t))))))
   (enable/disable-all-buttons 'enable)
   (viewport-flush-input vp))
 
@@ -896,7 +917,8 @@
 (define (calc-circ h m f t)
   (call-with-time-out
     (λ ()
-      (message-box str-comp "Circular not yet implemented")))
+      (message-box str-comp "Circular not yet implemented"))
+    #t)
   (viewport-flush-input vp)
   (values #f #f #f #f))
   
@@ -1058,17 +1080,17 @@
   (open-graphics)
   (set! vp (open-viewport "Tower of Hanoi" vp-width vp-height))
   ; Initalize and draw the buttons.
-  (set! button-height (make-button height      pos-height max-height))
-  (set! button-mode   (make-button mode        pos-mode   'manual   ))
-  (set! button-delay  (make-button delay       pos-delay  click     ))
-  (set! button-idle   (make-button |idle time| pos-idle (idle-limit)))
-  (set! button-reset  (make-button reset       pos-reset            ))
-  (set! button-setup  (make-button setup       pos-setup            ))
-  (set! button-quit   (make-button quit        pos-quit             ))
-  (set! button-peg1   (make-button |peg 1|     pos-peg1             ))
-  (set! button-peg2   (make-button |peg 2|     pos-peg2             ))
-  (set! button-peg3   (make-button |peg 3|     pos-peg3             ))
-  (set! button-comp   (make-button comp        pos-comp             ))
+  (set! button-height (make-button height       pos-height max-height  ))
+  (set! button-mode   (make-button mode         pos-mode   'manual     ))
+  (set! button-delay  (make-button delay        pos-delay  click       ))
+  (set! button-idle   (make-button |idle limit| pos-idle   (idle-limit)))
+  (set! button-reset  (make-button reset        pos-reset              ))
+  (set! button-setup  (make-button setup        pos-setup              ))
+  (set! button-quit   (make-button quit         pos-quit               ))
+  (set! button-peg1   (make-button |peg 1|      pos-peg1               ))
+  (set! button-peg2   (make-button |peg 2|      pos-peg2               ))
+  (set! button-peg3   (make-button |peg 3|      pos-peg3               ))
+  (set! button-comp   (make-button comp         pos-comp               ))
   ; Draw a girder.
   ((draw-solid-rectangle vp) girder-pos (- vp-width (* 2 border)) blok gray)
   (for ((p (in-range 0 3)))
