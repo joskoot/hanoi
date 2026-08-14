@@ -857,8 +857,8 @@
                       (apply string-append
                         (for/fold
                           ((result '()) #:result (reverse result))
-                          ((p (in-list distr)) (n (in-cycle (in-range 1 31))))
-                          (if (= n 30)
+                          ((p (in-list distr)) (n (in-cycle (in-range 0 50))))
+                          (if (= n 49)
                             (cons "\n" (cons (format "~s" (add1 p)) result))
                             (cons (format "~s" (add1 p)) result))))))))
               #t))))))
