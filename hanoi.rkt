@@ -44,9 +44,9 @@
   ; The Quit button can be used to exit from the GUI,
   ; but sometimes it just terminates the current action.
   (define pos (mouse-click-posn (call-with-time-out (λ () (get-mouse-click vp)))))
-  (dispatch-all pos))
+  (dispatch pos))
 
-(define (dispatch-all pos)
+(define (dispatch pos)
   (dispatch-button pos
     (button-height (do-height  ) (main))
     (button-mode   (do-mode    ) (main))
@@ -430,7 +430,7 @@
         (else
           (draw-disk d h p)
           (reset-manual-count)
-          (dispatch-all pos))))))
+          (unless (button-quit (quote in-button?) pos) (dispatch pos)))))))
 
 (define (do-manual2 d h p dest-p)
   (cond
