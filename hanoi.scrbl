@@ -12,7 +12,7 @@
      (only-in typed/racket Setof Natural Sequenceof Index))
    (for-syntax racket))
 
-@(define-for-syntax local #f)
+@(define-for-syntax local #t)
 
 @(define-syntax-rule
    (Interaction x ...)
@@ -211,7 +211,7 @@ Used to make moves manually and for @seclink["Setup"]{setup} of a distribution o
 
 Opens a dialog to adjust the idle limit in minutes.
 When the GUI is waiting for a mouseclick or an answer to a dialog but
-does not receive such click or answer within the idle limit minutes, it halts.
+does not receive such click or answer within idle limit minutes, it halts.
 The initial idle limit is collected from parameter @racket[idle-limit].
 When giving an idle limit of less than 1 minute,
 the time is set to 1 minute.
@@ -220,7 +220,7 @@ the time is set to 1 minute.
 
 Computes a move and the resulting distribution of disks
 for the shortest path, the longest path or the circular path,
-all three of them starting and ending with all disk on one peg.
+all three of them starting and ending with all disks on one peg.
 Opens some dialogs.
 The first is for information only.
 The second one asks some data:
@@ -234,7 +234,7 @@ The second one asks some data:
 The computation is fast because it is not recursive in the sense that
 it does not depend on preceding moves.
 For a circular path the destination determines the order of visited distributions
-with all disk on one peg: starting peg, destination peg,
+with all disks on one peg: starting peg, destination peg,
 the remaining third peg and finally back to the starting peg.
 
 @section[#:style '(unnumbered)]{Appendix}
@@ -257,7 +257,7 @@ In contrast to a
 @nb{the vertices} of the triangles of a Hanoi graph do not coincide with the vertices
 of other triangles.
 The vertices of two triangles are separated by at least one edge.
-The three vertices of the largest triangle represent distributions of all disks on the same peg.
+The three vertices of the largest triangle represent distributions with all disks on the same peg.
 These have two edges only,
 the two moving the smallest disk to one of the two empty pegs.
 All other vertices of the graph represent distributions with at most one empty peg.
@@ -307,11 +307,12 @@ See @hyperlink["https://oeis.org/A125295"]{A125295} of @hyperlink["https://oeis.
 Regarding elementary arithmetic operations as non-recursive,
 given height @tt{h}, starting peg @tt{f} and destination peg @tt{t},
 all information about the @tt{m}@↑{th} move
-along the shortest path from @tt{f} to @tt{t}
+along the shortest path from peg @tt{f} to peg @tt{t}
 and the resulting distribution of disks
-can be computed without recursion.
+can be computed without recursion, in particular without dependence on previous moves
+or a solution with less disks.
 Written in @hyperlink["https://www.scheme.org/"]{Scheme} or
-@hyperlink["https://racket-lang.org/"]{Racket}:
+@hyperlink["https://racket-lang.org/"]{Racket} as follows:
 
 @elemtag["example" ""]
 
@@ -369,7 +370,9 @@ Written in @hyperlink["https://www.scheme.org/"]{Scheme} or
 Notice that in the formulas the pegs have ordinals @tt{0}, @tt{1} and @tt{2}.
 For the formulas this is more convenient than the ordinals @tt{1}, @tt{2} and @tt{3}
 as used in the GUI.
-The disks are numbered starting from 0 for the smallest one, whereas the GIU starts from 1.
+The disks are numbered start@element['roman ?-]ing from @tt{0} for the smallest one,
+whereas the GIU starts from @tt{1}.
+The ordinal of the first move is not changed and remains @tt{1}.
 
 @Interaction*[
  (define (exp2 n        ) (expt   2 n))

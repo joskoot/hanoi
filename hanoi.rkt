@@ -29,10 +29,9 @@
 ; Main procedure.
 
 (define (play)
-  (initialize)
   (dynamic-wind
     void
-    main
+    (λ () (let/ec ec (initialize ec) (main)))
     close))
 
 (define (close)
@@ -41,10 +40,13 @@
 
 (define (main)
   ; At this point the GUI always is in manual mode,
-  ; Each action, Quit excepted, return to manual mode.
+  ; Each action, Quit excepted, returns to manual mode.
   ; The Quit button can be used to exit from the GUI,
   ; but sometimes it just terminates the current action.
   (define pos (mouse-click-posn (call-with-time-out (λ () (get-mouse-click vp)))))
+  (dispatch-all pos))
+
+(define (dispatch-all pos)
   (dispatch-button pos
     (button-height (do-height  ) (main))
     (button-mode   (do-mode    ) (main))
@@ -56,7 +58,7 @@
     (button-peg2   (do-manual 1) (main))
     (button-peg3   (do-manual 2) (main))
     (button-comp   (do-comp    ) (main))
-    (button-quit   (void       )       ) ; Exit from the game.
+    (button-quit   (quit-exit       )       )
     (else
       (define p (dispatch-peg pos))
       (when p (do-manual p))
@@ -136,12 +138,15 @@
     'idle-limit))
 
 (define (abort)
-  (error '|Tower of Hanoi|
-    (string-append
-      "~n  No activity during ~s minutes. Game aborted."
-      "~n  Use parameter idle-limit to increase the allowed idle limit"
-      "~n  or use the Idle limit button.")
-    (idle-limit)))
+  (define abort-msg
+    (format
+      (string-append
+        "~n  No activity during ~s minutes. Game aborted."
+        "~n  Use parameter idle-limit to increase the allowed idle limit"
+        "~n  or use the Idle limit button.~n~n") (idle-limit)))
+  (fprintf (current-error-port) (string-append  "~nTower of Hanoi~n" abort-msg))
+  (message-box "Tower of Hanoi" abort-msg #f (quote (ok caution no-icon)))
+  (quit-exit))
 
 (define (call-with-time-out thunk (warn? #f))
   (when warn? ((draw-string vp) pos-warn str-warn red))
@@ -420,9 +425,12 @@
     (button-peg3 (do-manual2 d h p 2))
     (else
       (define dest (dispatch-peg pos))
-      (if dest
-        (do-manual2 d h p dest)
-        (draw-disk d h p)))))
+      (cond
+        (dest (do-manual2 d h p dest))
+        (else
+          (draw-disk d h p)
+          (reset-manual-count)
+          (dispatch-all pos))))))
 
 (define (do-manual2 d h p dest-p)
   (cond
@@ -434,7 +442,8 @@
          (remove-disk d h p)
          (vector-set! disk-distr p (cdr (vector-ref disk-distr p)))
          (draw-disk d 0 dest-p)
-         (vector-set! disk-distr dest-p (cons d (vector-ref disk-distr dest-p))))
+         (vector-set! disk-distr dest-p (cons d (vector-ref disk-distr dest-p)))
+         (inc-man-count))
         (else
           (define dest-d (car peg))
           (define dest-h (length peg))
@@ -443,8 +452,23 @@
              (remove-disk d h p)
              (vector-set! disk-distr p (cdr (vector-ref disk-distr p)))
              (draw-disk d dest-h dest-p)
-             (vector-set! disk-distr dest-p (cons d (vector-ref disk-distr dest-p))))
+             (vector-set! disk-distr dest-p (cons d (vector-ref disk-distr dest-p)))
+             (inc-man-count))
             (else (draw-disk d h p))))))))
+
+(define (inc-man-count)
+  (set! manual-count (add1 manual-count))
+  (clear-man-count)
+  (draw-man-count))
+
+(define (clear-man-count) ((clear-string vp) pos-msg msg-str))
+
+(define (draw-man-count)
+  (clear-man-count)
+  (set! msg-str (format "Manual moves ~s" manual-count))
+  (when (> manual-count 0) ((draw-string vp) pos-msg msg-str)))
+
+(define (reset-manual-count) (clear-man-count) (set! manual-count 0))
 
 ;=====================================================================================================
 ; Action height.
@@ -472,6 +496,7 @@
     (define h (- (char->integer (string-ref str 0)) (char->integer #\0)))
     (set! height h)
     (button-height 'put-content h)
+    (reset-manual-count)
     (do-reset-help))
   (enable/disable-all-buttons 'enable))
 
@@ -490,14 +515,17 @@
           modes))
       #t))
   (viewport-flush-input vp)
-  (when choice
-    (define ch (car choice))
-    (define do-mode (vector-ref  (vector short long circular) ch))
-    (define mode    (vector-ref #(       short long circular) ch))
-    (button-mode 'put-content mode)
-    (unless (eq? mode 'short) (do-reset-help))
-    (do-mode)
-    (finish (symbol->string mode))))
+  (cond
+    (choice
+      (reset-manual-count)
+      (define ch (car choice))
+      (define do-mode (vector-ref  (vector short long circular) ch))
+      (define mode    (vector-ref #(       short long circular) ch))
+      (button-mode 'put-content mode)
+      (unless (eq? mode 'short) (do-reset-help))
+      (do-mode)
+      (finish (symbol->string mode)))
+    ((prepare/finish-do-mode 'enable))))
 
 (define (prepare/finish-do-mode enable/disable)
   (define buttons
@@ -522,7 +550,6 @@
   ; Ignore clicks on reset and quit button while the message box is waiting.
   ; Clicks on other buttons already were ignored because they still are disabled.
   (viewport-flush-input vp)
-  (clear-msg)
   (prepare/finish-do-mode 'enable)
   (button-mode 'put-content 'manual))
 
@@ -672,6 +699,7 @@
 (define (do-reset-help)
   (set! disk-distr (vector (range height) '() '()))
   (remove-all-disks)
+  (reset-manual-count)
   (for ((d (in-range height)) (h (in-reversed-range height)))
     (draw-disk d h 0)))
 
@@ -693,6 +721,7 @@
       button-setup
       button-idle
       button-comp))
+  (reset-manual-count)
   (enable/disable-buttons buttons 'disable)
   (set! msg-str "Setting up")
   (remove-all-disks)
@@ -1047,6 +1076,7 @@
 ; play is called more than once because the procedure may mutate them. Notice that syntax make-button
 ; needs the viewport too. Therefore the buttons are included in the initialization.
 
+(define quit-exit     'yet-to-be-initialized)
 (define vp            'yet-to-be-initialized)
 (define height        'yet-to-be-initialized)
 (define delay         'yet-to-be-initialized)
@@ -1054,6 +1084,7 @@
 (define msg-str       'yet-to-be-initialized)
 (define clock         'yet-to-be-initialized)
 (define move-count    'yet-to-be-initialized)
+(define manual-count  'yet-to-be-initialized)
 (define button-height 'yet-to-be-initialized)
 (define button-mode   'yet-to-be-initialized)
 (define button-delay  'yet-to-be-initialized)
@@ -1066,15 +1097,17 @@
 (define button-peg3   'yet-to-be-initialized)
 (define button-comp   'yet-to-be-initialized)
 
-(define (initialize)
+(define (initialize ec)
   ; Store variables not yet initialized.
   ; Also needed for variables they may have been mutated in a previous call to procedure play.
-  (set! height     max-height)
-  (set! delay      click     )
-  (set! msg-str    ""        )
-  (set! msg-str    ""        )
-  (set! clock      0         )
-  (set! move-count 0         )
+  (set! quit-exit    ec        )
+  (set! height       max-height)
+  (set! delay        click     )
+  (set! msg-str      ""        )
+  (set! msg-str      ""        )
+  (set! clock        0         )
+  (set! move-count   0         )
+  (set! manual-count 0         )
   (set! disk-distr (vector (range height) '() '()))
   ; Open graphics and the viewport.
   (open-graphics)
@@ -1106,3 +1139,4 @@
 
 ;=====================================================================================================
 ; The end
+(play)
