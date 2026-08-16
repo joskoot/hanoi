@@ -161,6 +161,7 @@
             (λ ()
               (define choice (thunk))
               (set-box! user-choice choice)))))
+
       (sync/timeout (* (idle-limit) 60) task-thread)))
   (cond
     ((not result)
@@ -366,8 +367,8 @@
 (define pos-peg2   (add-posn pos-peg1   (+ button-width blok) 0))
 (define pos-peg3   (add-posn pos-peg2   (+ button-width blok) 0))
 (define pos-comp   (add-posn pos-peg3   (+ button-width blok) 0))
-(define pos-msg    (add-posn pos-comp   (+ button-width blok) (- button-hight string-offset)))
-(define pos-warn   (add-posn pos-msg    0                     (+ button-hight string-offset)))
+(define pos-msg    (add-posn pos-idle   (+ button-width blok) (- (* 2 button-hight) string-offset)))
+(define pos-warn   (add-posn pos-comp   (+ button-width blok) (-      button-hight  string-offset)))
 (define disk-height blok)
 (define max-tower-height (* max-height disk-height))
 (define min-disk-width (* 3 blok))
@@ -824,29 +825,35 @@
              (< 0 m (case L ((S) (expt 2 h)) ((L) expt3h) ((C) (add1 expt3h))))))
          (values L h m f t))
         (else (catcher #f)))))
-  (define answer
+  (define-values (ok? answer)
     (cond
       (allow-intro
-        (call-with-time-out
-          (λ ()
-            (message-box/custom str-comp
-              (string-append
-                "Show rhis message next time again?\n\n"
-                "Computation of move m:\n"
-                "  which disk is moved,\n"
-                "  from which peg it is taken,\n"
-                "  onto which peg it put\n"
-                "  and the resulting distribution of disks\n\n"
-                "You will be asked for the following details:\n\n"
-                "  mode  : capital letter: S for short, L for long and C for circular\n"
-                "  height: number of disks (can be greater than 9)\n"
-                "  from  : starting peg 1, 2 or 3\n"
-                "  onto  : destination-peg 1, 2 or 3, but t≠f\n")
-              "yes" "no" #f))
-          #t))
-      (else #t)))
-  (when (eq? answer 2) (set! allow-intro #f))
-  (when answer
+        (define o-a
+          (call-with-time-out
+            (λ ()
+              (call-with-values ; Because call-with-time-out does not handle multiple values.
+                (λ ()
+                  (message+check-box str-comp
+                    (string-append
+                      "Computation of move m:\n"
+                      "  which disk is moved,\n"
+                      "  from which peg it is taken,\n"
+                      "  onto which peg it put\n"
+                      "  and the resulting distribution of disks\n\n"
+                      "You will be asked for the following details:\n\n"
+                      "  mode  : capital letter: S for short, L for long and C for circular\n"
+                      "  height: number of disks (can be greater than 9)\n"
+                      "  from  : starting peg 1, 2 or 3\n"
+                      "  onto  : destination-peg 1, 2 or 3, but t≠f")
+                    "Do not show this message next time again"
+                    #f
+                    (quote (ok-cancel))))
+                list)) 
+            #t))
+        (apply values o-a))
+      (else (values (quote ok) #f))))
+  (when answer (set! allow-intro #f))
+  (when (eq? ok? (quote ok))
     (let loop ((first? #t))
       (define str
         (call-with-time-out
@@ -854,7 +861,8 @@
             (get-text-from-user str-comp
               (string-append
                 (if first? "" "Wrong data, try again\n")
-                "Give mode, height, move -r from-disk and onto-disk")
+                "Give mode, height, move -r from-disk and onto-disk\n"
+                "separated by spaces")
               #f
               ""
               (quote ())))
