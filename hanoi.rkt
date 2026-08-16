@@ -825,24 +825,28 @@
          (values L h m f t))
         (else (catcher #f)))))
   (define answer
-    (call-with-time-out
-      (λ ()
-        (message-box str-comp
-          (string-append
-            "Computation of move m:\n"
-            "  which disk is moved,\n"
-            "  from which peg it is taken,\n"
-            "  onto which peg it put\n"
-            "  and the resulting distribution of disks\n"
-            "You will be asked for the following details:\n"
-            "  mode  : capital letter: S for short, L for long and C for circular\n"
-            "  height: number of disks (can be greater than 9)\n"
-            "  from  : starting peg 1, 2 or 3\n"
-            "  onto  : destination-peg 1, 2 or 3, but t≠f")
-          #f
-          (quote (ok-cancel))))
-      #t))
-  (when (eq? answer 'ok)
+    (cond
+      (allow-intro
+        (call-with-time-out
+          (λ ()
+            (message-box/custom str-comp
+              (string-append
+                "Show rhis message next time again?\n\n"
+                "Computation of move m:\n"
+                "  which disk is moved,\n"
+                "  from which peg it is taken,\n"
+                "  onto which peg it put\n"
+                "  and the resulting distribution of disks\n\n"
+                "You will be asked for the following details:\n\n"
+                "  mode  : capital letter: S for short, L for long and C for circular\n"
+                "  height: number of disks (can be greater than 9)\n"
+                "  from  : starting peg 1, 2 or 3\n"
+                "  onto  : destination-peg 1, 2 or 3, but t≠f\n")
+              "yes" "no" #f))
+          #t))
+      (else #t)))
+  (when (eq? answer 2) (set! allow-intro #f))
+  (when answer
     (let loop ((first? #t))
       (define str
         (call-with-time-out
@@ -1117,6 +1121,7 @@
 (define button-peg2   'yet-to-be-initialized)
 (define button-peg3   'yet-to-be-initialized)
 (define button-comp   'yet-to-be-initialized)
+(define allow-intro   'yet-to-be-initialized)
 
 (define (initialize ec)
   ; Store variables not yet initialized.
@@ -1129,6 +1134,7 @@
   (set! clock        0         )
   (set! move-count   0         )
   (set! manual-count 0         )
+  (set! allow-intro  #t        )
   (set! disk-distr (vector (range height) '() '()))
   ; Open graphics and the viewport.
   (open-graphics)
