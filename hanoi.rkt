@@ -58,7 +58,7 @@
     (button-peg2   (do-manual 1) (main))
     (button-peg3   (do-manual 2) (main))
     (button-comp   (do-comp    ) (main))
-    (button-quit   (quit-exit       )       )
+    (button-quit   (quit-exit  )       )
     (else
       (define p (dispatch-peg pos))
       (when p (do-manual p))
@@ -244,7 +244,8 @@
                    (list (syntax ((draw-button-content vp) pos kontent)))))
                (λ (action . args)
                  (when
-                   (or enabled? (member action '(enable disable get-content put-content in-button?)))
+                   (or enabled?
+                     (member action (quote (enable disable get-content put-content in-button?))))
                    (apply button action args)))))))))))
 
 (define (str-title-case str)
@@ -269,7 +270,7 @@
 (define str-comp   " Compute "   )
 (define str-warn   " A dialog is waiting. Look for it when you don't see it.")
 (define click (quote click))
-(define click-str (symbol->string 'click))
+(define click-str (symbol->string (quote click)))
 (define red   (make-rgb 1.0 0.0 0.0))
 (define white (make-rgb 1.0 1.0 1.0))
 (define black (make-rgb 0.0 0.0 0.0))
@@ -910,7 +911,7 @@
   (values
     (disk m)
     (from m h f t)
-    (add1 (onto m h f t))
+    (onto m h f t)
     (for/list ((p (in-range h))) (posi m h p f t))))
 
 (define (calc-long h m f t)
@@ -943,14 +944,34 @@
     (onto m h f t)
     (for/list ((p (in-range h))) (posi m p f t))))
 
-(define (calc-circ h m f t)
-  (call-with-time-out
-    (λ ()
-      (message-box str-comp "Circular not yet implemented"))
-    #t)
-  (viewport-flush-input vp)
-  (values #f #f #f #f))
-  
+(define (calc-circ h M f t)
+  (define (long m h f t r)
+    (define-values (d F T distr) (calc-long h m f t))
+    (values d F T (append distr (list r))))
+  (define (mover h f t r) (values h f t (append (make-list h r) (list t))))
+  (cond
+    ((= h 1)
+     (define r (- 3 f t))
+     (case M
+       ((1) (values 0 f r (list t)))
+       ((2) (values 0 t r (list r)))
+       ((3) (values 0 r f (list f)))))
+    (else
+      (define r (- 3 f t))
+      (define h-1 (sub1 h))
+      (define 3^<h-1> (expt 3 h-1))
+      (define 3^h (* 3 3^<h-1>))
+      (define 3^<h-1>-1 (sub1 3^<h-1>))
+      (define <3^<h-1>-1>/2 (/ 3^<h-1>-1 2))
+      (define m (modulo (+ M <3^<h-1>-1>/2) 3^h))
+      (cond
+        ((zero? m)                 (mover  h-1 r f t))
+        ((< m 3^<h-1>)             (long m h-1 t r f))
+        ((= m 3^<h-1>)             (mover  h-1 f t r))
+        ((< m (+ 3^<h-1> 3^<h-1>)) (long m h-1 r f t))
+        ((= m (+ (* 2 3^<h-1>)))   (mover  h-1 t r f))
+        ((< m (+ (* 3 3^<h-1>) 2)) (long m h-1 f t r))))))
+
 ;=====================================================================================================
 ; Limit time waiting for a mouseclick or response to a dialog.
 
