@@ -321,13 +321,13 @@
 (define (call-with-time-out thunk (warn? #f))
   (when warn? ((draw-string vp) pos-warn str-warn red))
   (define time-out-custodian (make-custodian))
-  (define user-choice (box #f))
+  (define answer-box (box #f))
   (define result
     (parameterize ((current-custodian time-out-custodian))
       (define dialog-eventspace (make-eventspace))
       (define task-thread
         (parameterize ((current-eventspace dialog-eventspace))
-          (thread (λ () (set-box! user-choice (thunk))))))
+          (thread (λ () (set-box! answer-box (call-with-values thunk list))))))
       (sync/timeout (* (idle-limit) 60) task-thread)))
   (cond
     ((not result)
@@ -336,7 +336,7 @@
     (else
       (custodian-shutdown-all time-out-custodian)
       (when warn? ((clear-string vp) pos-warn str-warn))
-      (unbox user-choice))))
+      (apply values (unbox answer-box)))))
 
 ;=====================================================================================================
 ; Layout of the GUI. Computation of coordinates and sizes of all elements in the viewport of the GUI.
@@ -821,29 +821,25 @@
   (define-values (ok answer)
     (cond
       (allow-intro
-        (apply values
-          (call-with-time-out
-            (λ ()
-              (call-with-values ; Needed because call-with-time-out does not handle multiple values.
-                (λ ()
-                  (message+check-box str-comp
-                    (string-append
-                      "Computation of move m:\n"
-                      "  which disk is moved,\n"
-                      "  from which peg it is taken,\n"
-                      "  onto which peg it put\n"
-                      "  and the resulting distribution of disks\n\n"
-                      "You will be asked for the following details:\n\n"
-                      "  mode  : capital letter: S for short, L for long and C for circular\n"
-                      "  height: number of disks (can be greater than 9)\n"
-                      "  from  : starting peg 1, 2 or 3\n"
-                      "  onto  : destination-peg 1, 2 or 3, but t≠f")
-                    "Do not show this message next time again"
-                    #f
-                    '(ok-cancel no-icon)))
-                list))
-            #t)))
-      (else (values 'ok #f))))
+        (call-with-time-out
+          (λ ()
+            (message+check-box str-comp
+              (string-append
+                "Computation of move m:\n"
+                "  which disk is moved,\n"
+                "  from which peg it is taken,\n"
+                "  onto which peg it put\n"
+                "  and the resulting distribution of disks\n\n"
+                "You will be asked for the following details:\n\n"
+                "  mode  : capital letter: S for short, L for long and C for circular\n"
+                "  height: number of disks (can be greater than 9)\n"
+                "  from  : starting peg 1, 2 or 3\n"
+                "  onto  : destination-peg 1, 2 or 3, but t≠f")
+              "Do not show this message next time again"
+              #f
+              '(ok-cancel no-icon)))
+          #t))
+      (else (values 'ok #f)))) (writeln (list ok answer))
   (when answer (set! allow-intro #f))
   (when (eq? ok 'ok)
     (let loop ((first? #t))
@@ -1169,3 +1165,4 @@
 
 ;=====================================================================================================
 ; The end
+(play)
