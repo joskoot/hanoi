@@ -1,10 +1,10 @@
-
+ 
 ;=====================================================================================================
 ;
 ; A GUI playing the game of The Tower of Hanoi. Moves can be made manually but also automatically by
 ; the GUI. It has clickable buttons Height, Mode, Delay, Reset, Setup, Quit, Peg1, Peg2, Peg3, Idle-
 ; limit and Compute. A click on such button initiates an action. During an action some buttons may be
-; disabled and disappear temporarily from the screen.
+; disabled.
 ;
 ;=====================================================================================================
 ; Exports, imports and two simple macros.
@@ -46,6 +46,9 @@
   (define pos (mouse-click-posn (call-with-time-out (λ () (get-mouse-click vp)))))
   (dispatch pos))
 
+;=====================================================================================================
+; Dispatching mouse clicks.
+
 (define (dispatch pos)
   (dispatch-button pos
     (button-height (do-height  ) (main))
@@ -63,9 +66,6 @@
       (define p (dispatch-peg pos))
       (when p (do-manual p))
       (main))))
-
-;=====================================================================================================
-; Dispatching mouse clicks.
 
 (define-syntax (dispatch-button stx)
   (syntax-case stx (else)
@@ -100,25 +100,6 @@
   (define x-max (+ x-min (region-width  region)))
   (define y-max (+ y-min (region-height region)))
   (and (<= x-min x x-max) (<= y-min y y-max)))
-
-(define (enable/disable-buttons buttons enable/disable)
-  (for ((button (in-list buttons))) (button enable/disable)))
-
-(define (enable/disable-all-buttons enable/disable)
-  (define buttons
-    (list
-      button-height
-      button-mode
-      button-delay
-      button-idle
-      button-reset
-      button-setup
-      button-quit
-      button-peg1
-      button-peg2
-      button-peg3
-      button-comp))
-  (enable/disable-buttons buttons enable/disable))
 
 ;=====================================================================================================
 ; Tool for aborting when waiting too long for for a mouseclick or answer to a dialog.
@@ -159,19 +140,17 @@
         (parameterize ((current-eventspace dialog-eventspace))
           (thread
             (λ ()
-              (define choice (thunk))
+              (define choice (call-with-values thunk list))
               (set-box! user-choice choice)))))
-
       (sync/timeout (* (idle-limit) 60) task-thread)))
   (cond
     ((not result)
      (custodian-shutdown-all time-out-custodian)
      (abort))
     (else
-      (define final-response (unbox user-choice))
       (custodian-shutdown-all time-out-custodian)
       (when warn? ((clear-string vp) pos-warn str-warn))
-      final-response)))
+      (apply values (unbox user-choice)))))
 
 ;=====================================================================================================
 ; A button is displayed on the screen.
@@ -248,6 +227,25 @@
                    (or enabled?
                      (member action (quote (enable disable get-content put-content in-button?))))
                    (apply button action args)))))))))))
+
+(define (enable/disable-all-buttons enable/disable)
+  (define buttons
+    (list
+      button-height
+      button-mode
+      button-delay
+      button-idle
+      button-reset
+      button-setup
+      button-quit
+      button-peg1
+      button-peg2
+      button-peg3
+      button-comp))
+  (enable/disable-buttons buttons enable/disable))
+
+(define (enable/disable-buttons buttons enable/disable)
+  (for ((button (in-list buttons))) (button enable/disable)))
 
 (define (str-title-case str)
   (define lst (string->list str))
@@ -514,7 +512,10 @@
         (get-choices-from-user
           str-mode
           "Select a mode\nCancel in order to remain in manual mode."
-          modes))
+          modes
+          #f
+          (quote ())
+          (quote (single))))
       #t))
   (viewport-flush-input vp)
   (cond
@@ -548,11 +549,12 @@
   (enable/disable-buttons buttons enable/disable))
 
 (define (finish who)
-  (call-with-time-out (λ () (message-box who "\n\n\nfinished\n\n\n" #f '(ok))) #t)
+  (call-with-time-out (λ () (message-box who "\n\n\nfinished\n\n\n" #f '(ok no-icon))) #t)
   ; Ignore clicks on reset and quit button while the message box is waiting.
   ; Clicks on other buttons already were ignored because they still are disabled.
   (viewport-flush-input vp)
   (prepare/finish-do-mode 'enable)
+  ((clear-string vp) pos-msg msg-str)
   (button-mode 'put-content 'manual))
 
 ;=====================================================================================================
@@ -828,29 +830,24 @@
   (define-values (ok? answer)
     (cond
       (allow-intro
-        (define o-a
-          (call-with-time-out
-            (λ ()
-              (call-with-values ; Because call-with-time-out does not handle multiple values.
-                (λ ()
-                  (message+check-box str-comp
-                    (string-append
-                      "Computation of move m:\n"
-                      "  which disk is moved,\n"
-                      "  from which peg it is taken,\n"
-                      "  onto which peg it put\n"
-                      "  and the resulting distribution of disks\n\n"
-                      "You will be asked for the following details:\n\n"
-                      "  mode  : capital letter: S for short, L for long and C for circular\n"
-                      "  height: number of disks (can be greater than 9)\n"
-                      "  from  : starting peg 1, 2 or 3\n"
-                      "  onto  : destination-peg 1, 2 or 3, but t≠f")
-                    "Do not show this message next time again"
-                    #f
-                    (quote (ok-cancel))))
-                list)) 
-            #t))
-        (apply values o-a))
+        (call-with-time-out
+          (λ ()
+            (message+check-box str-comp
+              (string-append
+                "Computation of move m:\n"
+                "  which disk is moved,\n"
+                "  from which peg it is taken,\n"
+                "  onto which peg it put\n"
+                "  and the resulting distribution of disks\n\n"
+                "You will be asked for the following details:\n\n"
+                "  mode  : capital letter: S for short, L for long and C for circular\n"
+                "  height: number of disks (can be greater than 9)\n"
+                "  from  : starting peg 1, 2 or 3\n"
+                "  onto  : destination-peg 1, 2 or 3, but t≠f")
+              "Do not show this message next time again"
+              #f
+              (quote (ok-cancel no-icon))))
+          #t))
       (else (values (quote ok) #f))))
   (when answer (set! allow-intro #f))
   (when (eq? ok? (quote ok))
@@ -864,8 +861,7 @@
                 "Give mode, height, move -r from-disk and onto-disk\n"
                 "separated by spaces")
               #f
-              ""
-              (quote ())))
+              ""))
           #t))
       (viewport-flush-input vp)
       (when str
@@ -902,7 +898,9 @@
                           ((p (in-list distr)) (n (in-cycle (in-range 0 50))))
                           (if (= n 49)
                             (cons "\n" (cons (format "~s" (add1 p)) result))
-                            (cons (format "~s" (add1 p)) result))))))))
+                            (cons (format "~s" (add1 p)) result)))))
+                    #f
+                    (quote (no-icon)))))
               #t))))))
   (enable/disable-all-buttons 'enable)
   (viewport-flush-input vp))
