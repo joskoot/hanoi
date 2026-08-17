@@ -7,11 +7,9 @@
 ; disabled.
 ;
 ;=====================================================================================================
-; Exports, imports and two simple macros.
+; Imports and a simple macro for recersed in-range.
 
 #lang racket
-
-(provide play idle-limit)
 
 (require
   graphics/graphics
@@ -21,9 +19,10 @@
   (in-reversed-range n)
   (in-range (sub1 n) -1 -1))
 
-(define-syntax-rule
-  (define-values-block (value ...)         def/expr ...)
-  (define-values       (value ...) (let () def/expr ... (values value ...))))
+;=====================================================================================================
+; Exports.
+
+(provide play idle-limit)
 
 ;=====================================================================================================
 ; Main procedure.
@@ -45,6 +44,198 @@
   ; but sometimes it just terminates the current action.
   (define pos (mouse-click-posn (call-with-time-out (λ () (get-mouse-click vp)))))
   (dispatch pos))
+
+;=====================================================================================================
+; Some constants required in early stage. Never mutated.
+
+(define str-height " Height "    )
+(define str-mode   " Mode "      )
+(define str-delay  " Delay "     )
+(define str-idle   " Idle limit ")
+(define str-reset  " Reset "     )
+(define str-setup  " Setup "     )
+(define str-quit   " Quit "      )
+(define str-undo   " Undo "      )
+(define str-manual " manual "    )
+(define str-short  " short "     )
+(define str-long   " long "      )
+(define str-circ   " circular "  )
+(define str-comp   " Compute "   )
+(define str-warn   " A dialog is waiting. Look for it when you don't see it.")
+(define click 'click)
+(define click-str (symbol->string click))
+(define red   (make-rgb 1.0 0.0 0.0))
+(define white (make-rgb 1.0 1.0 1.0))
+(define black (make-rgb 0.0 0.0 0.0))
+(define gray  (make-rgb 0.6 0.6 0.6))
+(define blue  (make-rgb 0.0 0.0 1.0))
+(define green (make-rgb 0.0 0.8 0.0))
+
+;=====================================================================================================
+; A button is displayed on the screen.
+; It has procedure property and can have a content.
+; It is called as follows:
+;
+; (button command arg ...) --> any/c
+; command : (or/c 'in-button? 'disable 'enable 'get-content 'put-content)
+; arg : any/c
+;
+; 'get-content and 'put-content are for buttons with content only.
+
+(define-syntax make-button
+  (let ((no-kontent (string->uninterned-symbol "no-kontent")))
+    (λ (stx)
+      (syntax-case stx ()
+        ((_ name position)#`(make-button name position #,no-kontent))
+        ((_ name position kontent)
+         (let
+           ((no-kontent-condition
+              (and
+                (identifier? #'kontent)
+                (eq? (syntax-e #'kontent) no-kontent))))
+           #`(let ((pos position))
+               (define region (make-region pos button-width button-hight))
+               (define name-str (str-title-case (format "~a" 'name)))
+               (define enabled? #t)
+               (define (proc button action . args)
+                 (case action
+                   ((in-button?) (in-region? (car args) region))
+                   #,@(if no-kontent-condition
+                        (list)
+                        (list
+                          #'((put-content)
+                             (set-button-content! button (car args))
+                             ((draw-button-content vp) pos (car args)))
+                          #'((get-content) (button-content button))))
+                   ((disable)
+                    (set! enabled? #f)
+                    ((draw-disabled-button vp) pos name-str))
+                   ((enable)
+                    (set! enabled? #t)
+                    ((draw-button vp) pos name-str))
+                   (else
+                     (apply
+                       raise-argument-error
+                       'name
+                       "(or/c 'in-button? 'disable 'enable 'get-content 'put-content)"
+                       0 action args))))
+               (struct button
+                 #,(if no-kontent-condition
+                     #'(pos)
+                     #'(pos (content #:mutable)))
+                 #:property prop:procedure proc
+                 #:omit-define-syntaxes
+                 #:constructor-name button-maker)
+               #,(if no-kontent-condition
+                   #'(define button (button-maker pos))
+                   #'(define button (button-maker pos kontent)))
+               ; Draw the button and if it has content, the latter too.
+               ((draw-button vp) pos name-str)
+               #,@(if no-kontent-condition
+                    (list)
+                    (list #'((draw-button-content vp) pos kontent)))
+               (λ (action . args)
+                 (when
+                   (or enabled?
+                     (member action '(enable disable get-content put-content in-button?)))
+                   (apply button action args))))))))))
+
+(define (enable/disable-all-buttons enable/disable)
+  (define buttons
+    (list
+      button-height
+      button-mode
+      button-delay
+      button-idle
+      button-reset
+      button-setup
+      button-quit
+      button-peg1
+      button-peg2
+      button-peg3
+      button-comp))
+  (enable/disable-buttons buttons enable/disable))
+
+(define (enable/disable-buttons buttons enable/disable)
+  (for ((button (in-list buttons))) (button enable/disable)))
+
+(define (str-title-case str)
+  (define lst (string->list str))
+  (list->string (cons (char-upcase (car lst)) (cdr lst))))
+
+;=====================================================================================================
+; Procedures to draw buttons and their contents. Computation of their sizes.
+; A temporary pixmap is used to measure string sizes.
+
+(define-syntax-rule
+  (define-values-block (value ...)         def/expr ...)
+  (define-values       (value ...) (let () def/expr ... (values value ...))))
+
+(define-values-block
+  (draw-button draw-disabled-button draw-button-content button-width button-hight string-offset)
+
+  ; Measure the maximum size of strings used in buttons.
+
+  (define strings
+    (list
+      str-height
+      str-mode
+      str-delay
+      str-idle
+      str-reset
+      str-setup
+      str-quit
+      str-undo
+      str-manual
+      str-comp
+      str-long
+      str-circ
+      "999999"))
+
+  (define string-offset 4)
+  (define *2string-offset (* 2 string-offset))
+
+  (open-graphics)
+  (define vp (open-pixmap "string-sizes" 1000 500))
+
+  (define-values (button-width button-hight)
+    (for/fold ((w 0) (h 0) #:result (values (+ w *2string-offset) (+ h *2string-offset)))
+      ((w/h
+         (in-list
+           (map (get-string-size vp)
+             strings))))
+      (values
+        (max w (inexact->exact (ceiling (car w/h))))
+        (max h (inexact->exact (ceiling (cadr w/h)))))))
+
+  (close-viewport vp)
+  (close-graphics)
+
+  ; Procedures.
+
+  (define ((draw-button vp) pos str)
+    (define x (posn-x pos))
+    (define y (posn-y pos))
+    ((draw-solid-rectangle vp) pos button-width button-hight blue)
+    ((draw-string vp)
+     (make-posn (+ x string-offset) (+ y button-hight (- string-offset))) str white))
+
+  (define ((draw-disabled-button vp) pos str)
+    (define x (posn-x pos))
+    (define y (posn-y pos))
+    ((clear-solid-rectangle vp) pos button-width button-hight)
+    ((draw-rectangle vp) pos button-width button-hight blue)
+    ((draw-string vp)
+     (make-posn (+ x string-offset) (+ y button-hight (- (* 2 string-offset)))) str blue))
+
+  (define ((draw-button-content vp) pos value)
+    (define str (if (string? value) value (format "~a" value)))
+    (define x (posn-x pos))
+    (define y (+ (posn-y pos) button-hight))
+    ((clear-solid-rectangle vp) (make-posn x y) button-width button-hight)
+    ((draw-rectangle vp) (make-posn x y) button-width button-hight blue)
+    ((draw-string vp)
+     (make-posn (+ x string-offset) (+ y button-hight (- (* 2 string-offset)))) str blue)))
 
 ;=====================================================================================================
 ; Dispatching mouse clicks.
@@ -70,16 +261,14 @@
 (define-syntax (dispatch-button stx)
   (syntax-case stx (else)
     ((_ pos (button do-button ...) ... (else else-clause ...))
-     (syntax
-       (let ((p pos))
+     #'(let ((p pos))
          (cond
            ((button 'in-button? p) do-button ...) ...
-           (else else-clause ...)))))
+           (else else-clause ...))))
     ((_ pos (button do-button ...) ...)
-     (syntax
-       (let ((p pos))
+     #'(let ((p pos))
          (cond
-           ((button 'in-button? p) do-button ...) ...))))))
+           ((button 'in-button? p) do-button ...) ...)))))
 
 (define (dispatch-peg pos)
   (cond
@@ -126,7 +315,7 @@
         "~n  Use parameter idle-limit to increase the allowed idle limit"
         "~n  or use the Idle limit button.~n~n") (idle-limit)))
   (fprintf (current-error-port) (string-append  "~nTower of Hanoi~n" abort-msg))
-  (message-box "Tower of Hanoi" abort-msg #f (quote (ok caution no-icon)))
+  (message-box "Tower of Hanoi" abort-msg #f '(ok caution no-icon))
   (quit-exit))
 
 (define (call-with-time-out thunk (warn? #f))
@@ -138,10 +327,7 @@
       (define dialog-eventspace (make-eventspace))
       (define task-thread
         (parameterize ((current-eventspace dialog-eventspace))
-          (thread
-            (λ ()
-              (define choice (call-with-values thunk list))
-              (set-box! user-choice choice)))))
+          (thread (λ () (set-box! user-choice (thunk))))))
       (sync/timeout (* (idle-limit) 60) task-thread)))
   (cond
     ((not result)
@@ -150,202 +336,7 @@
     (else
       (custodian-shutdown-all time-out-custodian)
       (when warn? ((clear-string vp) pos-warn str-warn))
-      (apply values (unbox user-choice)))))
-
-;=====================================================================================================
-; A button is displayed on the screen.
-; It has procedure property and can have a content.
-; It is called as follows:
-;
-; (button command arg ...) --> any/c
-; command : (or/c 'in-button? 'disable 'enable 'get-content 'put-content)
-; arg : any/c
-;
-; 'get-content and 'put-content are for buttons with content only.
-
-(define-syntax make-button
-  (let ((no-kontent (string->uninterned-symbol "no-kontent")))
-    (λ (stx)
-      (syntax-case stx ()
-        ((_ name position) (quasisyntax (make-button name position (unsyntax no-kontent))))
-        ((_ name position kontent)
-         (let
-           ((no-kontent-condition
-              (and
-                (identifier? (syntax kontent))
-                (eq? (syntax-e (syntax kontent)) no-kontent))))
-           (quasisyntax
-             (let ((pos position))
-               (define region (make-region pos button-width button-hight))
-               (define name-str (str-title-case (format "~a" 'name)))
-               (define enabled? #t)
-               (define (proc button action . args)
-                 (case action
-                   ((in-button?) (in-region? (car args) region))
-                   (unsyntax-splicing
-                     (if no-kontent-condition
-                       (list)
-                       (list
-                         (syntax
-                           ((put-content)
-                            (set-button-content! button (car args))
-                            ((draw-button-content vp) pos (car args))))
-                         (syntax
-                           ((get-content) (button-content button))))))
-                   ((disable)
-                    (set! enabled? #f)
-                    ((draw-disabled-button vp) pos name-str))
-                   ((enable)
-                    (set! enabled? #t)
-                    ((draw-button vp) pos name-str))
-                   (else
-                     (apply
-                       raise-argument-error
-                       'name
-                       "(or/c 'in-button? 'disable 'enable 'get-content 'put-content)"
-                       0 action args))))
-               (struct button
-                 (unsyntax
-                   (if no-kontent-condition
-                     (syntax (pos))
-                     (syntax (pos (content #:mutable)))))
-                 #:property prop:procedure proc
-                 #:omit-define-syntaxes
-                 #:constructor-name button-maker)
-               (unsyntax
-                 (if no-kontent-condition
-                   (syntax (define button (button-maker pos)))
-                   (syntax (define button (button-maker pos kontent)))))
-               ; Draw the button and if it has content, the latter too.
-               ((draw-button vp) pos name-str)
-               (unsyntax-splicing
-                 (if no-kontent-condition
-                   (list)
-                   (list (syntax ((draw-button-content vp) pos kontent)))))
-               (λ (action . args)
-                 (when
-                   (or enabled?
-                     (member action (quote (enable disable get-content put-content in-button?))))
-                   (apply button action args)))))))))))
-
-(define (enable/disable-all-buttons enable/disable)
-  (define buttons
-    (list
-      button-height
-      button-mode
-      button-delay
-      button-idle
-      button-reset
-      button-setup
-      button-quit
-      button-peg1
-      button-peg2
-      button-peg3
-      button-comp))
-  (enable/disable-buttons buttons enable/disable))
-
-(define (enable/disable-buttons buttons enable/disable)
-  (for ((button (in-list buttons))) (button enable/disable)))
-
-(define (str-title-case str)
-  (define lst (string->list str))
-  (list->string (cons (char-upcase (car lst)) (cdr lst))))
-
-;=====================================================================================================
-; Some constants required in early stage. Never mutated.
-
-(define str-height " Height "    )
-(define str-mode   " Mode "      )
-(define str-delay  " Delay "     )
-(define str-idle   " Idle limit ")
-(define str-reset  " Reset "     )
-(define str-setup  " Setup "     )
-(define str-quit   " Quit "      )
-(define str-undo   " Undo "      )
-(define str-manual " manual "    )
-(define str-short  " short "     )
-(define str-long   " long "      )
-(define str-circ   " circular "  )
-(define str-comp   " Compute "   )
-(define str-warn   " A dialog is waiting. Look for it when you don't see it.")
-(define click (quote click))
-(define click-str (symbol->string (quote click)))
-(define red   (make-rgb 1.0 0.0 0.0))
-(define white (make-rgb 1.0 1.0 1.0))
-(define black (make-rgb 0.0 0.0 0.0))
-(define gray  (make-rgb 0.6 0.6 0.6))
-(define blue  (make-rgb 0.0 0.0 1.0))
-(define green (make-rgb 0.0 0.8 0.0))
-
-;=====================================================================================================
-; Procedures to draw buttons and their contents. Computation of their sizes.
-; A temporary pixmap is used to measure string sizes.
-
-(define-values-block
-  (draw-button draw-disabled-button draw-button-content button-width button-hight string-offset)
-
-  ; Measure the maximum size of strings used in buttons.
-
-  (define strings
-    (list
-      str-height
-      str-mode
-      str-delay
-      str-idle
-      str-reset
-      str-setup
-      str-quit
-      str-undo
-      str-manual
-      str-comp
-      str-long
-      str-circ
-      "999999"))
-
-  (define string-offset 4)
-  (define *2string-offset (* 2 string-offset))
-
-  (open-graphics)
-  (define vp (open-pixmap "string-sizes" 1000 500))
-
-  (define-values (button-width button-hight)
-    (for/fold ((w 0) (h 0) #:result (values (+ w *2string-offset) (+ h *2string-offset)))
-      ((w/h
-         (in-list
-           (map (get-string-size vp)
-             strings))))
-      (values
-        (max w (inexact->exact (ceiling (car w/h))))
-        (max h (inexact->exact (ceiling (cadr w/h)))))))
-
-  (close-viewport vp)
-  (close-graphics)
-
-  ; Two procedures to draw buttons and their contents.
-
-  (define ((draw-button vp) pos str)
-    (define x (posn-x pos))
-    (define y (posn-y pos))
-    ((draw-solid-rectangle vp) pos button-width button-hight blue)
-    ((draw-string vp)
-     (make-posn (+ x string-offset) (+ y button-hight (- string-offset))) str white))
-
-  (define ((draw-disabled-button vp) pos str)
-    (define x (posn-x pos))
-    (define y (posn-y pos))
-    ((clear-solid-rectangle vp) pos button-width button-hight)
-    ((draw-rectangle vp) pos button-width button-hight blue)
-    ((draw-string vp)
-     (make-posn (+ x string-offset) (+ y button-hight (- (* 2 string-offset)))) str blue))
-
-  (define ((draw-button-content vp) pos value)
-    (define str (if (string? value) value (format "~a" value)))
-    (define x (posn-x pos))
-    (define y (+ (posn-y pos) button-hight))
-    ((clear-solid-rectangle vp) (make-posn x y) button-width button-hight)
-    ((draw-rectangle vp) (make-posn x y) button-width button-hight blue)
-    ((draw-string vp)
-     (make-posn (+ x string-offset) (+ y button-hight (- (* 2 string-offset)))) str blue)))
+      (unbox user-choice))))
 
 ;=====================================================================================================
 ; Layout of the GUI. Computation of coordinates and sizes of all elements in the viewport of the GUI.
@@ -430,7 +421,7 @@
         (else
           (draw-disk d h p)
           (reset-manual-count)
-          (unless (button-quit (quote in-button?) pos) (dispatch pos)))))))
+          (unless (button-quit 'in-button? pos) (dispatch pos)))))))
 
 (define (do-manual2 d h p dest-p)
   (cond
@@ -514,8 +505,8 @@
           "Select a mode\nCancel in order to remain in manual mode."
           modes
           #f
-          (quote ())
-          (quote (single))))
+          '()
+          '(single)))
       #t))
   (viewport-flush-input vp)
   (cond
@@ -545,7 +536,7 @@
         button-comp)
       (if (eq? (button-delay 'get-content) click)
         (list button-peg1 button-peg2 button-peg3)
-        (quote ()))))
+        '())))
   (enable/disable-buttons buttons enable/disable))
 
 (define (finish who)
@@ -804,7 +795,7 @@
 
 (define (do-comp)
   (enable/disable-all-buttons 'disable)
-  (define (catcher e) (values (quote not-ok) #f #f #f #f))
+  (define (catcher e) (values 'not-ok #f #f #f #f))
   (define (validate-comp str)
     (with-handlers ((exn:fail? catcher))
       (define input (open-input-string str))
@@ -815,7 +806,7 @@
       (define t (read input))
       (cond
         ((and
-           (member L (quote (S L C)))
+           (member L '(S L C))
            (exact-integer? h)
            (exact-integer? m)
            (exact-integer? f)
@@ -827,30 +818,34 @@
              (< 0 m (case L ((S) (expt 2 h)) ((L) expt3h) ((C) (add1 expt3h))))))
          (values L h m f t))
         (else (catcher #f)))))
-  (define-values (ok? answer)
+  (define-values (ok answer)
     (cond
       (allow-intro
-        (call-with-time-out
-          (λ ()
-            (message+check-box str-comp
-              (string-append
-                "Computation of move m:\n"
-                "  which disk is moved,\n"
-                "  from which peg it is taken,\n"
-                "  onto which peg it put\n"
-                "  and the resulting distribution of disks\n\n"
-                "You will be asked for the following details:\n\n"
-                "  mode  : capital letter: S for short, L for long and C for circular\n"
-                "  height: number of disks (can be greater than 9)\n"
-                "  from  : starting peg 1, 2 or 3\n"
-                "  onto  : destination-peg 1, 2 or 3, but t≠f")
-              "Do not show this message next time again"
-              #f
-              (quote (ok-cancel no-icon))))
-          #t))
-      (else (values (quote ok) #f))))
+        (apply values
+          (call-with-time-out
+            (λ ()
+              (call-with-values ; Needed because call-with-time-out does not handle multiple values.
+                (λ ()
+                  (message+check-box str-comp
+                    (string-append
+                      "Computation of move m:\n"
+                      "  which disk is moved,\n"
+                      "  from which peg it is taken,\n"
+                      "  onto which peg it put\n"
+                      "  and the resulting distribution of disks\n\n"
+                      "You will be asked for the following details:\n\n"
+                      "  mode  : capital letter: S for short, L for long and C for circular\n"
+                      "  height: number of disks (can be greater than 9)\n"
+                      "  from  : starting peg 1, 2 or 3\n"
+                      "  onto  : destination-peg 1, 2 or 3, but t≠f")
+                    "Do not show this message next time again"
+                    #f
+                    '(ok-cancel no-icon)))
+                list))
+            #t)))
+      (else (values 'ok #f))))
   (when answer (set! allow-intro #f))
-  (when (eq? ok? (quote ok))
+  (when (eq? ok 'ok)
     (let loop ((first? #t))
       (define str
         (call-with-time-out
@@ -867,7 +862,7 @@
       (when str
         (define-values (L h m f t) (validate-comp str))
         (cond
-          ((eq? L (quote not-ok)) (loop #f))
+          ((eq? L 'not-ok) (loop #f))
           (else
             (define input (open-input-string str))
             (define mode (read input))
@@ -898,9 +893,9 @@
                           ((p (in-list distr)) (n (in-cycle (in-range 0 50))))
                           (if (= n 49)
                             (cons "\n" (cons (format "~s" (add1 p)) result))
-                            (cons (format "~s" (add1 p)) result)))))
-                    #f
-                    (quote (no-icon)))))
+                            (cons (format "~s" (add1 p)) result))))))
+                  #f
+                  (quote (ok no-icon))))
               #t))))))
   (enable/disable-all-buttons 'enable)
   (viewport-flush-input vp))
@@ -982,8 +977,45 @@
         ((= m (+ (* 2 3^<h-1>)))   (mover  h-1 t r f))
         ((< m (+ (* 3 3^<h-1>) 2)) (long m h-1 f t r))))))
 
-;=====================================================================================================
-; Limit time waiting for a mouseclick or response to a dialog.
+; Move disk for short, long or circular mode.
+
+(define (move-disk f t exit)
+  (define ff (vector-ref disk-distr f))
+  (define tt (vector-ref disk-distr t))
+  (unless (null? ff)
+    (define d (car ff))
+    (define move-to-be-made?
+      (case delay
+        ((click) (check-click #t exit))
+        (else
+          (define first-doze-time (min delay 1))
+          (cond
+            ((= move-count 0) (doze first-doze-time exit) (check-click #f exit))
+            (else (doze delay exit) (check-click #f exit))))))
+    (cond
+      (move-to-be-made?
+        (remove-disk d (sub1 (length ff)) f)
+        (draw-disk d (length tt) t)
+        (vector-set! disk-distr f (cdr ff))
+        (vector-set! disk-distr t (cons d tt))
+        (draw-msg))
+      (else (move-disk f t exit)))))
+
+; Enable abortion by means of reset and quit.
+; Also use abort after the idle time has expired for a required mouseclick (when mode is click)
+
+(define (check-click click-required? exit)
+  (define pos
+    (if click-required?
+      (call-with-time-out (λ () (get-mouse-click vp)))
+      (ready-mouse-click vp)))
+  (define p (and pos (mouse-click-posn pos)))
+  (when p
+    (dispatch-button p
+      (button-reset (do-reset) (exit))
+      (button-quit             (exit)))))
+
+; Doze is like sleep , but allowing reset and quit.
 
 (define (doze t exit)
   (define starting-time (current-inexact-milliseconds))
@@ -1060,44 +1092,9 @@
   (define y (- vp-height border blok (* (add1 h) disk-height)))
   (define pos (make-posn x y))
   ((clear-solid-rectangle vp) pos width disk-height)
-  ; Draw the part of the pile that was hidden by the disk.pile
+  ; Draw the part of the pile that was hidden by the disk.
   ((draw-solid-rectangle vp)
    (make-posn (- center (/ peg-width 2)) y) peg-width disk-height green))
-
-(define (move-disk f t exit)
-  (define ff (vector-ref disk-distr f))
-  (define tt (vector-ref disk-distr t))
-  (unless (null? ff)
-    (define d (car ff))
-    (define move-to-be-made?
-      (case delay
-        ((click) (check-click #t exit))
-        (else
-          (define first-doze-time (min delay 1))
-          (cond
-            ((= move-count 0) (doze first-doze-time exit) (check-click #f exit))
-            (else (doze delay exit) (check-click #f exit))))))
-    (cond
-      (move-to-be-made?
-        (remove-disk d (sub1 (length ff)) f)
-        (draw-disk d (length tt) t)
-        (vector-set! disk-distr f (cdr ff))
-        (vector-set! disk-distr t (cons d tt))
-        (draw-msg))
-      (else (move-disk f t exit)))))
-
-; Procedure check-click enables abortion from short, long and circular mode when delay is not click.
-
-(define (check-click click-required? exit)
-  (define pos
-    (if click-required?
-      (call-with-time-out (λ () (get-mouse-click vp)))
-      (ready-mouse-click vp)))
-  (define p (and pos (mouse-click-posn pos)))
-  (when p
-    (dispatch-button p
-      (button-reset (do-reset) (exit))
-      ( button-quit (exit)))))
 
 ;=====================================================================================================
 ; Initialization. Actions to be taken before the game can start and introduction of variables that
