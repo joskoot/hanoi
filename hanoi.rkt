@@ -7,20 +7,13 @@
 ; disabled.
 ;
 ;=====================================================================================================
-; Imports and a simple macro for recersed in-range.
+; Imports and exports. 
 
 #lang racket
 
 (require
   graphics/graphics
   racket/gui/base)
-
-(define-syntax-rule
-  (in-reversed-range n)
-  (in-range (sub1 n) -1 -1))
-
-;=====================================================================================================
-; Exports.
 
 (provide play idle-limit)
 
@@ -39,14 +32,11 @@
 
 (define (main)
   ; At this point the GUI always is in manual mode,
-  ; Each action, Quit excepted, returns to manual mode.
-  ; The Quit button can be used to exit from the GUI,
-  ; but sometimes it just terminates the current action.
   (define pos (mouse-click-posn (call-with-time-out (λ () (get-mouse-click vp)))))
   (dispatch pos))
 
 ;=====================================================================================================
-; Some constants required in early stage. Never mutated.
+; Some constants to be defined before being referred to.
 
 (define str-height " Height "    )
 (define str-mode   " Mode "      )
@@ -64,15 +54,15 @@
 (define str-warn   " A dialog is waiting. Look for it when you don't see it.")
 (define click 'click)
 (define click-str (symbol->string click))
-(define red   (make-rgb 1.0 0.0 0.0))
 (define white (make-rgb 1.0 1.0 1.0))
 (define black (make-rgb 0.0 0.0 0.0))
 (define gray  (make-rgb 0.6 0.6 0.6))
-(define blue  (make-rgb 0.0 0.0 1.0))
+(define red   (make-rgb 1.0 0.0 0.0))
 (define green (make-rgb 0.0 0.8 0.0))
+(define blue  (make-rgb 0.0 0.0 1.0))
 
 ;=====================================================================================================
-; A button is displayed on the screen.
+; Buttons; A button will be displayed on the screen.
 ; It has procedure property and can have a content.
 ; It is called as follows:
 ;
@@ -89,7 +79,7 @@
         ((_ name position)#`(make-button name position #,no-kontent))
         ((_ name position kontent)
          (let
-           ((no-kontent-condition
+           ((no-content?
               (and
                 (identifier? #'kontent)
                 (eq? (syntax-e #'kontent) no-kontent))))
@@ -100,7 +90,7 @@
                (define (proc button action . args)
                  (case action
                    ((in-button?) (in-region? (car args) region))
-                   #,@(if no-kontent-condition
+                   #,@(if no-content?
                         (list)
                         (list
                           #'((put-content)
@@ -120,18 +110,18 @@
                        "(or/c 'in-button? 'disable 'enable 'get-content 'put-content)"
                        0 action args))))
                (struct button
-                 #,(if no-kontent-condition
+                 #,(if no-content?
                      #'(pos)
                      #'(pos (content #:mutable)))
                  #:property prop:procedure proc
                  #:omit-define-syntaxes
                  #:constructor-name button-maker)
-               #,(if no-kontent-condition
+               #,(if no-content?
                    #'(define button (button-maker pos))
                    #'(define button (button-maker pos kontent)))
                ; Draw the button and if it has content, the latter too.
                ((draw-button vp) pos name-str)
-               #,@(if no-kontent-condition
+               #,@(if no-content?
                     (list)
                     (list #'((draw-button-content vp) pos kontent)))
                (λ (action . args)
@@ -839,7 +829,7 @@
               #f
               '(ok-cancel no-icon)))
           #t))
-      (else (values 'ok #f)))) (writeln (list ok answer))
+      (else (values 'ok #f))))
   (when answer (set! allow-intro #f))
   (when (eq? ok 'ok)
     (let loop ((first? #t))
@@ -1162,6 +1152,13 @@
      str white))
   ; Procedure do-reset draws the pegs and the initial distribution of disks on the peg at the left.
   (do-reset))
+
+;=====================================================================================================
+; A simple macro for reversed in-range.
+
+(define-syntax-rule
+  (in-reversed-range n)
+  (in-range (sub1 n) -1 -1))
 
 ;=====================================================================================================
 ; The end
