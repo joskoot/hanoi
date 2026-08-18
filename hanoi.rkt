@@ -305,7 +305,7 @@
         "~n  Use parameter idle-limit to increase the allowed idle limit"
         "~n  or use the Idle limit button.~n~n") (idle-limit)))
   (fprintf (current-error-port) (string-append  "~nTower of Hanoi~n" abort-msg))
-  (message-box "Tower of Hanoi" abort-msg #f '(ok caution no-icon))
+  ;;  (message-box "Tower of Hanoi" abort-msg #f '(ok caution no-icon))
   (quit-exit))
 
 (define (call-with-time-out thunk (warn? #f))
@@ -634,6 +634,67 @@
     (longest-circular-path height          0 2     )))
 
 ;=====================================================================================================
+; Move disk for actions short, long or circular.
+
+(define (move-disk f t exit)
+  (define ff (vector-ref disk-distr f))
+  (define tt (vector-ref disk-distr t))
+  (unless (null? ff)
+    (define d (car ff))
+    (define move-to-be-made?
+      (case delay
+        ((click) (check-click #t exit))
+        (else
+          (define first-doze-time (min delay 1))
+          (cond
+            ((= move-count 0) (doze first-doze-time exit) (check-click #f exit))
+            (else (doze delay exit) (check-click #f exit))))))
+    (cond
+      (move-to-be-made?
+        (remove-disk d (sub1 (length ff)) f)
+        (draw-disk d (length tt) t)
+        (vector-set! disk-distr f (cdr ff))
+        (vector-set! disk-distr t (cons d tt))
+        (draw-msg))
+      (else (move-disk f t exit)))))
+
+; Enable termination of actions short, long and circular by means of reset and quit.
+; When mode is click, also use abort after the idle time has expired for a required mouseclick.
+
+(define (check-click click-required? exit)
+  (define pos
+    (if click-required?
+      (call-with-time-out (λ () (get-mouse-click vp)))
+      (ready-mouse-click vp)))
+  (define p (and pos (mouse-click-posn pos)))
+  (when p
+    (dispatch-button p
+      (button-reset (do-reset) (exit))
+      (button-quit             (exit)))))
+
+; Doze is like sleep , but catchion reset and quit duting sleep.
+; Used during actions short, long and circular.
+
+(define (doze t exit)
+  (cond
+    ((zero? delay) (doze-help exit))
+    (else
+      (define starting-time (current-inexact-milliseconds))
+      (define finish-time (+ starting-time (* 1000 t)))
+      (define sleeping-time (min 0.25 (/ delay 1.5)))
+      (let loop ()
+        (cond
+          ((>= (current-inexact-milliseconds) finish-time))
+          (else (sleep sleeping-time) (doze-help exit) (loop)))))))
+
+(define (doze-help exit)
+  (define click (ready-mouse-click vp))
+  (when click
+    (dispatch-button (mouse-click-posn click)
+      (button-reset (do-reset) (exit))
+      (button-quit (exit)))))
+                  
+;=====================================================================================================
 ; Action delay.
 
 (define (do-delay)
@@ -681,17 +742,17 @@
 ;=====================================================================================================
 ; Action reset.
 
+(define (do-reset)
+  (enable/disable-all-buttons 'disable)
+  (do-reset-help)
+  (enable/disable-all-buttons 'enable))
+
 (define (do-reset-help)
   (set! disk-distr (vector (range height) '() '()))
   (remove-all-disks)
   (reset-manual-count)
   (for ((d (in-range height)) (h (in-reversed-range height)))
     (draw-disk d h 0)))
-
-(define (do-reset)
-  (enable/disable-all-buttons 'disable)
-  (do-reset-help)
-  (enable/disable-all-buttons 'enable))
 
 ;=====================================================================================================
 ; Action setup.
@@ -962,62 +1023,6 @@
         ((< m (+ 3^<h-1> 3^<h-1>)) (long m h-1 r f t))
         ((= m (+ (* 2 3^<h-1>)))   (mover  h-1 t r f))
         ((< m (+ (* 3 3^<h-1>) 2)) (long m h-1 f t r))))))
-
-; Move disk for short, long or circular mode.
-
-(define (move-disk f t exit)
-  (define ff (vector-ref disk-distr f))
-  (define tt (vector-ref disk-distr t))
-  (unless (null? ff)
-    (define d (car ff))
-    (define move-to-be-made?
-      (case delay
-        ((click) (check-click #t exit))
-        (else
-          (define first-doze-time (min delay 1))
-          (cond
-            ((= move-count 0) (doze first-doze-time exit) (check-click #f exit))
-            (else (doze delay exit) (check-click #f exit))))))
-    (cond
-      (move-to-be-made?
-        (remove-disk d (sub1 (length ff)) f)
-        (draw-disk d (length tt) t)
-        (vector-set! disk-distr f (cdr ff))
-        (vector-set! disk-distr t (cons d tt))
-        (draw-msg))
-      (else (move-disk f t exit)))))
-
-; Enable abortion by means of reset and quit.
-; Also use abort after the idle time has expired for a required mouseclick (when mode is click)
-
-(define (check-click click-required? exit)
-  (define pos
-    (if click-required?
-      (call-with-time-out (λ () (get-mouse-click vp)))
-      (ready-mouse-click vp)))
-  (define p (and pos (mouse-click-posn pos)))
-  (when p
-    (dispatch-button p
-      (button-reset (do-reset) (exit))
-      (button-quit             (exit)))))
-
-; Doze is like sleep , but allowing reset and quit.
-
-(define (doze t exit)
-  (define starting-time (current-inexact-milliseconds))
-  (define finish-time (+ starting-time (* 1000 t)))
-  (let loop ()
-    (cond
-      ((>= (current-inexact-milliseconds) finish-time))
-      (else
-        (define click (ready-mouse-click vp))
-        (cond
-          (click
-            (dispatch-button (mouse-click-posn click)
-              (button-reset (do-reset) (exit))
-              (button-quit (exit))
-              (else (sleep (/ delay 10)) (loop))))
-          (else (sleep (/ delay 10)) (loop)))))))
 
 ;=====================================================================================================
 ; Move-count and real time clock.
