@@ -66,7 +66,6 @@ It has 3 pegs, one at the left, one in the middle and one at the right.
 It has a number of disks.
 The disks have different sizes and a hole in the center.
 They are put on the pegs.
-A disk never rests upon a smaller disk.
 Initially all disks are on the peg at the left,
 forming a conical tower with the disks in order of decreasing size from bottom to top.
 See the @elemref["figure"]{figure} below.
@@ -74,8 +73,9 @@ The goal of the game is to move all disks to the peg at the right by making succ
 A move is made by taking the top disk of a non-empty peg and putting it on top onto another peg
 or just putting it there if the peg of
 des@element['roman ?-]ti@element['roman ?-]na@element['roman ?-]tion has no disks.
-However, it is not allowed to put a disk upon a smaller one.
-Except while being moved a disk always is on a peg and never rests upon a smaller one.
+However, @nb{it is} not allowed to put a disk upon a smaller one.
+Hence, @nb{a disk} never rests upon a smaller one and
+except while being moved it always is on a peg.
 
 @section[#:style '(unnumbered)]{How to play}
 
