@@ -65,8 +65,8 @@ The @hyperlink["https://en.wikipedia.org/wiki/Tower_of_Hanoi"]{Tower of Hanoi} i
 It has 3 pegs, one at the left, one in the middle and one at the right.
 It has a number of disks.
 The disks have different sizes and a hole in the center.
-They are put on the pegs.
-Initially all disks are on the peg at the left,
+They are put at the pegs.
+Initially all disks are at the peg at the left,
 forming a conical tower with the disks in order of decreasing size from bottom to top.
 See the @elemref["figure"]{figure} below.
 The goal of the game is to move all disks to the peg at the right by making successive moves.
@@ -75,7 +75,7 @@ or just putting it there if the peg of
 des@element['roman ?-]ti@element['roman ?-]na@element['roman ?-]tion has no disks.
 However, @nb{it is} not allowed to put a disk upon a smaller one.
 Hence, @nb{a disk} never rests upon a smaller one and
-except while being moved it always is on a peg.
+except while being moved it always is at a peg.
 
 @section[#:style '(unnumbered)]{How to play}
 
@@ -126,16 +126,16 @@ An attempt to make an illegal move is ignored.
 In short mode the disks are moved by the GUI to the peg at the right
 with the least possible number of moves,
 at most @tt{2@↑{h}-1} moves, where @tt{h} is the @seclink["Height"]{height}.
-Exactly @tt{2@↑{h}-1} moves when starting with all disks on @seclink["Peg n"]{peg} 1 or 2.
+Exactly @tt{2@↑{h}-1} moves when starting with all disks at @seclink["Peg n"]{peg} 1 or 2.
 The shortest way always is uniquely defined.
 
-When the long mode is selected, first all disks are placed on the peg at the left and
+When the long mode is selected, first all disks are placed at the peg at the left and
 subsequently moved to the peg at the right with the largest number of moves possible
 without passing any distribution of disks more than once.
 @tt{3@↑{h}-1} moves, where @tt{h} is the @seclink["Height"]{height}.
 In fact every legal distribution of disks is visited. @nb{The sequence} of moves is uniquely defined.
 
-When the circular mode is selected, first all disks are placed on the peg at the left and
+When the circular mode is selected, first all disks are placed at the peg at the left and
 subsequently moved such as to pass exactly once along
 every legal distribution
 of disks and finishing with all disks at the peg started from.
@@ -170,12 +170,12 @@ the real time lost while no processor was evailable for the GUI.
  
 @subsection[#:tag "Reset"]{Reset}
 
-Puts all disks on the peg at the left.
+Puts all disks at the peg on the left.
 May cancel a current action in order to return to @seclink["Mode"]{mode} manual.
 
 @subsection[#:tag "Setup"]{Setup}
 
-Removes all disks and subsequently places disks on the pegs in a
+Removes all disks and subsequently places disks at the pegs in a
 distribution chosen by the user.
 Disks are placed in order of decreasing size.
 @nb{The user} is supposed to click a @seclink["Peg n"]{peg} button or nearby the corresponding peg
@@ -221,7 +221,7 @@ the time is set to 1 minute.
 
 Computes a move and the resulting distribution of disks
 for the shortest path, the longest path or the circular path,
-all three of them starting and ending with all disks on one peg.
+all three of them starting and ending with all disks at one peg.
 Opens some dialogs.
 The first is for information only.
 The second one asks some data:
@@ -235,7 +235,7 @@ The second one asks some data:
 The computation is fast because it is not recursive in the sense that
 it does not depend on preceding moves.
 For a circular path the destination determines the order of visited distributions
-with all disks on one peg: starting peg, destination peg,
+with all disks at one peg: starting peg, destination peg,
 the remaining third peg and finally back to the starting peg.
 
 @section[#:style '(unnumbered)]{Appendix}
@@ -258,7 +258,7 @@ In contrast to a
 @nb{the vertices} of the triangles of a Hanoi graph do not coincide with the vertices
 of other triangles.
 The vertices of two triangles are separated by at least one edge.
-The three vertices of the largest triangle represent distributions with all disks on the same peg.
+The three vertices of the largest triangle represent distributions with all disks at the same peg.
 These have two edges only,
 the two moving the smallest disk to one of the two empty pegs.
 All other vertices of the graph represent distributions with at most one empty peg.
@@ -273,8 +273,8 @@ edges because it has @tt{h}@↑{3} vertices, of which
 @tt{h@↑{3}@(minus)3} have @nb{3 edges} and 3 vertices have 2 edges only.
 The division by 2 is needed because every edge connects 2 vertices.
 
-Consider paths from a distribution of all disks on the same peg
-to a distribution with all disks on another peg.
+Consider paths from a distribution of all disks at the same peg
+to a distribution with all disks at another peg.
 These distributions are represented by the vertices of the largest triangle.
 The least number of moves required is @tt{h}@↑{2}@tt{-}1 with uniquely defined
 sequence of moves. This is the short mode, in the graph shown by the sides of the largest triangle.
@@ -282,7 +282,7 @@ sequence of moves. This is the short mode, in the graph shown by the sides of th
 The largest number of moves without passing a distribution of disks among the pegs more than once
 is @tt{h}@↑{3}@(minus)1, implying that every legal distribution is visited exactly once.
 This is the long mode and is uniquely defined too.
-For three disks and labeling the vertices such as to show on which pegs the disks are: 
+For three disks and labeling the vertices such as to show at which pegs the disks are: 
 
 @(hspace 5) @image["long-3.gif" #:scale 0.3]
 
@@ -296,8 +296,8 @@ disregarding the fact that the moves can be made in reversed order too. For thre
 
 @subsection{Number of paths}
 
-The number of distinct non self-crossing paths from a distribution with all disks on the same peg
-to one with all disks on another peg, those not passing all vertices included,
+The number of distinct non self-crossing paths from a distribution with all disks at the same peg
+to one with all disks at another peg, those not passing all vertices included,
 is a(n) with @nb{a(0)=1} and
 @nb{a(n+1)=a(n)@↑{2}+a(n)@↑{3}}.
 This is a very fast increasing sequence.
