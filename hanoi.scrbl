@@ -185,9 +185,10 @@ Click the @seclink["Reset"]{reset} button to cancel setup.
 
 @subsection[#:tag "Quit"]{Quit}
 
-Closes and terminates the GUI, but can also be used to cancel an ongoing action.
-In that case, the GUI returns to manual mode and
-the GUI is neither closed nor terminated.
+Usually closes and terminates the GUI,
+but in some cases cancel an ongoing action with@element['roman ?-]out terminating the GUI.
+In these cases the GUI returns to manual @seclink["Mode"]{mode}.
+In this @seclink["Mode"]{mode} @nb{the quit} button always terminates the GUI.
 
 @(define (note . x) (inset (apply smaller x)))
 @(define (inset . x) (apply nested #:style 'inset x))
