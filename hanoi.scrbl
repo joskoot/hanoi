@@ -202,9 +202,8 @@ In this @seclink["Mode"]{mode} @nb{the quit} button always terminates the GUI.
  Nevertheless, the GUI eventually will terminate.
  See the @seclink["Idle limit"]{idle limit} button and parameter @racket[idle-limit].}
 
-@subsection[#:tag "Peg n"]{Peg n}
+@subsection[#:tag "Peg n"]{Pegs 1, 2 and 3}
 
-n is 1, 2 or 3.
 Used to make moves manually and for @seclink["Setup"]{setup} of a distribution of disks.
 @nb{The same} can be done by clicking nearby the corresponding peg.
 

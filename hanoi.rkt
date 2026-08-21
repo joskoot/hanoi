@@ -83,7 +83,7 @@
   ;===================================================================================================
   ; Buttons:
   ; Are displayed on the screen.
-  ; They have procedure property and some can have a content and are called as follows:
+  ; They have procedure property and some can have a content. Buttons are called as follows:
   ;
   ; (button command arg ...) --> any/c
   ; command : (or/c 'in-button? 'disable 'enable 'get-content 'put-content)
@@ -100,7 +100,7 @@
     #:constructor-name button2-maker)
 
   (define-syntax make-button
-    (let ((no-content (string->uninterned-symbol "no-kontent")))
+    (let ((no-content (string->uninterned-symbol "no-content")))
       (λ (stx)
         (syntax-case stx ()
           ((_ name position) #`(make-button name position #,no-content))
@@ -110,10 +110,12 @@
                 (and
                   (identifier? #'content)
                   (eq? (syntax-e #'content) no-content))))
+             (define (if-no-content no-content . with-content)
+               (if no-content? no-content with-content))
              #`(let ((pos position))
                  #,@(if no-content? null
                       (list #'(define the-content content)))
-                 (define region (make-region pos width-of-buttons height-of-buttons))
+                 (define region (make-region pos width-of-button height-of-button))
                  (define name-str (str-title-case (format "~a" 'name)))
                  (define enabled? #t)
                  (define (proc action . args)
@@ -187,8 +189,8 @@
     (draw-button
       draw-disabled-button
       draw-button-content
-      width-of-buttons
-      height-of-buttons
+      width-of-button
+      height-of-button
       str-offset)
 
     ; Measure the maximum size of strings used in buttons.
@@ -218,7 +220,7 @@
     (open-graphics)
     (define pixmap (open-pixmap "string-sizes" 1000 500))
 
-    (define-values (width-of-buttons height-of-buttons)
+    (define-values (width-of-button height-of-button)
       (for/fold ((w 0) (h 0) #:result (values (+ w *2str-offset) (+ h *2str-offset)))
         ((w/h
            (in-list
@@ -236,26 +238,26 @@
     (define ((draw-button vp) pos str)
       (define x (posn-x pos))
       (define y (posn-y pos))
-      ((draw-solid-rectangle vp) pos width-of-buttons height-of-buttons blue)
+      ((draw-solid-rectangle vp) pos width-of-button height-of-button blue)
       ((draw-string vp)
-       (make-posn (+ x str-offset) (+ y height-of-buttons (- str-offset))) str white))
+       (make-posn (+ x str-offset) (+ y height-of-button (- str-offset))) str white))
 
     (define ((draw-disabled-button vp) pos str)
       (define x (posn-x pos))
       (define y (posn-y pos))
-      ((clear-solid-rectangle vp) pos width-of-buttons height-of-buttons)
-      ((draw-rectangle vp) pos width-of-buttons height-of-buttons blue)
+      ((clear-solid-rectangle vp) pos width-of-button height-of-button)
+      ((draw-rectangle vp) pos width-of-button height-of-button blue)
       ((draw-string vp)
-       (make-posn (+ x str-offset) (+ y height-of-buttons (- (* 2 str-offset)))) str blue))
+       (make-posn (+ x str-offset) (+ y height-of-button (- (* 2 str-offset)))) str blue))
 
     (define ((draw-button-content vp) pos value)
       (define str (if (string? value) value (format "~a" value)))
       (define x (posn-x pos))
-      (define y (+ (posn-y pos) height-of-buttons))
-      ((clear-solid-rectangle vp) (make-posn x y) width-of-buttons height-of-buttons)
-      ((draw-rectangle vp) (make-posn x y) width-of-buttons height-of-buttons blue)
+      (define y (+ (posn-y pos) height-of-button))
+      ((clear-solid-rectangle vp) (make-posn x y) width-of-button height-of-button)
+      ((draw-rectangle        vp) (make-posn x y) width-of-button height-of-button blue)
       ((draw-string vp)
-       (make-posn (+ x str-offset) (+ y height-of-buttons (- (* 2 str-offset)))) str blue)))
+       (make-posn (+ x str-offset) (+ y height-of-button (- (* 2 str-offset)))) str blue)))
 
   ;===================================================================================================
   ; Dispatching mouse clicks.
@@ -341,9 +343,9 @@
 
   (define-syntax (time-out stx)
     (syntax-case stx ()
-      ((_ #f expr ...) #'(time-out-proc (λ () expr ...) #f))
-      ((_ #t expr ...) #'(time-out-proc (λ () expr ...) #t))
-      ((_ expr    ...) #'(time-out-proc (λ () expr ...) #f))))
+      ((_ #f expr) #'(time-out-proc (λ () expr) #f))
+      ((_ #t expr) #'(time-out-proc (λ () expr) #t))
+      ((_    expr) #'(time-out-proc (λ () expr) #f))))
 
   (define (time-out-proc thunk warn?)
     (when warn? ((draw-string viewport) pos-warn1 str-warn1 red))
@@ -377,20 +379,20 @@
   (define block 20)
   (define border (* 3 block))
   (define pos-height (make-posn border border))
-  (define button-width+blok (+ width-of-buttons block))
-  (define pos-mode    (add-posn pos-height  button-width+blok 0                                     ))
-  (define pos-delay   (add-posn pos-mode    button-width+blok 0                                     ))
-  (define pos-idle    (add-posn pos-delay   button-width+blok 0                                     ))
-  (define pos-reset   (add-posn pos-idle    button-width+blok 0                                     ))
-  (define pos-setup   (add-posn pos-reset   button-width+blok 0                                     ))
-  (define pos-quit    (add-posn pos-setup   button-width+blok 0                                     ))
-  (define pos-peg1    (add-posn pos-quit    button-width+blok 0                                     ))
-  (define pos-peg2    (add-posn pos-peg1    button-width+blok 0                                     ))
-  (define pos-peg3    (add-posn pos-peg2    button-width+blok 0                                     ))
-  (define pos-compute (add-posn pos-peg3    button-width+blok 0                                     ))
-  (define pos-msg     (add-posn pos-idle    button-width+blok (- (* 2 height-of-buttons) str-offset)))
-  (define pos-warn1   (add-posn pos-compute button-width+blok (-      height-of-buttons  str-offset)))
-  (define pos-warn2   (add-posn pos-warn1   0                 block                                 ))
+  (define button-width+blok (+ width-of-button block))
+  (define pos-mode    (add-posn pos-height  button-width+blok 0                                    ))
+  (define pos-delay   (add-posn pos-mode    button-width+blok 0                                    ))
+  (define pos-idle    (add-posn pos-delay   button-width+blok 0                                    ))
+  (define pos-reset   (add-posn pos-idle    button-width+blok 0                                    ))
+  (define pos-setup   (add-posn pos-reset   button-width+blok 0                                    ))
+  (define pos-quit    (add-posn pos-setup   button-width+blok 0                                    ))
+  (define pos-peg1    (add-posn pos-quit    button-width+blok 0                                    ))
+  (define pos-peg2    (add-posn pos-peg1    button-width+blok 0                                    ))
+  (define pos-peg3    (add-posn pos-peg2    button-width+blok 0                                    ))
+  (define pos-compute (add-posn pos-peg3    button-width+blok 0                                    ))
+  (define pos-msg     (add-posn pos-idle    button-width+blok (- (* 2 height-of-button) str-offset)))
+  (define pos-warn1   (add-posn pos-compute button-width+blok (-      height-of-button  str-offset)))
+  (define pos-warn2   (add-posn pos-warn1   0                 block                                ))
   (define disk-height block)
   (define max-tower-height (* max-height disk-height))
   (define min-disk-width (* 3 block))
@@ -399,10 +401,10 @@
   (define max-disk-width (disk-width (sub1 max-height)))
   (define peg-top (* 2 block))
   (define peg-width 4)
-  (define peg-y (* 2 (+ border height-of-buttons)))
+  (define peg-y (* 2 (+ border height-of-button)))
   (define peg-height (+ peg-top max-tower-height))
   (define vp-width (+ (* 3 max-disk-width) (* 2 block) (* 4 border)))
-  (define vp-height (+ (* 2 height-of-buttons) (* 3 border) peg-height block))
+  (define vp-height (+ (* 2 height-of-button) (* 3 border) peg-height block))
   (define girder-pos (make-posn border (- vp-height border block)))
 
   (define region-peg0
@@ -1141,27 +1143,27 @@
   ; Graphics is opened by procedure initialize. Making a button needs the viewport. Therefore all
   ; variables for buttons are included in the list of variables to be initialized.
 
-  (define escape         'set-by-initialize  )
-  (define height         'mutable            )
-  (define delay          'mutable            )
-  (define msg-str        'mutable            )
-  (define clock          'mutable            )
-  (define move-count     'mutable            )
-  (define manual-count   'mutable            )
-  (define allow-intro    'mutable            )
-  (define disk-distr     'mutable            )
-  (define viewport       'needs-open-graphics)
-  (define button-height  'needs-the-viewport )
-  (define button-mode    'needs-the-viewport )
-  (define button-delay   'needs-the-viewport )
-  (define button-idle    'needs-the-viewport )
-  (define button-reset   'needs-the-viewport )
-  (define button-setup   'needs-the-viewport )
-  (define button-quit    'needs-the-viewport )
-  (define button-peg1    'needs-the-viewport )
-  (define button-peg2    'needs-the-viewport )
-  (define button-peg3    'needs-the-viewport )
-  (define button-compute 'needs-the-viewport )
+  (define escape         'to-be-set-by-initialize)
+  (define height         'mutable                )
+  (define delay          'mutable                )
+  (define msg-str        'mutable                )
+  (define clock          'mutable                )
+  (define move-count     'mutable                )
+  (define manual-count   'mutable                )
+  (define allow-intro    'mutable                )
+  (define disk-distr     'mutable                )
+  (define viewport       'needs-open-graphics    )
+  (define button-height  'needs-the-viewport     )
+  (define button-mode    'needs-the-viewport     )
+  (define button-delay   'needs-the-viewport     )
+  (define button-idle    'needs-the-viewport     )
+  (define button-reset   'needs-the-viewport     )
+  (define button-setup   'needs-the-viewport     )
+  (define button-quit    'needs-the-viewport     )
+  (define button-peg1    'needs-the-viewport     )
+  (define button-peg2    'needs-the-viewport     )
+  (define button-peg3    'needs-the-viewport     )
+  (define button-compute 'needs-the-viewport     )
 
   (define (initialize  ec)
     ; Restore variables that may have been mutated in earlier calls to procedure play.
