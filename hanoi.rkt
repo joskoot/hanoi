@@ -10,6 +10,8 @@
 
 #lang racket
 
+(provide play idle-limit)
+
 ;=====================================================================================================
 
 (module hanoi racket ; Hide all except procedure play and parameter idle-limit.
@@ -19,11 +21,7 @@
 
   ;===================================================================================================
   ; Tools
-
-  (define-syntax-rule
-    (define-values-block (id ...)         def/expr ...)
-    (define-values       (id ...) (let () def/expr ... (values id ...))))
-
+ 
   (define-syntax-rule
     (in-reversed-range n)
     (in-range (sub1 n) -1 -1))
@@ -34,8 +32,8 @@
   (define (play)
     ; let/cc: Procedure initialize stores the continuation in variable escape
     ; for use by procedure abort and button quit.
-    (let/ec ec
-      (initialize ec)
+    (let/ec escape
+      (initialize escape)
       (dynamic-wind
         void
         main
@@ -181,6 +179,10 @@
   ; Procedures to draw buttons and their contents. Computation of their sizes.
   ; A temporary pixmap is used to measure string sizes.
 
+  (define-syntax-rule
+    (define-values-block (id ...)         def/expr ...)
+    (define-values       (id ...) (let () def/expr ... (values id ...))))
+
   (define-values-block
     (draw-button
       draw-disabled-button
@@ -210,7 +212,7 @@
     (define str-offset 4)
     (define *2str-offset (* 2 str-offset))
 
-    ; Compute the rerquired width and height of buttons.
+    ; Compute the required width and height of buttons.
 
     (open-graphics)
     (define pixmap (open-pixmap "string-sizes" 1000 500))
@@ -330,10 +332,10 @@
       (format
         (string-append
           "~n  No activity during ~s minutes. Game aborted."
-          "~n  Use parameter idle-limit to increase the allowed idle limit"
+          "~n  Use parameter idle-limit to increase the allowed idle time"
           "~n  or use the Idle limit button.~n~n") (idle-limit)))
     (fprintf (current-error-port) (string-append  "~nTower of Hanoi~n" abort-msg))
-    ;;  (message-box "Tower of Hanoi" abort-msg #f '(ok caution no-icon))
+    ; (message-box "Tower of Hanoi" abort-msg #f '(ok caution no-icon))
     (escape))
 
   (define-syntax (time-out stx)
@@ -564,7 +566,7 @@
   (define (finish who)
     (time-out #t (message-box who "\n\n\nfinished\n\n\n" #f '(ok no-icon)))
     ; Ignore clicks on reset and quit button while the message box is waiting.
-    ; Clicks on other buttons already were ignored because they still are disabled.
+    ; Clicks on other buttons already are ignored because they still are disabled.
     (viewport-flush-input viewport)
     (prepare/finish-action-mode 'enable)
     ((clear-string viewport) pos-msg msg-str)
@@ -620,7 +622,6 @@
             (move-disk third dest exit)
             (long (make-list h (car conf)) dest))))
       (long p-list 2)))
-
 
   ;===================================================================================================
   ; Action circular.
@@ -703,7 +704,7 @@
     (when p
       (dispatch-button p
         (button-reset (action-reset) (exit))
-        (button-quit             (exit)))))
+        (button-quit                 (exit)))))
 
   ; Doze is like sleep , but catching reset and quit during sleep.
   ; Used during actions short, long and circular.
@@ -1200,7 +1201,6 @@
 ;=====================================================================================================
 
 (require 'hanoi)
-(provide play idle-limit)
 
 ;=====================================================================================================
 ; The end
