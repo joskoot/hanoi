@@ -182,7 +182,7 @@
   ; A temporary pixmap is used to measure string sizes.
 
   (define-syntax-rule
-    (define-values-block (id ...)         def/expr ...)
+    (define-values-block (id ...)         def/expr ...                  )
     (define-values       (id ...) (let () def/expr ... (values id ...))))
 
   (define-values-block
@@ -718,7 +718,7 @@
   ; Used during actions short, long and circular.
   ; In this case quit and reset terminate these actions and restore mode manual.
 
-  (define (doze t exit)
+  (define (doze t exit) ; t in seconds
     (cond
       ((zero? delay) (doze-help exit))
       (else
@@ -965,8 +965,8 @@
                       (string-append
                         "Results for move ~s for path ~a from peg ~s to peg ~s with ~s disks.~n~n"
                         "Disk ~s from peg ~s onto peg ~s.~n"
-                        "Resulting distribution: "
-                        "positions of disks in order of increasing size:~n~a~n")
+                        "Resulting distribution:~n"
+                        "Positions of disks in order of increasing size:~n~a~n")
                       m L f t h (add1 d) (add1 ff) (add1 tt)
                       (apply string-append
                         (for/fold
@@ -1047,7 +1047,7 @@
       ((= h 1)
        (define r (- 3 f t))
        (case M
-         ((1) (values 0 f r (list t)))
+         ((1) (values 0 f t (list t)))
          ((2) (values 0 t r (list r)))
          ((3) (values 0 r f (list f)))))
       (else
