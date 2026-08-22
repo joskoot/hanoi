@@ -96,7 +96,7 @@
 ;
 ; 'get-content and 'put-content are for buttons with content only.
 
-(define (proc-button1 button action (arg error)) ; For buttons without content.
+(define (proc-button1 button action (arg #f)) ; For buttons without content.
   (case action
     ((enabled?)
      (button1-enabled? button))
@@ -396,18 +396,18 @@
 (define pos-warn1   (add-posn pos-compute button-width+blok (-      height-of-button  str-offset)))
 (define pos-warn2   (add-posn pos-warn1   0                 block                                ))
 (define disk-height block)
-(define max-tower-height (* max-height disk-height))
-(define min-disk-width (* 3 block))
-(define disk-width-incr block)
-(define (disk-width d) (+ min-disk-width (* 2 d disk-width-incr)))
-(define max-disk-width (disk-width (sub1 max-height)))
-(define peg-top (* 2 block))
-(define peg-width 4)
-(define peg-y (* 2 (+ border height-of-button)))
-(define peg-height (+ peg-top max-tower-height))
-(define vp-width (+ (* 3 max-disk-width) (* 2 block) (* 4 border)))
-(define vp-height (+ (* 2 height-of-button) (* 3 border) peg-height block))
-(define girder-pos (make-posn border (- vp-height border block)))
+(define max-tower-height (* max-height disk-height)                              )
+(define min-disk-width   (* 3 block)                                             )
+(define disk-width-incr  block                                                   )
+(define (disk-width d)   (+ min-disk-width (* 2 d disk-width-incr))              )
+(define max-disk-width   (disk-width (sub1 max-height))                          )
+(define peg-top          (* 2 block)                                             )
+(define peg-width        4                                                       )
+(define peg-y            (* 2 (+ border height-of-button))                       )
+(define peg-height       (+ peg-top max-tower-height)                            )
+(define vp-width         (+ (* 3 max-disk-width) (* 2 block) (* 4 border))       )
+(define vp-height        (+ (* 2 height-of-button) (* 3 border) peg-height block))
+(define girder-pos       (make-posn border (- vp-height border block))           )
 
 (define region-peg0
   (make-region
@@ -704,7 +704,7 @@
         (draw-disk d (length tt) t)
         (vector-set! disk-distr f (cdr ff))
         (vector-set! disk-distr t (cons d tt))
-        (draw-msg))
+        (draw-count-msg))
       (else (move-disk f t exit)))))
 
 ; Enable termination of actions short, long and circular by means of reset and quit.
@@ -950,9 +950,9 @@
             "")))
       (viewport-flush-input viewport)
       (when str
-        (define-values (L h m f t) (validate-compute str))
+        (define-values (SLC h m f t) (validate-compute str))
         (cond
-          ((eq? L 'not-ok) (loop #f))
+          ((eq? SLC 'not-ok) (loop #f))
           (else
             (define input (open-input-string str))
             (define mode (read input))
@@ -966,23 +966,34 @@
                  ((L) calculate-long )
                  ((C) calculate-circular ))
                h m (sub1 f) (sub1 t)))
+            (define distr-str
+              (apply string-append
+                (for/fold
+                  ((result '()) #:result (reverse result))
+                  ((p (in-list distr)) (n (in-cycle (in-range 0 50))))
+                  (if (= n 49)
+                    (cons "\n" (cons (format "~s" (add1 p)) result))
+                    (cons (format "~s" (add1 p)) result)))))
             (time-out #t
               (message-box str-compute
-                (string-append
-                  (format
-                    (string-append
-                      "Results for move ~s for path ~a from peg ~s to peg ~s with ~s disks.~n~n"
-                      "Disk ~s from peg ~s onto peg ~s.~n"
-                      "Resulting distribution:~n"
-                      "Positions of disks in order of increasing size:~n~a~n")
-                    m L f t h (add1 d) (add1 ff) (add1 tt)
-                    (apply string-append
-                      (for/fold
-                        ((result '()) #:result (reverse result))
-                        ((p (in-list distr)) (n (in-cycle (in-range 0 50))))
-                        (if (= n 49)
-                          (cons "\n" (cons (format "~s" (add1 p)) result))
-                          (cons (format "~s" (add1 p)) result))))))
+                (if (eq? SLC 'C)
+                  (string-append
+                    (format
+                      (string-append
+                        "Results for move ~s for path C with ~s disks from peg ~s "
+                        "via peg ~s and peg ~s back to peg ~s~n~n"
+                        "Disk ~s from peg ~s to peg ~s.~n"
+                        "Resulting distribution:~n"
+                        "Positions of disks in order of increasing size:~n~a~n")
+                      m h f t (- 6 f t) f (add1 d) (add1 ff) (add1 tt) distr-str))
+                  (string-append
+                    (format
+                      (string-append
+                        "Results for move ~s for path ~a from peg ~s to peg ~s with ~s disks.~n~n"
+                        "Disk ~s from peg ~s onto peg ~s.~n"
+                        "Resulting distribution:~n"
+                        "Positions of disks in order of increasing size:~n~a~n")
+                      m SLC f t h (add1 d) (add1 ff) (add1 tt) distr-str)))
                 #f
                 (quote (ok no-icon)))))))))
   (enable/disable-all-buttons 'enable)
@@ -1082,11 +1093,11 @@
   (set! clock (current-inexact-milliseconds))
   (set! move-count -1)
   (set! msg-str "")
-  (draw-msg))
+  (draw-count-msg))
 
 (define (clear-msg) ((clear-string viewport) pos-msg msg-str))
 
-(define (draw-msg)
+(define (draw-count-msg)
   (clear-msg)
   (set! move-count (add1 move-count))
   (set! msg-str
@@ -1151,27 +1162,27 @@
 ; Graphics is opened by procedure initialize. Making a button needs the viewport. Therefore all
 ; variables for buttons are included in the list of variables to be initialized.
 
-(define escape         'to-be-set-by-initialize)
-(define height         'mutable                )
-(define delay          'mutable                )
-(define msg-str        'mutable                )
-(define clock          'mutable                )
-(define move-count     'mutable                )
-(define manual-count   'mutable                )
-(define allow-intro    'mutable                )
-(define disk-distr     'mutable                )
-(define viewport       'needs-open-graphics    )
-(define button-height  'needs-the-viewport     )
-(define button-mode    'needs-the-viewport     )
-(define button-delay   'needs-the-viewport     )
-(define button-idle    'needs-the-viewport     )
-(define button-reset   'needs-the-viewport     )
-(define button-setup   'needs-the-viewport     )
-(define button-quit    'needs-the-viewport     )
-(define button-peg1    'needs-the-viewport     )
-(define button-peg2    'needs-the-viewport     )
-(define button-peg3    'needs-the-viewport     )
-(define button-compute 'needs-the-viewport     )
+(define escape         'set-by-initialize  )
+(define height         'mutable            )
+(define delay          'mutable            )
+(define msg-str        'mutable            )
+(define clock          'mutable            )
+(define move-count     'mutable            )
+(define manual-count   'mutable            )
+(define allow-intro    'mutable            )
+(define disk-distr     'mutable            )
+(define viewport       'needs-open-graphics)
+(define button-height  'needs-the-viewport )
+(define button-mode    'needs-the-viewport )
+(define button-delay   'needs-the-viewport )
+(define button-idle    'needs-the-viewport )
+(define button-reset   'needs-the-viewport )
+(define button-setup   'needs-the-viewport )
+(define button-quit    'needs-the-viewport )
+(define button-peg1    'needs-the-viewport )
+(define button-peg2    'needs-the-viewport )
+(define button-peg3    'needs-the-viewport )
+(define button-compute 'needs-the-viewport )
 
 (define (initialize  ec)
   ; Restore variables that may have been mutated in earlier calls to procedure play.
