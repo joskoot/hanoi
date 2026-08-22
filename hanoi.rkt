@@ -17,7 +17,6 @@
 (require
   graphics/graphics
   racket/gui/base
-  syntax/parse)
 
 (provide
   play
