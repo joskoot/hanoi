@@ -16,7 +16,7 @@
 
 (require
   graphics/graphics
-  racket/gui/base
+  racket/gui/base)
 
 (provide
   play
