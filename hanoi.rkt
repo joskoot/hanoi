@@ -1,11 +1,10 @@
 
 ;=====================================================================================================
 ;
-; A GUI playing the game of The Tower of Hanoi. Implemented with graphics/grap`hics and racket/gui/
-; base. Moves can be made manually but also automatically by the GUI. It has clickable buttons:
-; Height, Mode, Delay, Idle limit, Reset, Setup, Quit, Peg 1, Peg 2, Peg 3, and Compute. A click on a
-; button initiates an action. During an action some buttons may be disabled. Modal dialogs are used to
-; exchange information between the GUI and the user.
+; A GUI playing the game of The Tower of Hanoi. Implemented with graphics/graphics and
+; racket/gui/base. Moves can be made manually but also automatically by the GUI. It has clickable
+; buttons. A click on a button initiates an action. Modal dialogs are used to exchange information
+; between the GUI and the user. Documentation for the user can be made from module "hanoi.scrbl". 
 ;
 ;=====================================================================================================
 
@@ -38,9 +37,10 @@
 
 (define (play)
   (let/ec ec
-    ; Procedure initialize stores the continuation in variable escape.
-    ; The escape is used by procedure abort and button quit for termination of the GUI.
-    ; Make sure graphics and the viewport are closed when finishing abnormally.
+    ; Procedure initialize stores the continuation in variable escape, which is used by procedure
+    ; time-out-abort and button quit for normal termination of the GUI. Dynamic wind is used to make
+    ; sure that graphics and the viewport are closed when the GUI terminates abnormally because of a
+    ; bug or a more serious coding or design error.
     (initialize ec)
     (dynamic-wind
       void
@@ -58,8 +58,8 @@
   (dispatch pos))
 
 ;=====================================================================================================
-; Some constants that must be defined in early stage because they are referred to in early stage.
-; Not mutated.
+; Some constants that must be defined in early stage because
+; they are referred to in early stage. Not mutated.
 
 (define str-height   " Height "                           )
 (define str-mode     " Mode "                             )
@@ -129,10 +129,10 @@
 
 (define make-button
   (case-lambda
-    ((name position) ; without content
+    ((name position)         ; without content
      (let*
        ((pos position)
-        (region (make-region pos width-of-button height-of-button))
+        (region (make-region pos button-width-of button-height-of))
         (str-name (str-title-case (symbol->string name))))
        ((draw-button viewport) pos str-name)
        (make-button1
@@ -140,10 +140,10 @@
          region
          pos
          str-name)))
-    ((name position content) ; with content
+    ((name position content) ; with    content
      (let*
        ((pos position)
-        (region (make-region pos width-of-button height-of-button))
+        (region (make-region pos button-width-of button-height-of))
         (str-name (str-title-case (symbol->string name))))
        ((draw-button viewport) pos str-name)
        ((draw-button-content viewport) pos content)
@@ -184,8 +184,8 @@
   (draw-button
     draw-disabled-button
     draw-button-content
-    width-of-button
-    height-of-button
+    button-width-of
+    button-height-of
     str-offset)
 
   ; Measure the maximum size of strings used in buttons.
@@ -215,7 +215,7 @@
   (open-graphics)
   (define pixmap (open-pixmap "string-sizes" 1000 500))
 
-  (define-values (width-of-button height-of-button)
+  (define-values (button-width-of button-height-of)
     (for/fold ((w 0) (h 0) #:result (values (+ w *2str-offset) (+ h *2str-offset)))
       ((w/h
          (in-list
@@ -233,26 +233,26 @@
   (define ((draw-button vp) pos str)
     (define x (posn-x pos))
     (define y (posn-y pos))
-    ((draw-solid-rectangle vp) pos width-of-button height-of-button blue)
+    ((draw-solid-rectangle vp) pos button-width-of button-height-of blue)
     ((draw-string vp)
-     (make-posn (+ x str-offset) (+ y height-of-button (- str-offset))) str white))
+     (make-posn (+ x str-offset) (+ y button-height-of (- str-offset))) str white))
 
   (define ((draw-disabled-button vp) pos str)
     (define x (posn-x pos))
     (define y (posn-y pos))
-    ((clear-solid-rectangle vp) pos width-of-button height-of-button)
-    ((draw-rectangle vp) pos width-of-button height-of-button blue)
+    ((clear-solid-rectangle vp) pos button-width-of button-height-of)
+    ((draw-rectangle vp) pos button-width-of button-height-of blue)
     ((draw-string vp)
-     (make-posn (+ x str-offset) (+ y height-of-button (- (* 2 str-offset)))) str blue))
+     (make-posn (+ x str-offset) (+ y button-height-of (- (* 2 str-offset)))) str blue))
 
   (define ((draw-button-content vp) pos value)
     (define str (if (string? value) value (format "~a" value)))
     (define x (posn-x pos))
-    (define y (+ (posn-y pos) height-of-button))
-    ((clear-solid-rectangle vp) (make-posn x y) width-of-button height-of-button)
-    ((draw-rectangle        vp) (make-posn x y) width-of-button height-of-button blue)
+    (define y (+ (posn-y pos) button-height-of))
+    ((clear-solid-rectangle vp) (make-posn x y) button-width-of button-height-of)
+    ((draw-rectangle        vp) (make-posn x y) button-width-of button-height-of blue)
     ((draw-string vp)
-     (make-posn (+ x str-offset) (+ y height-of-button (- (* 2 str-offset)))) str blue)))
+     (make-posn (+ x str-offset) (+ y button-height-of (- (* 2 str-offset)))) str blue)))
 
 ;=====================================================================================================
 ; Dispatching mouse clicks.
@@ -325,15 +325,18 @@
             min-idle-minutes t))))
     'idle-limit))
 
-(define (abort)
-  (define abort-msg
+(define (time-out-abort)
+  (define limit (idle-limit))
+  (define time-out-abort-msg
     (format
       (string-append
-        "~n  No activity during ~s minutes. Game aborted."
+        "~nTower of Hanoi~n"
+        "~n  No activity during ~a. Game aborted."
         "~n  Use parameter idle-limit to increase the allowed idle time"
-        "~n  or use the Idle limit button.~n~n") (idle-limit)))
-  (fprintf (current-error-port) (string-append  "~nTower of Hanoi~n" abort-msg))
-  ; (message-box "Tower of Hanoi" abort-msg #f '(ok caution no-icon))
+        "~n  or use the Idle limit button.~n~n")
+      (if (= limit 1) "1 minute" (format "~s minutes" limit))))
+  (fprintf (current-error-port) time-out-abort-msg)
+  ; (message-box "Tower of Hanoi" time-out-abort-msg #f '(ok caution no-icon))
   (escape))
 
 (define-syntax (time-out stx)
@@ -353,16 +356,16 @@
   (define in-time?
     (parameterize ((current-custodian custodian))
       (define dialog-eventspace (make-eventspace))
-      (define task-thread
+      (define task
         (parameterize ((current-eventspace dialog-eventspace))
           (thread (λ () (set-box! result-box (call-with-values thunk list))))))
-      (sync/timeout (* (idle-limit) 60) task-thread))) ; (* t 60) converts minutes to seconds.
-  ; Collect results. Make sure the thread will be killed in case of a time out.
+      (sync/timeout (* (idle-limit) 60) task))) ; (* (idle-limit) 60) converts minutes to seconds.
+  ; Collect results.
   (cond
     ; Abort when no answer within (idle-limit) minutes.
     ((or (not in-time?) (not (unbox result-box)))
      (custodian-shutdown-all custodian)
-     (abort))
+     (time-out-abort))
     ; Else return the results.
     (else
       (custodian-shutdown-all custodian)
@@ -381,7 +384,7 @@
 (define block 20)
 (define border (* 3 block))
 (define pos-height (make-posn border border))
-(define button-width+blok (+ width-of-button block))
+(define button-width+blok (+ button-width-of block))
 (define pos-mode    (add-posn pos-height  button-width+blok 0                                    ))
 (define pos-delay   (add-posn pos-mode    button-width+blok 0                                    ))
 (define pos-idle    (add-posn pos-delay   button-width+blok 0                                    ))
@@ -392,8 +395,8 @@
 (define pos-peg2    (add-posn pos-peg1    button-width+blok 0                                    ))
 (define pos-peg3    (add-posn pos-peg2    button-width+blok 0                                    ))
 (define pos-compute (add-posn pos-peg3    button-width+blok 0                                    ))
-(define pos-msg     (add-posn pos-idle    button-width+blok (- (* 2 height-of-button) str-offset)))
-(define pos-warn1   (add-posn pos-compute button-width+blok (-      height-of-button  str-offset)))
+(define pos-msg     (add-posn pos-idle    button-width+blok (- (* 2 button-height-of) str-offset)))
+(define pos-warn1   (add-posn pos-compute button-width+blok (-      button-height-of  str-offset)))
 (define pos-warn2   (add-posn pos-warn1   0                 block                                ))
 (define disk-height block)
 (define max-tower-height (* max-height disk-height)                              )
@@ -403,10 +406,10 @@
 (define max-disk-width   (disk-width (sub1 max-height))                          )
 (define peg-top          (* 2 block)                                             )
 (define peg-width        4                                                       )
-(define peg-y            (* 2 (+ border height-of-button))                       )
+(define peg-y            (* 2 (+ border button-height-of))                       )
 (define peg-height       (+ peg-top max-tower-height)                            )
 (define vp-width         (+ (* 3 max-disk-width) (* 2 block) (* 4 border))       )
-(define vp-height        (+ (* 2 height-of-button) (* 3 border) peg-height block))
+(define vp-height        (+ (* 2 button-height-of) (* 3 border) peg-height block))
 (define girder-pos       (make-posn border (- vp-height border block))           )
 
 (define region-peg0
@@ -707,8 +710,8 @@
         (draw-count-msg))
       (else (move-disk f t exit)))))
 
-; Enable termination of actions short, long and circular by means of reset and quit.
-; When mode is click, also use abort after the idle time has expired for a required mouseclick.
+; Enable termination of actions short, long and circular by means of reset and quit. When mode is
+; click, use time-out-abort after the idle time has expired while waiting for the required mouseclick.
 
 (define (check-click click-required? exit)
   (define pos
