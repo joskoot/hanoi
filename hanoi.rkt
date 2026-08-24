@@ -38,9 +38,8 @@
 (define (play)
   (let/ec ec
     ; Procedure initialize stores the continuation in variable escape, which is used by procedure
-    ; time-out-abort and button quit for normal termination of the GUI. Dynamic wind is used to make
-    ; sure that graphics and the viewport are closed when the GUI terminates abnormally because of a
-    ; bug or a more serious coding or design error.
+    ; time-out-abort and by button quit for normal termination of the GUI. Dynamic-wind is used to
+    ; make sure that graphics and the viewport are closed, even when the GUI terminates abnormally.
     (initialize ec)
     (dynamic-wind
       void
@@ -53,13 +52,14 @@
 
 (define (main)
   ; At this point the GUI always is in manual mode. Driven by mouseclicks.
-  ; Terminates when not recveiving a mouseclick within (idle-limit) minutes.
+  ; Terminates when not receiving a mouseclick within (idle-limit) minutes.
+  ; Always called in tail position relative to itself.
   (define pos (mouse-click-posn (time-out (get-mouse-click viewport))))
   (dispatch pos))
 
 ;=====================================================================================================
-; Some constants that must be defined in early stage because
-; they are referred to in early stage. Not mutated.
+; Some constants that must be defined in early stage because they are referred to in early stage.
+; Not mutated.
 
 (define str-height   " Height "                           )
 (define str-mode     " Mode "                             )
@@ -86,22 +86,23 @@
 (define blue         (make-rgb 0.0 0.0 1.0)               )
 
 ;=====================================================================================================
-; Buttons. These are displayed in the viewport. They have procedure property and some have a content.
-; They are made and drawn by macro make-button. They are called as follows:
+; Buttons. These are displayed in the viewport and have procedure property.
+; Some of them have a content. They are made and drawn by macro make-button.
+; They are called as follows:
 ;
-;   (button command arg) --> any/c ; or
-;   (button command    ) --> any/c
-;   command : (or/c 'in-button? 'disable 'enable 'get-content 'put-content)
-;   arg : any/c ; as prescribed by the command.
+;   (button action arg) --> any/c ; or
+;   (button action    ) --> any/c
+;   action : (or/c 'in-button? 'enabled? 'disable 'enable 'get-content 'put-content)
+;   arg : any/c ; as prescribed by the action.
 ;
 ; 'get-content and 'put-content are for buttons with content only.
 
-(define (proc-button1 button action (arg #f)) ; For buttons without content.
+(define (proc-button1 button action (pos #f))          ; For buttons without content.
   (case action
+    ((in-button?)
+     (in-region? pos (button1-region button)))
     ((enabled?)
      (button1-enabled? button))
-    ((in-button?)
-     (in-region? arg (button1-region button)))
     ((disable)
      (set-button1-enabled?! button #f)
      ((draw-disabled-button viewport) (button1-pos button) (button1-name button)))
@@ -109,14 +110,17 @@
      (set-button1-enabled?! button #t)
      ((draw-button viewport) (button1-pos button) (button1-name button)))))
 
-(define (proc-button2 button action (arg #f)) ; For buttons with content.
+(define (proc-button2 button action (arg #f))          ; For buttons with    content.
   (case action
     ((get-content)
      (button2-content button))
     ((put-content)
      (set-button2-content! button arg)
      ((draw-button-content viewport) (button1-pos button) arg))
+    ; Remaining cases same as for proc-button1. Procedure proc-button2 never
+    ; is called with action in-button? in combination with arg not being a posn.
     (else (proc-button1 button action arg))))
+
 
 (struct button1 ((enabled? #:mutable) region pos name) ; For buttons without content.
   #:property prop:procedure proc-button1
@@ -127,32 +131,20 @@
   #:omit-define-syntaxes
   #:constructor-name make-button2)
 
-(define make-button
-  (case-lambda
-    ((name position)         ; without content
-     (let*
-       ((pos position)
-        (region (make-region pos button-width-of button-height-of))
-        (str-name (str-title-case (symbol->string name))))
-       ((draw-button viewport) pos str-name)
-       (make-button1
-         #t ; enabled.
-         region
-         pos
-         str-name)))
-    ((name position content) ; with    content
-     (let*
-       ((pos position)
-        (region (make-region pos button-width-of button-height-of))
-        (str-name (str-title-case (symbol->string name))))
-       ((draw-button viewport) pos str-name)
-       ((draw-button-content viewport) pos content)
-       (make-button2
-         #t ; enabled.
-         region
-         pos
-         str-name
-         content)))))
+(define (make-button name position (content #f))
+  ; The content of a button never is #f. Procedure make-button never is called with content #f.
+  ; Content #f indicates that a button without content is wanted.
+  (let*
+    ((pos position)
+     (region (make-region pos button-width-of button-height-of))
+     (str-name (str-title-case (symbol->string name))))
+    ((draw-button viewport) pos str-name)
+    (cond
+      (content
+        ((draw-button-content viewport) pos  content)
+        (make-button2 #t region pos str-name content))
+      (else
+        (make-button1 #t region pos str-name        )))))
 
 (define (str-title-case str)
   (define lst (string->list str))
@@ -177,6 +169,7 @@
 (define (enable/disable-buttons buttons enable/disable)
   (for ((button (in-list buttons))) (button enable/disable)))
 
+;=====================================================================================================
 ; Procedures to draw buttons and their contents. Computation of their sizes.
 ; A temporary pixmap is used to measure string sizes.
 
@@ -875,7 +868,7 @@
       (button-peg1  (action-setup2 d 0) (action-setup1 (cdr disks)))
       (button-peg2  (action-setup2 d 1) (action-setup1 (cdr disks)))
       (button-peg3  (action-setup2 d 2) (action-setup1 (cdr disks)))
-      (button-reset (clear-msg    ) (action-reset-help))
+      (button-reset (clear-msg        ) (action-reset-help        ))
       (else
         (define p (dispatch-peg pos))
         (cond
@@ -894,31 +887,33 @@
 ; the pegs must be increased by 1, in the returned distribution too. The three procedures start
 ; counting moves from 1, hence no modification of the move-count.
 
+(define namespace (make-base-namespace))
+
 (define (action-compute)
+  (define-values (SLC h m f t) (values #f #f #f #f #f))
   (enable/disable-all-buttons 'disable)
-  (define (catcher e) (values 'not-ok #f #f #f #f))
+  (define (catcher e) (set! SLC 'not-ok))
   (define (validate-compute str)
     (with-handlers ((exn:fail? catcher))
       (define input (open-input-string str))
-      (define L (read input))
-      (define h (read input))
-      (define m (read input))
-      (define f (read input))
-      (define t (read input))
-      (cond
-        ((and
-           (member L '(S L C))
-           (exact-integer? h)
-           (exact-integer? m)
-           (exact-integer? f)
-           (exact-integer? t)
-           (<= 1 f 3)
-           (<= 1 t 3)
-           (not (= f t))
-           (let ((expt3h (expt 3 h)))
-             (< 0 m (case L ((S) (expt 2 h)) ((L) expt3h) ((C) (add1 expt3h))))))
-         (values L h m f t))
-        (else (catcher #f)))))
+      (set! SLC        (read input))
+      (set! h          (read input))
+      (set! m (let ((m (read input))) (if (real? m) m (eval m namespace))))
+      (set! f          (read input))
+      (set! t          (read input)))
+    (or
+      (and
+        (member SLC '(S L C))
+        (exact-integer? h)
+        (exact-integer? m)
+        (exact-integer? f)
+        (exact-integer? t)
+        (<= 1 f 3)
+        (<= 1 t 3)
+        (not (= f t))
+        (let ((expt3h (expt 3 h)))
+          (< 0 m (case SLC ((S) (expt 2 h)) ((L) expt3h) ((C) (add1 expt3h))))))
+      (set! SLC 'not-ok)))
   (define-values (ok answer)
     (cond
       (allow-intro
@@ -931,11 +926,17 @@
               "  onto which peg it put\n"
               "  and the resulting distribution of disks\n\n"
               "You will be asked for the following details:\n\n"
-              "  mode  : capital letter: S for short, L for long and C for circular\n"
-              "  height: number of disks (can be greater than 9)\n"
-              "  from  : starting peg 1, 2 or 3\n"
-              "  onto  : destination-peg 1, 2 or 3, but t≠f")
-            "Do not show this message next time again"
+              "  mode: capital letter: S for short, L for long and C for circular.\n"
+              "  height: number of disks (can be greater than 9).\n"
+              "  move: move number, starting from 1.\n"
+              "  from: starting peg 1, 2 or 3.\n"
+              "  onto: destination-peg 1, 2 or 3, but t≠f.\n\n"
+              "The move can be any expression for a positive exact integer\n"
+              "number not greater than allowed for the mode and height.\n"
+              "For mode S: (<= 1 move (sub1 (expt 2 height)))\n"
+              "For mode L: (<= 1 move (sub1 (expt 3 height)))\n"
+              "For mode C: (<= 1 move (expt 3 height))")
+            "   Do not show this message next time."
             #f
             '(ok-cancel no-icon))))
       (else (values 'ok #f))))
@@ -947,24 +948,18 @@
           (get-text-from-user str-compute
             (string-append
               (if first? "" "Wrong data, try again\n")
-              "Give mode, height, move -r from-disk and onto-disk\n"
-              "separated by spaces")
+              "Give mode, height, move, from-disk and onto-disk\n"
+              "separated by spaces.\n")
             #f
             "")))
       (viewport-flush-input viewport)
       (when str
-        (define-values (SLC h m f t) (validate-compute str))
+        (validate-compute str)
         (cond
           ((eq? SLC 'not-ok) (loop #f))
           (else
-            (define input (open-input-string str))
-            (define mode (read input))
-            (define h    (read input))
-            (define m    (read input))
-            (define f    (read input))
-            (define t    (read input))
             (define-values (d ff tt distr)
-              ((case mode
+              ((case SLC
                  ((S) calculate-short)
                  ((L) calculate-long )
                  ((C) calculate-circular ))
@@ -983,7 +978,7 @@
                   (string-append
                     (format
                       (string-append
-                        "Results for move ~s for path C with ~s disks from peg ~s "
+                        "Results for move ~s of path C with ~s disks from peg ~s "
                         "via peg ~s and peg ~s back to peg ~s~n~n"
                         "Disk ~s from peg ~s to peg ~s.~n"
                         "Resulting distribution:~n"
@@ -992,13 +987,13 @@
                   (string-append
                     (format
                       (string-append
-                        "Results for move ~s for path ~a from peg ~s to peg ~s with ~s disks.~n~n"
+                        "Results for move ~s of path ~a from peg ~s to peg ~s with ~s disks.~n~n"
                         "Disk ~s from peg ~s onto peg ~s.~n"
                         "Resulting distribution:~n"
                         "Positions of disks in order of increasing size:~n~a~n")
                       m SLC f t h (add1 d) (add1 ff) (add1 tt) distr-str)))
                 #f
-                (quote (ok no-icon)))))))))
+                '(ok no-icon))))))))
   (enable/disable-all-buttons 'enable)
   (viewport-flush-input viewport))
 

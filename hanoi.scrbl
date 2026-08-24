@@ -31,6 +31,8 @@
    (Interaction* x ...)
    (interaction/no-prompt #:eval evaller x ...))
 
+@(define (ignore . x) (void))
+
 @(define (make-evaller)
    (make-base-eval
      #:pretty-print? #f
@@ -218,24 +220,51 @@ the time is set to 1 minute.
 
 @subsection[#:tag "Compute"]{Compute}
 
-Computes a move and the resulting distribution of disks
-for the shortest path, the longest path or the circular path,
-all three of them starting and ending with all disks at one peg.
-Opens some dialogs.
-The first is for information only.
-The second one asks some data:
+Calculates a move and the resulting distribution of disks
+for the shortest path, the longest path, or the circular path,
+where all three start and end with all disks on one pin.
+Opens two dialog boxes.
+The first one is for information only and can be suppressed.
+The second one wants the following data:
 
-@(hspace 3)The mode (S for short, L for long and C for circular)@(lb)
-@(hspace 3)The number of disks (which can be more than 9. Every positive number is accepted)@(lb)
-@(hspace 3)The move number (the first move has number 1)@(lb)
-@(hspace 3)The starting peg (1, 2 or 3)@(lb)
-@(hspace 3)The destination peg (1, 2 or 3, but not the same as the starting peg)
+@(hspace 3)The mode: capital letter S for short, L for long and C for circular.@(lb)
+@(hspace 3)The number of disks.@(lb)
+@(hspace 3)The move number. The first move has number 1.@(lb)
+@(hspace 3)The starting peg: 1, 2 or 3.@(lb)
+@(hspace 3)The destination peg: 1, 2 or 3, but not the same as the starting peg.
 
-The computation is fast because it is not recursive in the sense that
+The move-number can be any expression yielding a positive exact integer number.
+The expression is evaluated with procedure @racket[eval] in a
+@seclink["Namespaces" #:doc '(lib "scribblings/reference/reference.scrbl")]{base-namespace}.
+The move number @tt{m} and height @tt{h} must satisfy the following rules:
+
+@inset{@tabular[
+ (list
+   (list "Short mode:" @tt{1≤m<2@↑{h}})
+   (list "Long mode:" @tt{1≤m<3@↑{h}})
+   (list "Circular mode:" @tt{1≤m≤3@↑{h}}))
+ #:sep (hspace 1)]}
+
+There is no limit to the number of disks, but a very large height, say 1000000 disks,
+takes time because this requires a loop of 1000000 cycles for the computation of the positions
+of the disks, involving exact numeric operations on very large numbers, almost 10@↑{500000}.
+@nb{For reasonable} heights, say up to 10000 disks,
+the computation is fast because it is not recursive in the sense that
 it does not depend on preceding moves.
 For a circular path the destination determines the order of visited distributions
 with all disks at one peg: starting peg, destination peg,
 the remaining third peg and finally back to the starting peg.
+
+@ignore{@note{For the longest and circular path the number of times
+  the move number can be divided by 3 is needed and computed recursively,
+  but even with 1000 disks my computer needs less than a millisecond.
+  However, with a million or more disks my computer needs over two minutes
+  for move number 3@↑{1000000}.
+  The computation is not recursive in any other respect.
+  For the shorstest path the number of times the move number can be divided by 2 must be computed,
+  but with the binary representation of numbers this can easily be done without recursion.
+  The number of zero bits at the low significant end is needed,
+  but this computation can be done without realy counting them.}}
 
 @section[#:style '(unnumbered)]{Appendix}
 
@@ -428,7 +457,8 @@ Similar formulas exist for the longest non-selfcrossing path from @tt{f} to @tt{
  (define (disk m) (if (zero? (mod3 m)) (add1 (disk (quotient m 3))) 0))
  (code:comment " ")
  (code:comment "(disk m) is recursive.")
- (code:comment "It is possible, but not simple, to make it non-recursive.")
+ (code:comment #,(list "It is possible, to make it non-recursive. "
+                   @elemref["nonrrec-disk"]{See below}))
  (code:comment " ")
  (define (posi m d f t)
    (case (mod4 (mcnt m d))
@@ -440,6 +470,24 @@ Similar formulas exist for the longest non-selfcrossing path from @tt{f} to @tt{
    (+
      (* 2  (quotient m (exp3 (add1 d))))
      (mod3 (quotient m (exp3 d)))))]
+
+@elemtag["nonrrec-disk" ""]
+A non-recursive version of procedure disk when regarding exponentiation and taking a logarithm
+as non-recursive.
+Works for m of @racket[order-of-magnitude] up to five million, may be even more,
+but is not guaranteed to work for every m because of the use of inexact numbers.
+
+@note{The @racket[order-of-magnitude] of a postive integer number m is one@(lb)
+ less than the number of digits needed to write m in decimal base.}
+
+@racketblock[
+ (define (disk m)
+   (let*
+     ((log3 (inexact->exact (log 3)))
+      (first-guess (ceiling (/ (inexact->exact (log m)) log3)))
+      (upper-bound (expt 3 first-guess))
+      (lowest-power-3 (gcd m upper-bound)))
+     (inexact->exact (round (/ (log lowest-power-3) log3)))))]
 
 The following example resembles the one for the shortest path,
 but the differences are such that making a procedure that can handle both examples
