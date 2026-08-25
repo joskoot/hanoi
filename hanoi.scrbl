@@ -246,7 +246,7 @@ The move number @tt{m} and height @tt{h} must satisfy the following rules:
  #:sep (hspace 1)]}
 
 There is no limit to the number of disks, but a very large height, say 1000000 disks,
-takes time because this requires a loop of 1000000 cycles for the computation of the positions
+takes time because this requires a loop of as many cycles for the computation of the positions
 of the disks, involving exact numeric operations on very large numbers, almost 10@↑{500000}.
 @nb{For reasonable} heights, say up to 10000 disks,
 the computation is fast because it is not recursive in the sense that
@@ -516,7 +516,9 @@ The formulas are used for button @seclink["Compute"]{Compute} only.
 When walking a whole path, recursion is faster because it can use information about
 what happened during previous moves,
 but when wanting the information for one move only, for example
-move 6.02214076×10@↑{23} (Avogadro's number) for a tower of 80 disks,
+move 6.02214076×10@↑{23}
+@hyperlink["https://en.wikipedia.org/wiki/Avogadro_constant"]{(Avogadro's number)}
+for a tower of 80 disks,
 the formulas produce results instantaneously without the need to pass along previous moves.
 See the @elemref["example"]{examples above}.
 
@@ -526,8 +528,8 @@ Let h be the number of disks, h≥3.
 A distribution of these h disks can have one or two empty pegs.
 Obviously there are three distributions with two empty pegs.
 There are three ways to select two pegs out of three
-and 2@↑{h} ways to distribute the disks among
-these two pegs. However, two of these distributions leave the other peg empty.
+and 2@↑{h} ways to distribute the disks among these two pegs.
+However, two of these distributions leave the other peg empty.
 Hence given a selection of the two pegs we find @nb{2@↑{h}@(minus)2} distributions and
 because the two pegs can be chosen in three ways, we find a total of @nb{3(2@↑{h}@(minus)2)}
 distributions with one peg empty.
