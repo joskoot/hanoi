@@ -12,7 +12,9 @@
      (only-in typed/racket Setof Natural Sequenceof Index))
    (for-syntax racket))
 
-@(define-for-syntax local #f)
+@(display (current-directory))
+
+@(define-for-syntax local #t)
 
 @(define-syntax-rule
    (Interaction x ...)
@@ -66,7 +68,7 @@
 The @hyperlink["https://en.wikipedia.org/wiki/Tower_of_Hanoi"]{Tower of Hanoi} is a game.
 It has 3 pegs, one at the left, one in the middle and one at the right.
 It has a number of disks.
-The disks have different sizes and a hole in the center.
+The disks have different diameters and a hole in the center.
 They are put at the pegs.
 Initially all disks are at the peg at the left,
 forming a conical tower with the disks in order of decreasing size from bottom to top.
