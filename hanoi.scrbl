@@ -12,7 +12,7 @@
      (only-in typed/racket Setof Natural Sequenceof Index))
    (for-syntax racket))
 
-@(display (current-directory))
+@(display (current-directory) )
 
 @(define-for-syntax local #t)
 
