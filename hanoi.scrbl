@@ -97,7 +97,7 @@ except while being moved it always is at a peg.
 
 The blue rectangles are buttons that can be clicked to start an action.
 
-@defparam[idle-limit time (and/c real? exact? (>=/c 1)) #:value 10]{
+@defparam[idle-limit time (and/c exact-positive-integer?= (<=/c 1000000)) #:value 10]{
  When the GUI is waiting for a mouseclick or an answer to a modal dialog
  but receives no response within @racket[time] minutes, the GUI aborts.
  Within the GUI the limit can be adjusted by means of
@@ -215,8 +215,7 @@ Opens a dialog to adjust the idle limit in minutes.
 When the GUI is waiting for a mouseclick or an answer to a dialog but
 does not receive such click or answer within idle limit minutes, it halts.
 The initial idle limit is collected from parameter @racket[idle-limit].
-When giving an idle limit of less than 1 minute,
-the time is set to 1 minute.
+The limit must be an exact positive integer less than 1000000.
 
 @subsection[#:tag "Compute"]{Compute}
 

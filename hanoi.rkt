@@ -313,11 +313,10 @@
     default-idle-minutes
     (λ (t)
       (cond
-        ((and (real? t) (exact? t) (>= t min-idle-minutes)) t)
+        ((and (exact-positive-integer? t) (< t 1000000)) t)
         (else
           (raise-user-error 'idle-limit
-            "~n  positive exact real number expected, at least ~s. Given ~s"
-            min-idle-minutes t))))
+            "~n  exact positive integer less than 1000000 expected. Given ~s" t))))
     'idle-limit))
 
 (define-syntax (time-out stx)
@@ -795,25 +794,18 @@
   (define (catcher e) #f)
   (define (validate-delay str)
     (and (<= 1 (string-length str) 6)
-      (or
-        (equal? str str-click)
-        (with-handlers ((exn:fail? catcher))
-          (define input (open-input-string str))
-          (define idle-limit (read input))
-          (cond
-            ((not (eof-object? (read input))) #f)
-            ((infinite? idle-limit) #f)
-            ((and (real? idle-limit) (exact? idle-limit) (>= idle-limit 0)))
-            (else #f))))))
+      (with-handlers ((exn:fail? catcher))
+        (define input (open-input-string str))
+        (define idle-limit (read input))
+        (and (exact-positive-integer? idle-limit) (< idle-limit 1000000)))))
   (define str
     (time-out #t
       (get-text-from-user
         str-idle
         (string-append
-          "Enter a non-negative exact real number for the\n"
-          "for the allowed idle time in minutes.\n"
-          "Do not enter more than 6 characters.\n"
-          "Idle limits less than 1 minute are set to 1 minute.")
+          "Enter an exact positive integer number less than\n"
+          "1000000 for the maximally allowed idle time in\n"
+          "minutes. Do not enter more than 6 characters.")
         #f	
         "10"	
         '(disallow-invalid)	
