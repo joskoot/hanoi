@@ -15,7 +15,7 @@
 @(displayln (current-directory))
 
 @(define-for-syntax local
-   (not (equal? (substring (path->string (current-directory)) 0 14) "C:\\Users\\JOS\\AppData")))
+   (not (equal? (substring (path->string (current-directory)) 0 19) "C:\\Users\\JOS\\AppData")))
 
 @(define-syntax-rule
    (Interaction x ...)
