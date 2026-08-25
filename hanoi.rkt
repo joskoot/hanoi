@@ -1,19 +1,16 @@
+#lang racket
 
-;=====================================================================================================
-; The Tower of Hanoi, a GUI
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
+; The Tower of Hanoi, a GUI.
 ; By Jacob J. A. Koot
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ;
-; A GUI playing the game of The Tower of Hanoi. Implemented with graphics/graphics and
+; A GUI playing the game of The Tower of Hanoi. Implemented with racket, graphics/graphics and
 ; racket/gui/base. Moves can be made manually but also automatically by the GUI. It has clickable
 ; buttons. A click on a button initiates an action. Modal dialogs are used to exchange information
 ; between the GUI and the user. Documentation for the user can be made from module "hanoi.scrbl".
 ;
-;=====================================================================================================
-
-#lang racket
-
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Imports and exports.
 
 (require
@@ -24,7 +21,7 @@
   play
   idle-limit)
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Two macros simplifying notation.
 
 (define-syntax-rule
@@ -35,14 +32,15 @@
   (in-reversed-range n)
   (in-range (sub1 n) -1 -1))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Main procedure.
 
 (define (play)
   (let/ec ec
-    ; Procedure initialize stores the continuation ec in variable escape, which is used by procedure
+    ; Procedure initialize stores continuation ec in variable escape, which is used by procedure
     ; time-out-abort and by button quit for normal termination of the GUI. Dynamic-wind is used to
     ; make sure that graphics and the viewport are closed, even when the GUI terminates abnormally.
+    ; Graphics and the viewport are openerd by procedure initialize.
     (initialize ec)
     (dynamic-wind
       void
@@ -60,9 +58,9 @@
   (define pos (mouse-click-posn (time-out (get-mouse-click viewport))))
   (dispatch pos))
 
-;=====================================================================================================
-; Some constants that must be defined in early stage because they are referred to in early stage.
-; Not mutated.
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
+; Some constants that must be defined in early stage
+; because they are referred to in early stage. Not mutated.
 
 (define click        'click                               )
 (define str-click    (symbol->string click)               )
@@ -88,7 +86,7 @@
 (define green        (make-rgb 0.0 0.8 0.0)               )
 (define blue         (make-rgb 0.0 0.0 1.0)               )
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Buttons. These are displayed in the viewport and have procedure property.
 ; Some of them have a content. They are made and drawn by procedure make-button.
 ; They are called as follows:
@@ -124,7 +122,6 @@
     ; Remaining cases same as for proc-button1. Procedure proc-button2 never
     ; is called with action in-button? in combination with arg not being a posn.
     (else (proc-button1 button action arg))))
-
 
 (struct button1 ((enabled? #:mutable) region pos name) ; For buttons without content.
   #:property prop:procedure proc-button1
@@ -173,7 +170,7 @@
 (define (enable/disable-buttons buttons enable/disable)
   (for ((button (in-list buttons))) (button enable/disable)))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Procedures to draw buttons and their contents. A temporary pixmap is used
 ; to measure string sizes. These sizes determine the required sizes of buttons.
 
@@ -184,8 +181,6 @@
     button-width-size
     button-height-size
     str-offset)
-
-  ; Measure the maximum size of strings used in buttons.
 
   (define strings
     (list
@@ -206,8 +201,10 @@
   (define str-offset 4)
   (define *2str-offset (* 2 str-offset))
 
-  ; Compute the required width and height of buttons.
-  ; Use a temporary pixmap or this purpose.
+  ;‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒
+  ; Measure the maximum size of strings used in buttons.
+  ; Use it to compute compute the required width and height of buttons.
+  ; Use a temporary pixmap for this purpose.
 
   (open-graphics)
   (define pixmap (open-pixmap "string-sizes" 1000 500))
@@ -221,6 +218,7 @@
 
   (close-viewport pixmap)
   (close-graphics)
+  ;‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒
 
   ; Procedures drawing buttons.
 
@@ -248,7 +246,7 @@
     ((draw-string vp)
      (make-posn (+ x str-offset) (+ y button-height-size (- *2str-offset))) str blue)))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Dispatching mouse clicks. Right click the mouse on the left parenthesis of the next definition
 ; and tack arrows to see that procedure main always is called in tail position. No growing stack.
 
@@ -302,7 +300,7 @@
   (define y-max (+ y-min (region-height region)))
   (and (<= x-min x x-max) (<= y-min y y-max)))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Tool for aborting when waiting too long for for a mouseclick or answer to a dialog.
 
 (define default-idle-minutes 10)
@@ -330,6 +328,7 @@
   (when warn?
     ((draw-string viewport) pos-warn1 str-warn1 red)
     ((draw-string viewport) pos-warn2 str-warn2 red))
+  ;‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒
   ; The timer proper.
   (define custodian (make-custodian))
   (define result-box (box #f))
@@ -340,6 +339,7 @@
         (parameterize ((current-eventspace dialog-eventspace))
           (thread (λ () (set-box! result-box (call-with-values thunk list))))))
       (sync/timeout (* (idle-limit) 60) task))) ; (* (idle-limit) 60) converts minutes to seconds.
+  ;‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒‒
   ; Collect results.
   (cond
     ; Abort when no answer within (idle-limit) minutes.
@@ -369,14 +369,16 @@
   ; (message-box "Tower of Hanoi" time-out-abort-msg #f '(ok caution no-icon))
   (escape))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Layout of the GUI. Computation of coordinates and sizes
 ; of all elements in the viewport of the GUI. Not mutated.
 
 (define (add-posn pos width height) (make-posn (+ (posn-x pos) width) (+ (posn-y pos) height)))
 (define max-height 9)
+; Basic dimensions.
 (define block 20)
 (define border (* 3 block))
+; Positions (posn)
 (define pos-height (make-posn border border))
 (define button-width+blok (+ button-width-size block))
 (define pos-mode    (add-posn pos-height  button-width+blok 0                                      ))
@@ -392,6 +394,7 @@
 (define pos-msg     (add-posn pos-idle    button-width+blok (- (* 2 button-height-size) str-offset)))
 (define pos-warn1   (add-posn pos-compute button-width+blok (-      button-height-size  str-offset)))
 (define pos-warn2   (add-posn pos-warn1   0                 block                                  ))
+; Some more dimensions.
 (define disk-height block)
 (define max-tower-height (* max-height disk-height)                                )
 (define min-disk-width   (* 3 block)                                               )
@@ -431,16 +434,16 @@
     (* p (+ border max-disk-width))
     (/ (- max-disk-width peg-width) 2)))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Action manual.
 
-(define (size-of-top-disk p) ; An empty peg always has an imaginary greater disk at top.
+(define (size-of-top-disk p) ; An empty peg always has an imaginary large disk at top.
   (define peg (vector-ref disk-distr p))
   (if (null? peg) max-height (car peg)))
 
 (define (action-manual p)
   (define peg (vector-ref disk-distr p))
-  ; If peg p is not empty and a move of its top disk is possible mark the disk and go to manual1.
+  ; If peg p is not empty and a move of its top disk is possible, mark the disk and go to manual1.
   ; Else do nothing.
   (unless (null? peg)
     (define d (car peg))
@@ -448,7 +451,7 @@
       (or
         (< d (size-of-top-disk (modulo (+ 1 p) 3)))
         (< d (size-of-top-disk (modulo (+ 2 p) 3))))
-      ; There is at least one possible move. Mark the disk and go to manual1, else do nothing.
+      ; There is at least one possible move. Mark the disk and go to manual1.
       (define h (sub1 (length peg)))
       (mark-disk d h p)
       (action-manual1 d h p))))
@@ -464,8 +467,8 @@
       (define dest (dispatch-peg pos))
       (cond
         (dest (action-manual2 d h p dest)) ; Use manual2 to try moving the disk to peg dest.
-        (else ; Another button has been clicked.
-          (draw-disk d h p) ; Unmark the disk.
+        (else ; Another button has been clicked. Unmark the disk.
+          (draw-disk d h p)
           ; In this case button quit merely unmarks the disk without finishing the manual sequence.
           ; Other buttons are processed and finish the sequence of manual moves.
           (unless (button-quit 'in-button? pos)
@@ -501,7 +504,7 @@
 
 (define (reset-manual-count) (clear-manual-count) (set! manual-count 0))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Action height.
 
 (define (action-height)
@@ -529,7 +532,7 @@
     (action-reset-help))
   (enable/disable-all-buttons 'enable))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Action mode
 
 (define (action-mode)
@@ -584,7 +587,7 @@
   ((clear-string viewport) pos-msg msg-str)
   (button-mode 'put-content 'manual))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Actions short.
 
 (define (short)
@@ -608,7 +611,7 @@
           (short (make-list (length (cdr conf)) new-conf) dest))))
     (short p-list 2)))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Action long.
 
 (define (long)
@@ -635,7 +638,7 @@
           (long (make-list h (car conf)) dest))))
     (long p-list 2)))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Action circular.
 
 (define (circular)
@@ -679,7 +682,7 @@
         (finish-path               h-1 r t     )))
     (longest-circular-path height      0 1     )))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Move disk for actions short, long or circular.
 
 (define (move-disk f t exit)
@@ -718,7 +721,7 @@
       (button-reset (action-reset) (exit))
       (button-quit                 (exit)))))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Doze is like sleep , but catching reset and quit during sleep.
 ; Used during actions short, long and circular.
 ; In this case quit and reset terminate these actions and restore mode manual.
@@ -743,7 +746,7 @@
       (button-reset (action-reset) (exit))
       (button-quit (exit)))))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Action delay.
 
 (define (action-delay)
@@ -786,7 +789,7 @@
   (enable/disable-all-buttons 'enable)
   (viewport-flush-input viewport))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Action idle limit
 
 (define (action-idle)
@@ -817,7 +820,7 @@
   (viewport-flush-input viewport)
   (enable/disable-all-buttons 'enable))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Action reset.
 
 (define (action-reset)
@@ -827,12 +830,12 @@
 
 (define (action-reset-help)
   (set! disk-distr (vector (range height) '() '()))
-  (remove-all-disks) ; Does not remove the pegs.
+  (remove-all-disks) ; Redraws the pegs.
   (reset-manual-count)
   (for ((d (in-range height)) (h (in-reversed-range height)))
     (draw-disk d h 0)))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Action setup.
 
 (define (action-setup)
@@ -848,7 +851,7 @@
   (reset-manual-count)
   (enable/disable-buttons buttons 'disable)
   (set! msg-str "Setting up")
-  (remove-all-disks) ; Does not remove the pegs.
+  (remove-all-disks) ; Redraws the pegs.
   (set! disk-distr (make-vector 3 '()))
   ((draw-string viewport) pos-msg msg-str red)
   (action-setup1 (reverse (range height)))
@@ -875,16 +878,20 @@
   (vector-set! disk-distr p (cons d peg))
   (draw-disk d (length peg) p))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Action compute
-; calc-short, calc-long and calc-circ number disks from 0 and use pegs ordinals 0, 1 and 2. When
-; calling them the peg ordinals must be decreased by 1 and upon return the ordinals of the disks and
-; the pegs must be increased by 1, in the returned distribution too. The three procedures start
-; counting moves from 1, hence no modification of the move-count.
-
-(define namespace (make-base-namespace))
+; calculate-short, calculate-long and calculate-circular compute, given height h, starting peg f,
+; destination peg t and move number m, the move and resulting distribution of disks without looking at
+; at preceding moves. They count disks from 0 and use pegs ordinals 0, 1 and 2. When calling them the
+; peg ordinals must be decreased by 1 and upon return the ordinals of the disks and the pegs must be
+; increased by 1, in the returned distribution too. The three procedures start counting moves from 1,
+; hence, no modification of the move-count. In principle the height is unlimited, but a height of a
+; million disks requires a loop of a million cycles to compute the distribution of disks and involves
+; exact arithmetic operations of very large numbers with order of magnitude close to half a million.
+; For height 10000 my computer does the calculation within a second for short, long and circular path.
 
 (define (action-compute)
+  (define namespace (make-base-namespace))
   (define-values (SLC h m f t) (values #f #f #f #f #f))
   (enable/disable-all-buttons 'disable)
   (define (catcher e) (set! SLC 'not-ok))
@@ -942,9 +949,8 @@
         (time-out #t
           (get-text-from-user str-compute
             (string-append
-              (if first? "" "Wrong data, try again\n")
-              "Give mode, height, move, from-disk and onto-disk\n"
-              "separated by spaces.\n")
+              (if first? "" "Wrong data, try again or cancel. ")
+              "Give mode, height, move, from-disk and onto-disk\n")
             #f
             "")))
       (viewport-flush-input viewport)
@@ -992,7 +998,7 @@
   (enable/disable-all-buttons 'enable)
   (viewport-flush-input viewport))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Short option of action-compute.
 
 (define (calculate-short h m f t)
@@ -1014,7 +1020,7 @@
     (onto m h f t)
     (for/list ((p (in-range h))) (posi m h p f t))))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Long option of action-compute.
 
 (define (calculate-long h m f t)
@@ -1047,7 +1053,7 @@
     (onto m h f t)
     (for/list ((p (in-range h))) (posi m p f t))))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Circular option of action-compute.
 
 (define (calculate-circular h M f t)
@@ -1078,7 +1084,7 @@
         ((= m (+ (* 2 3^<h-1>)))   (mover  h-1 t r f))
         ((< m (+ (* 3 3^<h-1>) 2)) (long m h-1 f t r))))))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Move-count and real time clock.
 
 (define (reset-time-and-move-counter)
@@ -1102,7 +1108,7 @@
 (define (watch-clock)
   (~r #:precision 3 (/ (- (current-inexact-milliseconds) clock) 1000)))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Drawing procedures.
 
 (define (draw-pegs)
@@ -1141,7 +1147,7 @@
   ((draw-solid-rectangle viewport)
    (make-posn (- center (/ peg-width 2)) y) peg-width disk-height green))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; Initialization. Actions to be taken before the game can start:
 ;
 ;   Setting mutable variables to their original values.
@@ -1212,11 +1218,10 @@
     ((draw-string viewport)
      (add-posn (make-posn (peg-x p) (- vp-height border))
        (- (/ size 2))
-       (- (/ str-offset 2)))
-     str white))
+       (- (/ str-offset 2)))     str white))
   ; Procedure action-reset-help initializes variable disk-distr and draws the pegs and the initial
   ; distribution of disks at the peg on the left.
   (action-reset-help))
 
-;=====================================================================================================
+;═════════════════════════════════════════════════════════════════════════════════════════════════════
 ; The end
