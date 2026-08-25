@@ -12,9 +12,10 @@
      (only-in typed/racket Setof Natural Sequenceof Index))
    (for-syntax racket))
 
-@(display (current-directory) )
+@(displayln (current-directory))
 
-@(define-for-syntax local #t)
+@(define-for-syntax local
+   (not (equal? (substring (path->string (current-directory)) 0 14) "C:\\Users\\JOS\\AppData")))
 
 @(define-syntax-rule
    (Interaction x ...)
