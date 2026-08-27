@@ -13,7 +13,8 @@
    (for-syntax racket))
 
 @(displayln (current-directory))
-@(define-for-syntax local #f)
+@(define-for-syntax local #t)
+
 
 @(define-syntax-rule
    (Interaction x ...)
@@ -98,11 +99,12 @@ except while being moved it always is at a peg.
 
 The blue rectangles are buttons that can be clicked to start an action.
 
-@defparam[idle-limit time (and/c exact-positive-integer?= (<=/c 1000000)) #:value 10]{
+@defparam[idle-limit time (and/c exact-positive-integer? (<=/c 100000)) #:value 10]{
  When the GUI is waiting for a mouseclick or an answer to a modal dialog
  but receives no response within @racket[time] minutes, the GUI aborts.
  Within the GUI the limit can be adjusted by means of
- the @seclink["Idle limit"]{idle limit} button.}
+ the @seclink["Idle limit"]{idle limit} button.
+ The maximum limit of 100000 minutes is almost 70 days.}
 
 @subsection[#:tag "Height"]{Height}
 
@@ -213,10 +215,11 @@ Used to make moves manually and for @seclink["Setup"]{setup} of a distribution o
 @subsection[#:tag "Idle limit"]{Idle limit}
 
 Opens a dialog to adjust the idle limit in minutes.
-When the GUI is waiting for a mouseclick or an answer to a dialog but
+When the GUI is waiting for a mouse@element['roman ?-]click or an answer to a dialog but
 does not receive such click or answer within idle limit minutes, it halts.
 The initial idle limit is collected from parameter @racket[idle-limit].
-The limit must be an exact positive integer less than 1000000.
+The limit must be an exact positive integer less than or equal to 100000.
+This limit is almost 70 days.
 
 @subsection[#:tag "Compute"]{Compute}
 
