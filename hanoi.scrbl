@@ -12,9 +12,7 @@
      (only-in typed/racket Setof Natural Sequenceof Index))
    (for-syntax racket))
 
-@(displayln (current-directory))
 @(define-for-syntax local #f)
-
 
 @(define-syntax-rule
    (Interaction x ...)
@@ -98,6 +96,7 @@ except while being moved it always is at a peg.
 @(hspace 3)@image["gui-pict.gif" #:scale 0.5]
 
 The blue rectangles are buttons that can be clicked to start an action.
+The white rectangle is a disabled button. It is enabled when appropriate.
 
 @defparam[idle-limit time (and/c exact-positive-integer? (<=/c 100000)) #:value 10]{
  When the GUI is waiting for a mouseclick or an answer to a modal dialog
@@ -116,7 +115,8 @@ Initially the height is 9.
 
 Opens a modal dialog for selection of the mode, which is manual, short, long or circular.
 Initially the mode is manual. This mode is not included in the dialog.
-Actions short, long and circular return to manual mode after completion or cancelation.
+The GUI starts in mode manual and actions short, long and circular
+return to manual mode after completion or @seclink["Cancel"]{cancelation}.
 
 In manual mode the user is supposed to click the @seclink["Peg n"]{peg} button
 the disk is to be taken from
@@ -125,7 +125,7 @@ In stead of clicking a @seclink["Peg n"]{peg} button one can click nearby the co
 The disk selected to be moved is colored red.
 @nb{The selection} can be canceled by clicking nearby the peg were it is
 or clicking the corresponding @seclink["Peg n"]{peg} button
-or by clicking the @seclink["Quit"]{quit} button.
+or by clicking the @seclink["Cancel"]{cancel} button.
 An attempt to make an illegal move is ignored.
 
 In short mode the disks are moved by the GUI to the peg at the right
@@ -149,7 +149,7 @@ of disks and finishing with all disks at the peg started from.
 in reversed order too.
 
 The short, long and circular mode can be aborted by clicking the
-@seclink["Reset"]{reset} or @seclink["Quit"]{quit} button,
+@seclink["Reset"]{reset} or @seclink["Cancel"]{cancel} button,
 which make the GUI return to manual mode.
 
 @subsection[#:tag "Delay"]{Delay}
@@ -161,7 +161,7 @@ It applies to @seclink["Mode"]{modes} short, long and circular.
 
 When the delay is @tt{click} a move is made after each mouseclick
 at arbitrary position in the window of the GUI
-but not on the @seclink["Reset"]{reset} or @seclink["Quit"]{quit} button,
+but not on the @seclink["Reset"]{reset} or @seclink["Cancel"]{cancel} button,
 which terminate the @seclink["Mode"]{modes} short, long and circular
 and return to manual @seclink["Mode"]{mode}.
 
@@ -169,10 +169,18 @@ If the delay is a non-negative real number, say d,
 the GUI waits d seconds between successive moves.
 In fact the delay is d+ε seconds,
 ε being the minimum time for a single move,
-which is the non-zero real time needed for calculations and graphical rendering and
-the real time lost while no processor was evailable for the GUI.
+which is the non-zero real time the GUI needs to make a move.
 ε depends on your CPU and GPU and the load by other programs. It may be about 1 ms.
  
+@subsection[#:tag "Idle limit"]{Idle limit}
+
+Opens a dialog to adjust the idle limit in minutes.
+When the GUI is waiting for a mouse@element['roman ?-]click or an answer to a dialog but
+does not receive such click or answer within idle limit minutes, it halts.
+The initial idle limit is collected from parameter @racket[idle-limit].
+The limit must be an exact positive integer less than or equal to 100000.
+This limit is almost 70 days.
+
 @subsection[#:tag "Reset"]{Reset}
 
 Puts all disks at the peg on the left.
@@ -186,14 +194,12 @@ Disks are placed in order of decreasing size.
 @nb{The user} is supposed to click a @seclink["Peg n"]{peg} button or nearby the corresponding peg
 indicating where each next disk is to be placed.
 Requires @seclink["Height"]{height} such clicks.
-Click the @seclink["Reset"]{reset} button to cancel setup.
+Click the @seclink["Reset"]{reset} or @seclink["Cancel"]{cancel} button to cancel setup.
 
 @subsection[#:tag "Quit"]{Quit}
 
-Usually closes and terminates the GUI,
-but in some cases cancel an ongoing action with@element['roman ?-]out terminating the GUI.
-In these cases the GUI returns to manual @seclink["Mode"]{mode}.
-In this @seclink["Mode"]{mode} @nb{the quit} button always terminates the GUI.
+Closes and terminates the GUI after asking for confirmation in a modal dialog.
+Does nothing if not confirmed.
 
 @(define (note . x) (inset (apply smaller x)))
 @(define (inset . x) (apply nested #:style 'inset x))
@@ -201,25 +207,22 @@ In this @seclink["Mode"]{mode} @nb{the quit} button always terminates the GUI.
 @note{The window of the GUI can be closed by means of the close button in the title bar
  (at the top-right corner),
  but procedure @racket[play] probably is not terminated immediately
- because it may keep waiting for a mouseclick or an answer to a modal dialog.
+ because it may be waiting for a mouseclick or an answer to a modal dialog.
  However, after closing the GUI window, no such mouseclick can be made
  and answers to modal dialogs are not received.
  Nevertheless, the GUI eventually will terminate.
  See the @seclink["Idle limit"]{idle limit} button and parameter @racket[idle-limit].}
 
+@subsection[#:tag "Cancel"]{Cancel}
+
+This button is activated for actions that may be canceled.
+It returns to manual @seclink["Mode"]{mode} and
+may have the side effect of @seclink["Reset"]{resetting} the disks at the pile at the left.
+
 @subsection[#:tag "Peg n"]{Pegs 1, 2 and 3}
 
 Used to make moves manually and for @seclink["Setup"]{setup} of a distribution of disks.
 @nb{The same} can be done by clicking nearby the corresponding peg.
-
-@subsection[#:tag "Idle limit"]{Idle limit}
-
-Opens a dialog to adjust the idle limit in minutes.
-When the GUI is waiting for a mouse@element['roman ?-]click or an answer to a dialog but
-does not receive such click or answer within idle limit minutes, it halts.
-The initial idle limit is collected from parameter @racket[idle-limit].
-The limit must be an exact positive integer less than or equal to 100000.
-This limit is almost 70 days.
 
 @subsection[#:tag "Compute"]{Compute}
 
@@ -243,9 +246,9 @@ The move number @tt{m} and height @tt{h} must satisfy the following rules:
 
 @inset{@tabular[
  (list
-   (list "Short mode:" @tt{1≤m<2@↑{h}})
-   (list "Long mode:" @tt{1≤m<3@↑{h}})
-   (list "Circular mode:" @tt{1≤m≤3@↑{h}}))
+   (list "Short mode" @tt{1≤m<2@↑{h}})
+   (list "Long mode" @tt{1≤m<3@↑{h}})
+   (list "Circular mode" @tt{1≤m≤3@↑{h}}))
  #:sep (hspace 1)]}
 
 There is no limit to the number of disks, but a very large height, say 1000000 disks,
@@ -258,16 +261,11 @@ For a circular path the destination determines the order of visited distribution
 with all disks at one peg: starting peg, destination peg,
 the remaining third peg and finally back to the starting peg.
 
-@ignore{@note{For the longest and circular path the number of times
-  the move number can be divided by 3 is needed and computed recursively,
-  but even with 1000 disks my computer needs less than a millisecond.
-  However, with a million or more disks my computer needs over two minutes
-  for move number 3@↑{1000000}.
-  The computation is not recursive in any other respect.
-  For the shorstest path the number of times the move number can be divided by 2 must be computed,
-  but with the binary representation of numbers this can easily be done without recursion.
-  The number of zero bits at the low significant end is needed,
-  but this computation can be done without realy counting them.}}
+@note{The computation of the resulting distribution of disks can be parallelized.
+  Code with @seclink["futures" #:doc '(lib "scribblings/reference/reference.scrbl")]{futures}
+  for this pupose is already present in the source code, but commented out.
+  The code gives correct answers,
+  but there is no parallelization yet.}
 
 @section[#:style '(unnumbered)]{Appendix}
 
@@ -303,6 +301,7 @@ The graph has
 edges because it has @tt{h}@↑{3} vertices, of which
 @tt{h@↑{3}@(minus)3} have @nb{3 edges} and 3 vertices have 2 edges only.
 The division by 2 is needed because every edge connects 2 vertices.
+Because the dividend is even, the division yields an integer number.
 
 Consider paths from a distribution of all disks at the same peg
 to a distribution with all disks at another peg.
@@ -475,7 +474,7 @@ Similar formulas exist for the longest non-selfcrossing path from @tt{f} to @tt{
      (mod3 (quotient m (exp3 d)))))]
 
 @elemtag["nonrrec-disk" ""]
-A non-recursive version of procedure disk when regarding exponentiation and taking a logarithm
+Below a non-recursive version of procedure disk when regarding exponentiation and taking a logarithm
 as non-recursive.
 Works for m of @racket[order-of-magnitude] up to five million, may be even more,
 but is not guaranteed to work for every m because of the use of inexact numbers.
@@ -515,7 +514,7 @@ would make the code less easy to read.
        (printf "~s" (posi N-Avogadro d f t)))
      (printf "~nTimes in ms: ")))]
 
-The formulas are used for button @seclink["Compute"]{Compute} only.
+The formulas are used for button @seclink["Compute"]{compute} only.
 When walking a whole path, recursion is faster because it can use information about
 what happened during previous moves,
 but when wanting the information for one move only, for example
