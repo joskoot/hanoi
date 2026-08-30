@@ -12,7 +12,7 @@
      (only-in typed/racket Setof Natural Sequenceof Index))
    (for-syntax racket))
 
-@(define-for-syntax local #f)
+@(define-for-syntax local #t)
 
 @(define-syntax-rule
    (Interaction x ...)
@@ -41,6 +41,7 @@
         (require racket)
         (print-reader-abbreviations #f)
         (define (hex str) (read (open-input-string str))))))
+
 @(define-syntax (Defmodule stx)
    (if local
      #'(defmodule "hanoi.rkt" #:packages ())
@@ -114,13 +115,13 @@ Initially the height is 9.
 @subsection[#:tag "Mode" ""]{Mode}
 
 Opens a modal dialog for selection of the mode, which is manual, short, long or circular.
-Initially the mode is manual. This mode is not included in the dialog.
-The GUI starts in mode manual and actions short, long and circular
-return to manual mode after completion or @seclink["Cancel"]{cancelation}.
+Initially the mode is manual.
+This mode is not included in the dialog.
+The GUI starts in mode manual and actions short,
+long and circular return to manual mode after completion or @seclink["Cancel"]{cancelation}.
 
 In manual mode the user is supposed to click the @seclink["Peg n"]{peg} button
-the disk is to be taken from
-followed by a click on the @seclink["Peg n"]{peg} button of destination.
+the disk is to be taken from followed by a click on the @seclink["Peg n"]{peg} button of destination.
 In stead of clicking a @seclink["Peg n"]{peg} button one can click nearby the corresponding peg.
 The disk selected to be moved is colored red.
 @nb{The selection} can be canceled by clicking nearby the peg were it is
@@ -265,7 +266,7 @@ the remaining third peg and finally back to the starting peg.
   Code with @seclink["futures" #:doc '(lib "scribblings/reference/reference.scrbl")]{futures}
   for this pupose is already present in the source code, but commented out.
   The code gives correct answers,
-  but there is no parallelization yet.}
+  but does not parallelize yet.}
 
 @section[#:style '(unnumbered)]{Appendix}
 
