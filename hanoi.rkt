@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/base
 
 ;=====================================================================================================
 ; The Tower of Hanoi, a GUI.
@@ -13,33 +13,103 @@
 ;=====================================================================================================
 ; Imports and exports. The only ones in the present module.
 
-(require graphics/graphics racket/gui/base)
-(provide play idle-limit)
+(require
+  (only-in racket/base
+    (define DEFINE)
+    (define-values DEFINE-VALUES))
+  (only-in racket
+    make-list
+    infinite?
+    range
+    processor-count
+    ~r)
+  (only-in graphics/graphics
+    open-graphics
+    close-graphics
+    open-viewport
+    open-pixmap
+    close-viewport
+    viewport-flush-input
+    draw-rectangle
+    draw-solid-rectangle
+    clear-solid-rectangle
+    draw-string
+    clear-string
+    get-string-size
+    get-mouse-click
+    ready-mouse-click
+    mouse-click-posn
+    make-posn
+    posn-x
+    posn-y
+    make-rgb)
+  (only-in racket/gui/base
+    message-box
+    get-text-from-user
+    get-choices-from-user
+    message+check-box
+    make-eventspace
+    current-eventspace)
+  (for-syntax racket/base)
+  (for-syntax
+    (only-in syntax/transformer
+      make-variable-like-transformer)))
+
+(provide tower-of-hanoi idle-limit)
 
 ;=====================================================================================================
 ; Prologue. Some macros.
 
-(define-syntax-rule
+(define-syntax-rule ; Obvious.
   (in-reversed-range n)
   (in-range (sub1 n) -1 -1))
 
-(define-syntax-rule
+(define-syntax-rule ; Defines values with in addition a list of these values.
   (define-with-list the-list (var value) ...)
   (begin
     (define var value) ...
     (define the-list (list var ...))))
 
-(define-syntax-rule
-  (define-values-accumulative (var ...) first incrementor)
+(define-syntax-rule ; Defines values, each one, the first one excepted, depending on the previous one
+  (define-values-accumulative (var ...) first incrementor) ; according to an incrementor.
   (define-values (var ...)
     (apply values
-      (for/fold ((pos first) (vals '()) #:result (reverse vals))
-        ((in-range (length '(var ...))))
-        (values (incrementor pos) (cons pos vals))))))
+      (for/fold ((val first) (vals '()) #:result (reverse vals))
+        ((index (in-range (length '(var ...)))))
+        (values (incrementor val) (cons val vals))))))
 
 ;=====================================================================================================
+; Protection against mutation of variables that are not intended to be mutable.
+; Use DEFINE and DEFINE-VALUES for mutable variables.
+; define and define-values generate immutable variables.
 
-(define (play)
+(define-syntax (define stx)
+  (syntax-case stx ()
+    ((_ id value)
+     (identifier? #'id)
+     #'(begin
+         (DEFINE hidden value)
+         (define-syntax id (make-variable-like-transformer #'hidden))))
+    ((_ (id arg ...           ) body ...)
+     #'(define id (procedure-rename (λ (arg ...           ) body ...) 'id)))
+    ((_ (id arg . rest-arg) body ...)
+     (identifier? #'rest-arg)
+     #'(define id (procedure-rename (λ (arg     . rest-arg) body ...) 'id)))
+    ((_ (id arg ... . rest-arg) body ...)
+     #'(define id (procedure-rename (λ (arg ... . rest-arg) body ...) 'id)))))
+
+(define-syntax (define-values stx)
+  (syntax-case stx ()
+    ((_ (id ...) expr)
+     (with-syntax (((hidden ...) (generate-temporaries #'(id ...))))
+       #'(begin
+           (DEFINE-VALUES (hidden ...) expr)
+           (define id (if (procedure? hidden) (procedure-rename hidden 'id) hidden)) ...)))))
+
+;=====================================================================================================
+; The GUI proper.
+
+(define (tower-of-hanoi)
 
   (let/ec escape ; The escape is for abort by button quit or when the idle-time is exceeded.
     
@@ -61,7 +131,7 @@
       (close-graphics))
 
     ;=================================================================================================
-    ; Dispatch of mouse-clicks on buttons and near pegs.
+    ; Dispatch of mouse-clicks on buttons and clicks near pegs.
 
     (define-syntax (dispatch-button stx)
       (syntax-case stx (else)
@@ -75,22 +145,17 @@
              (cond
                ((button 'in-button? p) action ...) ...)))))
 
-    ; In DrRacket place the mouse on the first left parenthesis to follow and tack arrows. Gives an
-    ; interesting view of tail positions of all calls to procedure main. It is not in tail position
-    ; of procedure play because there it is wrapped in a dynamic wind. This adds one level of
-    ; continuations only.
-
     (define (dispatch pos)
-      (dispatch-button pos ; Button cancel not included.
+      (dispatch-button pos
         (button-height  (action-height  ) (main))
         (button-mode    (action-mode    ) (main))
         (button-delay   (action-delay   ) (main))
         (button-idle    (action-idle    ) (main))
         (button-reset   (action-reset   ) (main))
         (button-setup   (action-setup   ) (main))
-        (button-peg1    (action-manual 0) (main))
-        (button-peg2    (action-manual 1) (main))
-        (button-peg3    (action-manual 2) (main))
+        (button-peg0    (action-manual 0) (main))
+        (button-peg1    (action-manual 1) (main))
+        (button-peg2    (action-manual 2) (main))
         (button-compute (action-compute ) (main))
         (button-quit    (action-quit    ) (main))
         (else
@@ -100,28 +165,30 @@
 
     (define (dispatch-peg pos)
       (cond
-        ((in-region? pos region-peg1) 0)
-        ((in-region? pos region-peg2) 1)
-        ((in-region? pos region-peg3) 2)
+        ((in-region? pos region-peg0) 0)
+        ((in-region? pos region-peg1) 1)
+        ((in-region? pos region-peg2) 2)
         (else #f)))
 
     ;=================================================================================================
-    ; The following variables can be mutated while playing. Other variables are never mutated.
-    ; Initialized by procedure initialize.
+    ; The following variables can be mutated while playing. Other variables in the present scope are
+    ; never mutated. Initialized by procedure initialize.
 
-    (define height       'mutable)
-    (define delay        'mutable)
-    (define msg-str      'mutable)
-    (define clock        'mutable)
-    (define move-count   'mutable)
-    (define manual-count 'mutable)
-    (define allow-intro  'mutable)
-    (define disk-distr   'mutable)
-    (define last-compute 'mutable)
+    (DEFINE height       'mutable)
+    (DEFINE delay        'mutable)
+    (DEFINE msg-str      'mutable)
+    (DEFINE clock        'mutable)
+    (DEFINE move-count   'mutable)
+    (DEFINE manual-count 'mutable)
+    (DEFINE allow-intro  'mutable)
+    (DEFINE disk-distr   'mutable)
+    (DEFINE last-compute 'mutable)
+    
     ; After being assigned a value variable viewport is never mutated, but it cannot be opened yet
     ; because this needs graphics to be open. Graphics is opened by procedure initialize, which also
     ; will assign the viewport.
-    (define viewport     'delayed)
+    
+    (DEFINE viewport     'delayed)
 
     ;=================================================================================================
     ; Initialization. Store the initial values or restore them when GUI is started again after a
@@ -145,6 +212,7 @@
         (define pos (button1-pos button))
         (draw-button button)
         (when (button2? button) (draw-button-content button (button2-content button))))
+      ; Disable button cancel.
       (button-cancel 'disable)
       ; Draw the girder on which the pegs will be mounted.
       ((draw-solid-rectangle viewport) pos-girder (- vp-width (* 2 border)) block gray)
@@ -160,7 +228,7 @@
       (action-reset))
 
     ;=================================================================================================
-    ; Buttons. Buttons have procedure property. A button contains its name, its position, its region
+    ; Buttons. They have procedure property. A button contains its name, its position, its region
     ; and a boolean indicating whether or not it is enabled. Some buttons contain a content too.
     ; The content and the enabled field are the only mutable ones.
 
@@ -378,9 +446,9 @@
         pos-setup
         pos-quit
         pos-cancel
+        pos-peg0
         pos-peg1
         pos-peg2
-        pos-peg3
         pos-compute)
       (make-posn border border)
       (λ (pos) (posn-add pos buttonw+b 0)))
@@ -407,14 +475,14 @@
       (define y-max (+ y-min (region-height region)))
       (and (<= x-min x x-max) (<= y-min y y-max)))
 
-    (define-values (region-peg1 region-peg2 region-peg3)
+    (define-values (region-peg0 region-peg1 region-peg2)
       (apply values
         (for/fold
           ((pos
              (make-posn
                (+ border block)
                (- vp-height border block peg-height)))
-           (regions '()) #:result regions)
+           (regions '()) #:result (reverse regions))
           ((n (in-range 3)))
           (values
             (posn-add pos (+ max-disk-width border) 0)
@@ -434,9 +502,9 @@
       (button-setup   (make-button 'setup        pos-setup              ))
       (button-quit    (make-button 'quit         pos-quit               ))
       (button-cancel  (make-button 'cancel       pos-cancel             ))
-      (button-peg1    (make-button '|peg 1|      pos-peg1               ))
-      (button-peg2    (make-button '|peg 2|      pos-peg2               ))
-      (button-peg3    (make-button '|peg 3|      pos-peg3               ))
+      (button-peg0    (make-button '|peg 1|      pos-peg0               ))
+      (button-peg1    (make-button '|peg 2|      pos-peg1               ))
+      (button-peg2    (make-button '|peg 3|      pos-peg2               ))
       (button-compute (make-button 'compute      pos-compute            )))
 
     ;================================================================================================
@@ -503,9 +571,9 @@
       (button-cancel 'enable)
       (define pos (mouse-click-posn (time-out (get-mouse-click viewport))))
       (dispatch-button pos
-        (button-peg1 (action-manual2 d h p 0)) ; Yes, peg 1 selected.
-        (button-peg2 (action-manual2 d h p 1)) ; Yes, peg 2 selected.
-        (button-peg3 (action-manual2 d h p 2)) ; Yes, peg 3 selected.
+        (button-peg0 (action-manual2 d h p 0)) ; Yes, peg 1 selected.
+        (button-peg1 (action-manual2 d h p 1)) ; Yes, peg 2 selected.
+        (button-peg2 (action-manual2 d h p 2)) ; Yes, peg 3 selected.
         (button-cancel                         ; Move canceled. Unmark the selected disk.
           (draw-disk d h p)
           (button-cancel 'disable)
@@ -605,9 +673,9 @@
           button-delay
           button-idle
           button-setup
+          button-peg0
           button-peg1
           button-peg2
-          button-peg3
           button-compute))
       (enable/disable-buttons buttons enable/disable))
 
@@ -804,12 +872,12 @@
     ; Action delay.
 
     (define (action-delay)
-      (define (catcher e) #f)
+      (define (catch-exn e) #f)
       (define (validate-delay str)
         (and (<= 1 (string-length str) 6)
           (or
             (equal? str str-click)
-            (with-handlers ((exn:fail? catcher))
+            (with-handlers ((exn:fail? catch-exn))
               (define input (open-input-string str))
               (define delay (read input))
               (cond
@@ -845,10 +913,10 @@
     ; Action idle limit.
 
     (define (action-idle)
-      (define (catcher e) #f)
+      (define (catch-exn e) #f)
       (define (validate-delay str)
         (and (<= 1 (string-length str) 6)
-          (with-handlers ((exn:fail? catcher))
+          (with-handlers ((exn:fail? catch-exn))
             (define input (open-input-string str))
             (define idle-limit (read input))
             (and (exact-positive-integer? idle-limit)
@@ -912,9 +980,9 @@
         (define d (car disks))
         (define pos (mouse-click-posn (time-out (get-mouse-click viewport))))
         (dispatch-button pos
-          (button-peg1   (action-setup2 d 0) (action-setup1 (cdr disks)))
-          (button-peg2   (action-setup2 d 1) (action-setup1 (cdr disks)))
-          (button-peg3   (action-setup2 d 2) (action-setup1 (cdr disks)))
+          (button-peg0   (action-setup2 d 0) (action-setup1 (cdr disks)))
+          (button-peg1   (action-setup2 d 1) (action-setup1 (cdr disks)))
+          (button-peg2   (action-setup2 d 2) (action-setup1 (cdr disks)))
           (button-reset  (clear-msg)         (action-reset))
           (button-cancel (clear-msg)         (action-reset))
           (button-quit   (action-quit) (action-setup1 (cdr disks)))
@@ -938,7 +1006,7 @@
           (message-box "Quit"
             "Ok to quit?"
             #f
-            '(ok-cancel caution))))
+            '(ok-cancel no-icon))))
       (when (eq? answer 'ok) (escape)))
 
     ;=================================================================================================
@@ -975,16 +1043,16 @@
           button-reset
           button-setup
           button-quit
+          button-peg0
           button-peg1
           button-peg2
-          button-peg3
           button-compute))
       (define namespace (make-base-namespace))
-      (define-values (SLC h M m f t) (values #f #f #f #f #f #f))
-      (define (catcher e) (set! SLC 'not-ok))
+      (DEFINE-VALUES (SLC h M m f t) (values #f #f #f #f #f #f))
+      (define (catch-exn e) (set! SLC 'not-ok))
       (define nr-of-disks-per-line 50)
       (define (validate-compute str)
-        (with-handlers ((exn:fail? catcher))
+        (with-handlers ((exn:fail? catch-exn))
           (define input (open-input-string str))
           (set! SLC (read input))
           (set! h (read input))

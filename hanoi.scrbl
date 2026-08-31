@@ -83,7 +83,7 @@ except while being moved it always is at a peg.
 
 @section[#:style '(unnumbered)]{How to play}
 
-@defproc[(play) void?]{
+@defproc[(tower-of-hanoi) void?]{
  Opens a GUI for playing the game of the
  @hyperlink["https://en.wikipedia.org/wiki/Tower_of_Hanoi"]{Tower of Hanoi}.
  The user can instruct the GUI which action to take by means of the buttons described below
@@ -91,7 +91,7 @@ except while being moved it always is at a peg.
  A button can temporarily be absent when not applicable during the current action.
  For some actions the GUI asks a question in a separate modal dialog.
  Instructions given before the question is answered are ignored.
- The GUI as opened by procedure @racket[play] looks like this:}
+ The GUI as opened by procedure @racket[tower-of-hanoi] looks like this:}
 
 @elemtag["figure"]
 
@@ -208,7 +208,7 @@ Does nothing if not confirmed.
 
 @note{The window of the GUI can be closed by means of the close button in the title bar
  (at the top-right corner),
- but procedure @racket[play] probably is not terminated immediately
+ but procedure @racket[tower-of-hanoi] probably is not terminated immediately
  because it may be waiting for a mouseclick or an answer to a modal dialog.
  However, after closing the GUI window, no such mouseclick can be made
  and answers to modal dialogs are not received.
