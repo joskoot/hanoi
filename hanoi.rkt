@@ -80,7 +80,7 @@
 
 ;=====================================================================================================
 ; Protection against mutation of variables that are not intended to be mutable.
-; Use DEFINE and DEFINE-VALUES for mutable variables.
+; Use DEFINE and DEFINE-VALUES for mutable variables,
 ; define and define-values generate immutable variables.
 
 (define-syntax (define stx)
