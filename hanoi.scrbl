@@ -12,7 +12,7 @@
      (only-in typed/racket Setof Natural Sequenceof Index))
    (for-syntax racket))
 
-@(printf "Directory: ~s" (path->string (current-directory)))
+@(printf "Directory: ~s~n" (path->string (current-directory)))
 @(define-for-syntax local #f)
 
 @(define-syntax-rule
