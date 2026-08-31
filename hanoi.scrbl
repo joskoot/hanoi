@@ -12,7 +12,7 @@
      (only-in typed/racket Setof Natural Sequenceof Index))
    (for-syntax racket))
 
-@(define-for-syntax local #f)
+@(define-for-syntax local (equal? (path->string (current-drive)) "G:\\"))
 
 @(define-syntax-rule
    (Interaction x ...)
