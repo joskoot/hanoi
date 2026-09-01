@@ -13,7 +13,7 @@
    (for-syntax racket))
 
 @(printf "Directory: ~s~n" (path->string (current-directory)))
-@(define-for-syntax local #f)
+@(define-for-syntax local #t)
 
 @(define-syntax-rule
    (Interaction x ...)
@@ -110,8 +110,8 @@ The white rectangle is a disabled button. It is enabled when appropriate.
 @subsection[#:tag "Height"]{Height}
 
 Opens a modal dialog for selection of the desired number of disks,
-at least one, at most nine.
-Initially the height is 9.
+at least one, at most ten
+Initially the height is 10.
 
 @subsection[#:tag "Mode" ""]{Mode}
 
@@ -133,7 +133,7 @@ An attempt to make an illegal move is ignored.
 In short mode the disks are moved by the GUI to the peg at the right
 with the least possible number of moves,
 at most @tt{2@↑{h}-1} moves, where @tt{h} is the @seclink["Height"]{height}.
-Exactly @tt{2@↑{h}-1} moves when starting with all disks at @seclink["Peg n"]{peg} 1 or 2.
+Exactly @tt{2@↑{h}-1} moves when starting with all disks at @seclink["Peg n"]{peg} 0 or 1.
 The shortest way always is uniquely defined.
 
 When the long mode is selected, first all disks are placed at the peg at the left and
@@ -238,8 +238,8 @@ The second one wants the following data:
 @(hspace 3)The mode: capital letter S for short, L for long and C for circular.@(lb)
 @(hspace 3)The number of disks.@(lb)
 @(hspace 3)The move number. The first move has number 1.@(lb)
-@(hspace 3)The starting peg: 1, 2 or 3.@(lb)
-@(hspace 3)The destination peg: 1, 2 or 3, but not the same as the starting peg.
+@(hspace 3)The starting peg: 0, 1 or 2.@(lb)
+@(hspace 3)The destination peg: 0, 1 or 2, but not the same as the starting peg.
 
 The move-number can be any expression yielding a positive exact integer number.
 The expression is evaluated with procedure @racket[eval] in a
@@ -399,13 +399,6 @@ Written in @hyperlink["https://www.scheme.org/"]{Scheme} or
          @tt{0}
          " being the smallest disk."))))
  #:sep (hspace 2)]
-
-Notice that in the formulas the pegs have ordinals @tt{0}, @tt{1} and @tt{2}.
-For the formulas this is more convenient than the ordinals @tt{1}, @tt{2} and @tt{3}
-as used in the GUI.
-The disks are numbered start@element['roman ?-]ing from @tt{0} for the smallest one,
-whereas the GIU starts from @tt{1}.
-The ordinal of the first move is not changed and remains @tt{1}.
 
 @Interaction*[
  (define (exp2 n        ) (expt   2 n))
