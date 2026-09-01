@@ -95,7 +95,7 @@ except while being moved it always is at a peg.
 
 @elemtag["figure"]
 
-@(hspace 3)@image["gui-pict.gif" #:scale 0.5]
+@(hspace 3)@image["gui-pict.gif" #:scale 0.4]
 
 The blue rectangles are buttons that can be clicked to start an action.
 The white rectangle is a disabled button. It is enabled when appropriate.
