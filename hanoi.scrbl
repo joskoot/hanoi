@@ -13,7 +13,7 @@
    (for-syntax racket))
 
 @(printf "Directory: ~s~n" (path->string (current-directory)))
-@(define-for-syntax local #f)
+@(define-for-syntax local #t)
 
 @(define-syntax-rule
    (Interaction x ...)
@@ -95,7 +95,7 @@ except while being moved it always is at a peg.
 
 @elemtag["figure"]
 
-@(hspace 3)@image["gui-pict.gif" #:scale 0.4]
+@(hspace 3)@image["gui-pict.gif" #:scale 0.45]
 
 The blue rectangles are buttons that can be clicked to start an action.
 The white rectangle is a disabled button. It is enabled when appropriate.
