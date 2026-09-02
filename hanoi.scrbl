@@ -13,7 +13,7 @@
    (for-syntax racket))
 
 @(printf "Directory: ~s~n" (path->string (current-directory)))
-@(define-for-syntax local #f)
+@(define-for-syntax local #t)
 
 @(define-syntax-rule
    (Interaction x ...)
@@ -237,11 +237,13 @@ The second one wants the following data:
 
 @inset[@tabular[
  (list
-   (list "mode" "Capital letter: S for short, L for long and C for circular.")
-   (list @tt{h} "The number of disks.")
-   (list @tt{m} "The move number: expression yielding a positive exact integer.")
-   (list @tt{f} "The starting peg: 0, 1 or 2.")
-   (list @tt{t} "The destination peg: 0, 1 or 2, but not the same as the starting peg."))
+   (list @tt{mode}
+     @list["capital letter: "@tt{S}" for short, "@tt{L}" for long and "@tt{C}" for circular."])
+   (list @tt{h} "number of disks: exact positive integer.")
+   (list @tt{m} "move number: expression yielding a positive exact integer.")
+   (list @tt{f} @list["starting peg: "@tt{0}", "@tt{1}" or "@tt{2}"."])
+   (list @tt{t}
+     @list["destination peg: "@tt{0}", "@tt{1}" or "@tt{2}" but not the same as the starting peg."]))
  #:column-properties '(center left)
  #:sep (hspace 2)]]
 
@@ -270,8 +272,7 @@ the remaining third peg and finally back to the starting peg.
 
 @note{The computation of the resulting distribution of disks can be parallelized.
   Code with @seclink["futures" #:doc '(lib "scribblings/reference/reference.scrbl")]{futures}
-  for this pupose is already present in the source code, but commented out.
-  The code gives correct answers,
+  for this pupose is already present in the source code and gives correct answers,
   but does not parallelize yet.}
 
 @section[#:style '(unnumbered)]{Appendix}
