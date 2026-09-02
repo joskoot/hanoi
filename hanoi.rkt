@@ -575,7 +575,7 @@
 
 ;=====================================================================================================
 
-(define (catch-exn e) #f)
+(define (catch-exn e) #f) ; Used when validating the answer to a modal dialog.
 
 ;=====================================================================================================
 ; Action manual. peg is the one that has been selected to be moved.
@@ -1080,9 +1080,9 @@
   (with-handlers ((exn:fail? catch-exn-for-compute))
     (define input (open-input-string str))
     (set! SLC (read input))
-    (set! h (read input))
+    (set! h (read input)) (namespace-set-variable-value! 'h h #t namespace #f)
     (set! M (read input))
-    (set! m (if (real? M) M (eval M namespace)))
+    (set! m (if (exact-positive-integer? M) M (eval M namespace)))
     (set! f (read input))
     (set! t (read input)))
   (or

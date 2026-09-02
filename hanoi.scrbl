@@ -13,7 +13,7 @@
    (for-syntax racket))
 
 @(printf "Directory: ~s~n" (path->string (current-directory)))
-@(define-for-syntax local #f)
+@(define-for-syntax local #t)
 
 @(define-syntax-rule
    (Interaction x ...)
@@ -110,7 +110,7 @@ The white rectangle is a disabled button. It is enabled when appropriate.
 @subsection[#:tag "Height"]{Height}
 
 Opens a modal dialog for selection of the desired number of disks,
-at least one, at most ten
+at least one, at most ten.
 Initially the height is 10.
 
 @subsection[#:tag "Mode" ""]{Mode}
@@ -235,15 +235,21 @@ Opens two dialog boxes.
 The first one is for information only and can be suppressed.
 The second one wants the following data:
 
-@(hspace 3)The mode: capital letter S for short, L for long and C for circular.@(lb)
-@(hspace 3)The number of disks.@(lb)
-@(hspace 3)The move number. The first move has number 1.@(lb)
-@(hspace 3)The starting peg: 0, 1 or 2.@(lb)
-@(hspace 3)The destination peg: 0, 1 or 2, but not the same as the starting peg.
+@inset[@tabular[
+ (list
+   (list "mode" "Capital letter: S for short, L for long and C for circular.")
+   (list @tt{h} "The number of disks.")
+   (list @tt{m} "The move number: expression yielding a positive exact integer.")
+   (list @tt{f} "The starting peg: 0, 1 or 2.")
+   (list @tt{t} "The destination peg: 0, 1 or 2, but not the same as the starting peg."))
+ #:column-properties '(center left)
+ #:sep (hspace 2)]]
 
-The move-number can be any expression yielding a positive exact integer number.
-The expression is evaluated with procedure @racket[eval] in a
-@seclink["Namespaces" #:doc '(lib "scribblings/reference/reference.scrbl")]{base-namespace}.
+If @tt{m} not already is a an exact positive integer,
+it is assumed to be an expression and is evaluated with procedure @racket[eval] in a
+@seclink["Namespaces" #:doc '(lib "scribblings/reference/reference.scrbl")]{base-namespace}
+to which a mutable variable h is added with value @tt{h}.
+Moves are counted starting from 1.
 The move number @tt{m} and height @tt{h} must satisfy the following rules:
 
 @inset{@tabular[
@@ -254,8 +260,7 @@ The move number @tt{m} and height @tt{h} must satisfy the following rules:
  #:sep (hspace 1)]}
 
 There is no limit to the number of disks, but a very large height, say 1000000 disks,
-takes time because this requires a loop of as many cycles for the computation of the positions
-of the disks, involving exact numeric operations on very large numbers, almost 10@↑{500000}.
+can take much time, involving exact numeric operations on very large numbers, almost 10@↑{500000}.
 @nb{For reasonable} heights, say up to 10000 disks,
 the computation is fast because it is not recursive in the sense that
 it does not depend on preceding moves.
