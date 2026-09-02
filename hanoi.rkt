@@ -18,47 +18,48 @@
   (only-in racket/base
     ; define and define-values will be redefined such as to produce immutable variables only.
     ; For mutable variables DEFINE and DEFINE-VALUES must be used. None of the imports can be omitted.
-    (define DEFINE)
-    (define-values DEFINE-VALUES))
+    (define                DEFINE               )
+    (define-values         DEFINE-VALUES        ))
   (only-in racket
-    make-list
-    infinite?
-    range
-    processor-count
-    future
-    touch
-    ~r)
+    (make-list             make-list            )
+    (infinite?             infinite?            )
+    (range                 range                )
+    (processor-count       processor-count      )
+    (future                future               )
+    (touch                 touch                )
+    (~r                    ~r                   ))
   (only-in graphics/graphics
-    open-graphics
-    close-graphics
-    open-viewport
-    open-pixmap
-    close-viewport
-    viewport-flush-input
-    draw-rectangle
-    draw-solid-rectangle
-    clear-solid-rectangle
-    draw-string
-    clear-string
-    get-string-size
-    get-mouse-click
-    ready-mouse-click
-    mouse-click-posn
-    make-posn
-    posn-x
-    posn-y
-    make-rgb)
+    (open-graphics         open-graphics        )
+    (close-graphics        close-graphics       )
+    (open-viewport         open-viewport        )
+    (open-pixmap           open-pixmap          )
+    (close-viewport        close-viewport       )
+    (viewport-flush-input  viewport-flush-input )
+    (draw-rectangle        draw-rectangle       )
+    (draw-solid-rectangle  draw-solid-rectangle )
+    (clear-solid-rectangle clear-solid-rectangle)
+    (draw-string           draw-string          )
+    (clear-string          clear-string         )
+    (get-string-size       get-string-size      )
+    (get-mouse-click       get-mouse-click      )
+    (ready-mouse-click     ready-mouse-click    )
+    (mouse-click-posn      mouse-click-posn     )
+    (make-posn             make-posn            )
+    (posn-x                posn-x               )
+    (posn-y                posn-y               )
+    (make-rgb              make-rgb             ))
   (only-in racket/gui/base
-    message-box
-    get-text-from-user
-    get-choices-from-user
-    message+check-box
-    make-eventspace
-    current-eventspace)
+    (message-box           message-box          )
+    (get-text-from-user    get-text-from-user   )
+    (get-choices-from-user get-choices-from-user)
+    (message+check-box     message+check-box    )
+    (make-eventspace       make-eventspace      )
+    (current-eventspace    current-eventspace   ))
   (for-syntax
     racket/base   
     (only-in syntax/transformer
-      make-variable-like-transformer)))
+      (make-variable-like-transformer
+        make-variable-like-transformer))))
 
 (provide tower-of-hanoi idle-limit)
 
@@ -203,15 +204,12 @@
 (DEFINE disk-distr   'mutable)
 (DEFINE escape       'delayed)
 (DEFINE viewport     'delayed)
-  
-; After being assigned a value variable viewport is never mutated, but it cannot be opened yet
-; because this needs graphics to be open. Graphics is opened by procedure initialize, which also
-; will open and assign the viewport.
-    
 (DEFINE last-compute ""      )
 
-; Variable last-compute is not initialized by procedure initialize.
-; The value is memorized between successive calls to procedure tower-of-hanoi.
+; After being assigned a value variables escape and viewport never are mutated. Variable viewport can-
+; not be opened yet because this needs graphics to be open. Graphics is opened by procedure initialize
+; which also will open and assign the viewport. Variable last-compute is not initialized by procedure
+; initialize. The value is memorized between successive calls to procedure tower-of-hanoi.
 
 ;=====================================================================================================
 ; Initialization. Store the initial values or restore them when GUI is started again after a
@@ -230,6 +228,12 @@
   ; Open graphics and the viewport.
   (open-graphics)
   (set! viewport (open-viewport "Tower of Hanoi" vp-width vp-height))
+  ; Restore the content of button-height, button-mode, button-delay and idle-limit.
+  ; They may have been mutated in previous calls to procedure tower-of-hanoit.
+  (button-height 'put-content max-height )
+  (button-mode   'put-content 'manual    )
+  (button-delay  'put-content click      )
+  (button-idle   'put-content (idle-limit))
   ; Draw the buttons.
   (for ((button (in-list all-buttons)))
     (define pos (button1-pos button))
@@ -251,9 +255,10 @@
   (action-reset))
 
 ;=====================================================================================================
-; Buttons. They have procedure property. A button contains its name, its position, its region
-; and a boolean indicating whether or not it is enabled. Some buttons contain a content too.
-; The fileds content and enabled are the only mutable ones.
+; Buttons. They have procedure property. A button contains its name, its position, its region and a
+; boolean indicating whether or not it is enabled. Some buttons contain a content too. Procedure
+; proc-button2 always is called with a position if the action is in-button?. Procedures button1 and
+; button-2 always receive a posn for argument pos cq arg when called with action in-button?.
 
 (define (proc-button1 button action (pos #f))
   (case action
@@ -263,7 +268,7 @@
      (button1-enabled? button))
     ((disable)
      (set-button1-enabled?! button #f)
-     (draw-disabled-button button))
+     (draw-disabled-button  button))
     ((enable)
      (set-button1-enabled?! button #t)
      (draw-button button))))
@@ -1065,6 +1070,7 @@
     button-idle
     button-reset
     button-setup
+    
     button-quit
     button-peg0
     button-peg1

@@ -13,7 +13,7 @@
    (for-syntax racket))
 
 @(printf "Directory: ~s~n" (path->string (current-directory)))
-@(define-for-syntax local #f)
+@(define-for-syntax local #t)
 
 @(define-syntax-rule
    (Interaction x ...)
@@ -160,6 +160,7 @@ The delay is specified by means of a modal dialog.
 It is either @tt{click} or a non-negative real number
 written with not more than 6 characters.
 It applies to @seclink["Mode"]{modes} short, long and circular.
+The initial value is @tt{click}.
 
 When the delay is @tt{click} a move is made after each mouseclick
 at arbitrary position in the window of the GUI
@@ -212,7 +213,7 @@ Does nothing if not confirmed.
  because it may be waiting for a mouseclick or an answer to a modal dialog.
  However, after closing the GUI window, no such mouseclick can be made
  and answers to modal dialogs are not received.
- Nevertheless, the GUI eventually will terminate.
+ Never@element['roman ?-]the@element['roman ?-]less, the GUI eventually will terminate.
  See the @seclink["Idle limit"]{idle limit} button and parameter @racket[idle-limit].}
 
 @subsection[#:tag "Cancel"]{Cancel}
