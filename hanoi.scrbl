@@ -1,7 +1,7 @@
 #lang scribble/manual
 @;----------------------------------------------------------------------------------------------------
 @(require scribble/base scribble/core scribble/eval racket
-   (only-in "hanoi.rkt" vp-width vp-height)
+  #; (only-in "hanoi.rkt" vp-width vp-height)
    (for-label "hanoi.rkt" racket
      (only-in typed/racket Setof Natural Sequenceof Index))
    (for-syntax racket))
@@ -27,7 +27,7 @@
    (Interaction* x ...)
    (interaction/no-prompt #:eval evaller x ...))
 
-@(define (ignore . x) (void))
+@(define-syntax (ignore stx) #'(void))
 
 @(define (make-evaller)
    (make-base-eval
@@ -93,9 +93,9 @@ except while being moved it always is at a peg.
  in which case it turns white.
  For some actions the GUI asks a question in a separate modal dialog.
  Instructions given before the question is answered are ignored.
- The width of the GUI is @format["~s"vp-width] pixels,
+@ignore{ The width of the GUI is @format["~s"vp-width] pixels,
  the height @format["~s" vp-height] pixels,
- title bar and border not included.}
+ title bar and border not included.}}
 
 @defparam[idle-limit time (and/c exact-positive-integer? (<=/c 100000)) #:value 10]{
  When the GUI is waiting for a mouseclick or an answer to a modal dialog
