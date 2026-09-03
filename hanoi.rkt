@@ -15,57 +15,57 @@
 ; For mutable variables DEFINE and DEFINE-VALUES must be used. In DrRacket place the mouse over the
 ; second element of an only-in entry to see arrows to bindings. Right click to tack the arrows.
 
-#lang racket
+#lang racket/base
 
-(require graphics/graphics racket/gui/base (for-syntax syntax/transformer))
-(require
-    (only-in racket/base
-    (define                DEFINE               )
-    (define-values         DEFINE-VALUES        ))
-)
-#;(require
+(require graphics/graphics racket/gui/base (for-syntax syntax/transformer) (for-syntax racket))
+(require racket
   (only-in racket/base
     (define                DEFINE               )
     (define-values         DEFINE-VALUES        ))
-  (only-in racket
-    (make-list             make-list            )
-    (infinite?             infinite?            )
-    (range                 range                )
-    (processor-count       processor-count      )
-    (future                future               )
-    (touch                 touch                )
-    (~r                    ~r                   ))
-  (only-in graphics/graphics
-    (open-graphics         open-graphics        )
-    (close-graphics        close-graphics       )
-    (open-viewport         open-viewport        )
-    (open-pixmap           open-pixmap          )
-    (close-viewport        close-viewport       )
-    (viewport-flush-input  viewport-flush-input )
-    (draw-rectangle        draw-rectangle       )
-    (draw-solid-rectangle  draw-solid-rectangle )
-    (clear-solid-rectangle clear-solid-rectangle)
-    (draw-string           draw-string          )
-    (clear-string          clear-string         )
-    (get-string-size       get-string-size      )
-    (get-mouse-click       get-mouse-click      )
-    (ready-mouse-click     ready-mouse-click    )
-    (mouse-click-posn      mouse-click-posn     )
-    (make-posn             make-posn            )
-    (posn-x                posn-x               )
-    (posn-y                posn-y               )
-    (make-rgb              make-rgb             ))
-  (only-in racket/gui/base
-    (message-box           message-box          )
-    (get-text-from-user    get-text-from-user   )
-    (get-choices-from-user get-choices-from-user)
-    (message+check-box     message+check-box    )
-    (make-eventspace       make-eventspace      )
-    (current-eventspace    current-eventspace   ))
-  (for-syntax
-    (only-in syntax/transformer
-      (make-variable-like-transformer
-        make-variable-like-transformer))))
+  )
+#;(require
+    (only-in racket/base
+      (define                DEFINE               )
+      (define-values         DEFINE-VALUES        ))
+    (only-in racket
+      (make-list             make-list            )
+      (infinite?             infinite?            )
+      (range                 range                )
+      (processor-count       processor-count      )
+      (future                future               )
+      (touch                 touch                )
+      (~r                    ~r                   ))
+    (only-in graphics/graphics
+      (open-graphics         open-graphics        )
+      (close-graphics        close-graphics       )
+      (open-viewport         open-viewport        )
+      (open-pixmap           open-pixmap          )
+      (close-viewport        close-viewport       )
+      (viewport-flush-input  viewport-flush-input )
+      (draw-rectangle        draw-rectangle       )
+      (draw-solid-rectangle  draw-solid-rectangle )
+      (clear-solid-rectangle clear-solid-rectangle)
+      (draw-string           draw-string          )
+      (clear-string          clear-string         )
+      (get-string-size       get-string-size      )
+      (get-mouse-click       get-mouse-click      )
+      (ready-mouse-click     ready-mouse-click    )
+      (mouse-click-posn      mouse-click-posn     )
+      (make-posn             make-posn            )
+      (posn-x                posn-x               )
+      (posn-y                posn-y               )
+      (make-rgb              make-rgb             ))
+    (only-in racket/gui/base
+      (message-box           message-box          )
+      (get-text-from-user    get-text-from-user   )
+      (get-choices-from-user get-choices-from-user)
+      (message+check-box     message+check-box    )
+      (make-eventspace       make-eventspace      )
+      (current-eventspace    current-eventspace   ))
+    (for-syntax
+      (only-in syntax/transformer
+        (make-variable-like-transformer
+          make-variable-like-transformer))))
 
 (provide tower-of-hanoi idle-limit)
 (provide vp-width       vp-height ) ; For the documentation.
