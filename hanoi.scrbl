@@ -4,7 +4,7 @@
    (only-in "hanoi.rkt" vp-width vp-height)
    (for-label "hanoi.rkt" racket
      (only-in typed/racket Setof Natural Sequenceof Index))
-   (for-syntax racket))
+   #;(for-syntax racket))
 
 @(define-for-syntax local #f)
 
