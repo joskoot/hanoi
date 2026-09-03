@@ -17,7 +17,13 @@
 
 #lang racket
 
+(require graphics/graphics racket/gui/base (for-syntax syntax/transformer))
 (require
+    (only-in racket/base
+    (define                DEFINE               )
+    (define-values         DEFINE-VALUES        ))
+)
+#;(require
   (only-in racket/base
     (define                DEFINE               )
     (define-values         DEFINE-VALUES        ))
