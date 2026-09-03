@@ -15,7 +15,7 @@
 ; For mutable variables DEFINE and DEFINE-VALUES must be used. In DrRacket place the mouse over the
 ; second element of an only-in entry to see arrows to bindings. Right click to tack the arrows.
 
-#lang racket/base
+#lang racket
 
 (require
   (only-in racket/base
@@ -57,7 +57,6 @@
     (make-eventspace       make-eventspace      )
     (current-eventspace    current-eventspace   ))
   (for-syntax
-    racket/base
     (only-in syntax/transformer
       (make-variable-like-transformer
         make-variable-like-transformer))))
