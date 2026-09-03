@@ -1,19 +1,14 @@
 #lang scribble/manual
 @;----------------------------------------------------------------------------------------------------
-@(require
-   scribble/base
-   scribble/core
-   scribble/eval
-   racket
-   ; "hanoi.rkt"
-   (for-label
-     "hanoi.rkt"
-     racket
+@(require scribble/base scribble/core scribble/eval racket
+   (only-in "hanoi.rkt" vp-width vp-height)
+   (for-label "hanoi.rkt" racket
      (only-in typed/racket Setof Natural Sequenceof Index))
    (for-syntax racket))
 
-@(printf "Directory: ~s~n" (path->string (current-directory)))
 @(define-for-syntax local #f)
+
+@(printf "Directory: ~s~n" (path->string (current-directory)))
 
 @(define-syntax-rule
    (Interaction x ...)
@@ -86,19 +81,21 @@ except while being moved it always is at a peg.
 @defproc[(tower-of-hanoi) void?]{
  Opens a GUI for playing the game of the
  @hyperlink["https://en.wikipedia.org/wiki/Tower_of_Hanoi"]{Tower of Hanoi}.
- The user can instruct the GUI which action to take by means of the buttons described below
- and by clicking nearby a peg.
- A button can temporarily be absent when not applicable during the current action.
+ It looks like this:
+
+ @elemtag["figure"]
+ 
+ @(hspace 3)@image["gui-pict.gif" #:scale 0.45]
+
+ The user can instruct the GUI which action to take by clicking one of the blue buttons
+ and by clicking nearby a peg. The actions are described in the sections to follow.
+ A button can temporarily be disabled when not applicable during the current action,
+ in which case it turns white.
  For some actions the GUI asks a question in a separate modal dialog.
  Instructions given before the question is answered are ignored.
- The GUI as opened by procedure @racket[tower-of-hanoi] looks like this:}
-
-@elemtag["figure"]
-
-@(hspace 3)@image["gui-pict.gif" #:scale 0.45]
-
-The blue rectangles are buttons that can be clicked to start an action.
-The white rectangle is a disabled button. It is enabled when appropriate.
+ The width of the GUI is @format["~s"vp-width] pixels,
+ the height @format["~s" vp-height] pixels,
+ title bar and border not included.}
 
 @defparam[idle-limit time (and/c exact-positive-integer? (<=/c 100000)) #:value 10]{
  When the GUI is waiting for a mouseclick or an answer to a modal dialog
@@ -272,9 +269,9 @@ with all disks at one peg: starting peg, destination peg,
 the remaining third peg and finally back to the starting peg.
 
 @note{The computation of the resulting distribution of disks can be parallelized.
-  Code with @seclink["futures" #:doc '(lib "scribblings/reference/reference.scrbl")]{futures}
-  for this pupose is already present in the source code and gives correct answers,
-  but does not parallelize yet.}
+ Code with @seclink["futures" #:doc '(lib "scribblings/reference/reference.scrbl")]{futures}
+ for this pupose is already present in the source code and gives correct answers,
+ but does not parallelize yet.}
 
 @section[#:style '(unnumbered)]{Appendix}
 
@@ -321,9 +318,10 @@ sequence of moves. This is the short mode, in the graph shown by the sides of th
 The largest number of moves without passing a distribution of disks among the pegs more than once
 is @tt{h}@↑{3}@(minus)1, implying that every legal distribution is visited exactly once.
 This is the long mode and is uniquely defined too.
-For three disks and labeling the vertices such as to show at which pegs the disks are: 
+For three disks with labels showing the positions (pegs)
+of the disks from left to right in order of increasing disk size: 
 
-@(hspace 5) @image["long-3.gif" #:scale 0.3]
+@(hspace 5) @image["long-3.gif" #:scale 0.45]
 
 Another interesting way is the circular mode, moving the disks such as to visit all legal
 distributions of disks among the pegs exactly once
@@ -331,7 +329,7 @@ and finishing with all disks on the starting peg.
 This takes @tt{h}@↑{3} moves. @nb{The circular} mode is uniquely defined too when
 disregarding the fact that the moves can be made in reversed order too. For three disks:
 
-@(hspace 5) @image["circular3.gif" #:scale 0.3]
+@(hspace 5) @image["circular3.gif" #:scale 0.45]
 
 @subsection{Number of paths}
 
@@ -381,7 +379,7 @@ Written in @hyperlink["https://www.scheme.org/"]{Scheme} or
          @tt{1}
          " or "
          @tt{2}
-         ". More convenient than ordinals " @tt{1} ", " @tt{2} " and "@tt{3} ".")))
+         ".")))
    (list "" @tt{t}
      (element #f
        (list
@@ -478,11 +476,9 @@ Similar formulas exist for the longest non-selfcrossing path from @tt{f} to @tt{
 @elemtag["nonrrec-disk" ""]
 Below a non-recursive version of procedure disk when regarding exponentiation and taking a logarithm
 as non-recursive.
-Works for m of @racket[order-of-magnitude] up to five million, may be even more,
-but is not guaranteed to work for every m because of the use of inexact numbers.
 
-@note{The @racket[order-of-magnitude] of a postive integer number m is one@(lb)
- less than the number of digits needed to write m in decimal base.}
+@note{Works for m up to 3@↑{5×10@↑{7}}, probably even much more,
+ but is not guaranteed to work for every m because of the use of logarithms and inexact numbers.}
 
 @racketblock[
  (define (disk m)
@@ -491,7 +487,7 @@ but is not guaranteed to work for every m because of the use of inexact numbers.
       (first-guess (ceiling (/ (inexact->exact (log m)) log3)))
       (upper-bound (expt 3 first-guess))
       (lowest-power-3 (gcd m upper-bound)))
-     (inexact->exact (round (/ (log lowest-power-3) log3)))))]
+     (round (inexact->exact (/ (log lowest-power-3) log3)))))]
 
 The following example resembles the one for the shortest path,
 but the differences are such that making a procedure that can handle both examples
