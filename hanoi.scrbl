@@ -1,12 +1,12 @@
 #lang scribble/manual
 @;----------------------------------------------------------------------------------------------------
 @(require scribble/base scribble/core scribble/eval racket
-  #; (only-in "hanoi.rkt" vp-width vp-height)
+   #; (only-in "hanoi.rkt" vp-width vp-height)
    (for-label "hanoi.rkt" racket
      (only-in typed/racket Setof Natural Sequenceof Index))
    (for-syntax racket))
 
-@(define-for-syntax local #f)
+@(define-for-syntax local #t)
 
 @(printf "Directory: ~s~n" (path->string (current-directory)))
 
@@ -27,8 +27,6 @@
    (Interaction* x ...)
    (interaction/no-prompt #:eval evaller x ...))
 
-@(define-syntax (ignore stx) #'(void))
-
 @(define (make-evaller)
    (make-base-eval
      #:pretty-print? #f
@@ -44,9 +42,8 @@
      #'(defmodule hanoi/hanoi #:packages ())))
 
 @(define (reset-Interaction*) (set! evaller (make-evaller)))
-
+@(define-syntax (ignore stx) #'(void))
 @(define evaller (make-evaller))
-
 @(define nb nonbreaking)
 @(define ↑ superscript)
 @(define ↓ subscript)
@@ -93,9 +90,9 @@ except while being moved it always is at a peg.
  in which case it turns white.
  For some actions the GUI asks a question in a separate modal dialog.
  Instructions given before the question is answered are ignored.
-@ignore{ The width of the GUI is @format["~s"vp-width] pixels,
- the height @format["~s" vp-height] pixels,
- title bar and border not included.}}
+ The width of the GUI is 1540 pixels,
+ the height 494 pixels,
+ title bar and border not included.}
 
 @defparam[idle-limit time (and/c exact-positive-integer? (<=/c 100000)) #:value 10]{
  When the GUI is waiting for a mouseclick or an answer to a modal dialog
@@ -119,7 +116,8 @@ The GUI starts in mode manual and actions short,
 long and circular return to manual mode after completion or @seclink["Cancel"]{cancelation}.
 
 In manual mode the user is supposed to click the @seclink["Peg n"]{peg} button
-the disk is to be taken from followed by a click on the @seclink["Peg n"]{peg} button of destination.
+the disk is to be taken from followed by a click on the @seclink["Peg n"]{peg} button of
+des@element['roman ?-]ti@element['roman ?-]na@element['roman ?-]tion.
 In stead of clicking a @seclink["Peg n"]{peg} button one can click nearby the corresponding peg.
 The disk selected to be moved is colored red.
 @nb{The selection} can be canceled by clicking nearby the peg were it is
@@ -137,12 +135,12 @@ When the long mode is selected, first all disks are placed at the peg at the lef
 subsequently moved to the peg at the right with the largest number of moves possible
 without passing any distribution of disks more than once.
 @tt{3@↑{h}-1} moves, where @tt{h} is the @seclink["Height"]{height}.
-In fact every legal distribution of disks is visited. @nb{The sequence} of moves is uniquely defined.
+In fact every legal distribution of disks is visited.
+@nb{The sequence} of moves is uniquely defined.
 
 When the circular mode is selected, first all disks are placed at the peg at the left and
-subsequently moved such as to pass exactly once along
-every legal distribution
-of disks and finishing with all disks at the peg started from.
+subsequently moved such as to pass exactly once along every legal distribution of disks and finishing
+with all disks at the peg started from.
 @tt{3@↑{h}} moves, where @tt{h} is the @seclink["Height"]{height}.
 @nb{The sequence} of moves is uniquely defined when we ignore the fact that the moves can be made
 in reversed order too.
@@ -206,12 +204,13 @@ Does nothing if not confirmed.
 
 @note{The window of the GUI can be closed by means of the close button in the title bar
  (at the top-right corner),
- but procedure @racket[tower-of-hanoi] probably is not terminated immediately
- because it may be waiting for a mouseclick or an answer to a modal dialog.
- However, after closing the GUI window, no such mouseclick can be made
- and answers to modal dialogs are not received.
+ but this does not terminate immediately procedure @racket[tower-of-hanoi]
+ because it will keep waiting for a mouseclick.
+ However, after closing the GUI window, no such mouseclick can be made.
  Never@element['roman ?-]the@element['roman ?-]less, the GUI eventually will terminate.
- See the @seclink["Idle limit"]{idle limit} button and parameter @racket[idle-limit].}
+ See the @seclink["Idle limit"]{idle limit} button and parameter @racket[idle-limit].
+ A modal dialog may keep responding but eventually the GUI will need a mouseclick other than
+ an answer to a dialog.}
 
 @subsection[#:tag "Cancel"]{Cancel}
 
@@ -259,13 +258,17 @@ The move number @tt{m} and height @tt{h} must satisfy the following rules:
    (list "Circular mode" @tt{1≤m≤3@↑{h}}))
  #:sep (hspace 1)]}
 
+The data provided by the user are memorised between successive compute actions and between
+successive calls to procedure @racket[tower-of-hanoi].
 There is no limit to the number of disks, but a very large height, say 1000000 disks,
-can take much time, involving exact numeric operations on very large numbers, almost 10@↑{500000}.
+can take much time, involving exact numeric operations on very large numbers, about
+10@↑[@(format "~s" (order-of-magnitude (expt 3 1000000)))].
 @nb{For reasonable} heights, say up to 10000 disks,
 the computation is fast because it is not recursive in the sense that
-it does not depend on preceding moves.
-For a circular path the destination determines the order of visited distributions
-with all disks at one peg: starting peg, destination peg,
+it does not depend on preceding moves or solutions with less disks.
+For a circular path the des@element['roman ?-]ti@element['roman ?-]na@element['roman ?-]tion
+determines the order of visited distributions with all disks at one peg: starting peg,
+des@element['roman ?-]ti@element['roman ?-]na@element['roman ?-]tion peg,
 the remaining third peg and finally back to the starting peg.
 
 @note{The computation of the resulting distribution of disks can be parallelized.
@@ -343,7 +346,8 @@ See @hyperlink["https://oeis.org/A125295"]{A125295} of @hyperlink["https://oeis.
 @subsection{Non recursive formulas}
 
 Regarding elementary arithmetic operations as non-recursive,
-given height @tt{h}, starting peg @tt{f} and destination peg @tt{t},
+given height @tt{h}, starting peg @tt{f} and
+des@element['roman ?-]ti@element['roman ?-]na@element['roman ?-]tion peg @tt{t},
 all information about the @tt{m}@↑{th} move
 along the shortest path from peg @tt{f} to peg @tt{t}
 and the resulting distribution of disks

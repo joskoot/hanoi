@@ -12,88 +12,14 @@
 ;=====================================================================================================
 ; Imports and exports. The only ones in the present module. None of the imports can be omitted.
 ; Syntaxes define and define-values will be redefined such as to produce immutable variables only.
-; For mutable variables DEFINE and DEFINE-VALUES must be used. In DrRacket place the mouse over the
+; For mutable variables define and define-values must be used. In DrRacket place the mouse over the
 ; second element of an only-in entry to see arrows to bindings. Right click to tack the arrows.
+; Does not work as you may expect in a for-syntax require form.
 
-#lang racket/base
+#lang racket
 
-(require racket
-  (only-in racket/base
-    (define                DEFINE               )
-    (define-values         DEFINE-VALUES        ))
-  (only-in racket/base
-    (define                DEFINE               )
-    (define-values         DEFINE-VALUES        ))
-  (only-in racket
-    (make-list             make-list            )
-    (infinite?             infinite?            )
-    (range                 range                )
-    (processor-count       processor-count      )
-    (future                future               )
-    (touch                 touch                )
-    (~r                    ~r                   ))
-  (only-in graphics/graphics
-    (open-graphics         open-graphics        )
-    (close-graphics        close-graphics       )
-    (open-viewport         open-viewport        )
-    (open-pixmap           open-pixmap          )
-    (close-viewport        close-viewport       )
-    (viewport-flush-input  viewport-flush-input )
-    (draw-rectangle        draw-rectangle       )
-    (draw-solid-rectangle  draw-solid-rectangle )
-    (clear-solid-rectangle clear-solid-rectangle)
-    (draw-string           draw-string          )
-    (clear-string          clear-string         )
-    (get-string-size       get-string-size      )
-    (get-mouse-click       get-mouse-click      )
-    (ready-mouse-click     ready-mouse-click    )
-    (mouse-click-posn      mouse-click-posn     )
-    (make-posn             make-posn            )
-    (posn-x                posn-x               )
-    (posn-y                posn-y               )
-    (make-rgb              make-rgb             ))
-  (only-in racket/gui/base
-    (message-box           message-box          )
-    (get-text-from-user    get-text-from-user   )
-    (get-choices-from-user get-choices-from-user)
-    (message+check-box     message+check-box    )
-    (make-eventspace       make-eventspace      )
-    (current-eventspace    current-eventspace   ))
-  (for-syntax
-    (only-in syntax/transformer
-      (make-variable-like-transformer
-        make-variable-like-transformer))))
-
+(require graphics/graphics racket/gui/base)
 (provide tower-of-hanoi idle-limit)
-(provide vp-width       vp-height ) ; For the documentation.
-
-;=====================================================================================================
-; Protection against mutation of variables that are not intended to be mutable. Use DEFINE and
-; DEFINE-VALUES for mutable variables. Syntaxes define and define-values are redefined such as to
-; produce immutable variables (a contradictio in terminis).
-
-(define-syntax (define stx)
-  (syntax-case stx ()
-    ((_ id value)
-     (identifier? #'id)
-     #'(begin
-         (DEFINE hidden value)
-         (define-syntax id (make-variable-like-transformer #'hidden))))
-    ((_ (id arg ...           ) body ...)
-     #'(define id (procedure-rename (λ (arg ...           ) body ...) 'id)))
-    ((_ (id arg . rest-arg) body ...)
-     (identifier? #'rest-arg)
-     #'(define id (procedure-rename (λ (arg     . rest-arg) body ...) 'id)))
-    ((_ (id arg ... . rest-arg) body ...)
-     #'(define id (procedure-rename (λ (arg ... . rest-arg) body ...) 'id)))))
-
-(define-syntax (define-values stx)
-  (syntax-case stx ()
-    ((_ (id ...) expr)
-     (with-syntax (((hidden ...) (generate-temporaries #'(id ...))))
-       #'(begin
-           (DEFINE-VALUES (hidden ...) expr)
-           (define id (if (procedure? hidden) (procedure-rename hidden 'id) hidden)) ...)))))
 
 ;=====================================================================================================
 ; Prologue, some macros.
@@ -117,15 +43,35 @@
         (values (incrementor val) (cons val vals))))))
 
 ;=====================================================================================================
+; When the GUI is waiting for a mouse-click or a response to a modal dialog but the user does not act
+; or answer within a certain time, the GUI aborts. The limit is hold in parameter idle-limit.
+
+(define default-idle-minutes 10)
+(define max-idle-minutes 100000) ; Almost 70 days.
+(define min-idle-minutes      1)
+
+(define idle-limit
+  (make-parameter
+    default-idle-minutes
+    (λ (time) ; Minutes.
+      (cond
+        ((and (exact-positive-integer? time) (<= time max-idle-minutes)) time)
+        (else
+          (raise-user-error '|Parameter idle-limit|
+            "~n  Exact positive integer ~s<=time<=~s wanted.~n  Given ~s"
+            min-idle-minutes  max-idle-minutes time))))
+    'parameter-idle-limit))
+
+;=====================================================================================================
 ; The main procedure.
 
 (define (tower-of-hanoi)
   (dynamic-wind
     void
-    hanoi
+    GUI
     close))
 
-(define (hanoi)
+(define (GUI)
   (let/ec ec
     (initialize ec)
     (main)))
@@ -139,21 +85,21 @@
   (close-graphics))
 
 ;=====================================================================================================
-; Internal state. The following variables can be mutated while playing. Other variables in the present
-; scope are never mutated. Initialized by procedure initialize. In an embeded scope action compute has
-; some mutable variables but these do not need reinitialization.
+; Internal state. The following variables can be mutated while playing. They are Initialized when
+; calling procedure tower-of-hanoi for the first time and restored when calling the procedure
+; subsequent times. Other top level variables are never mutated. 
 
-(DEFINE height       'mutable)
-(DEFINE delay        'mutable)
-(DEFINE msg-str      'mutable)
-(DEFINE clock        'mutable)
-(DEFINE move-count   'mutable)
-(DEFINE manual-count 'mutable)
-(DEFINE allow-intro  'mutable)
-(DEFINE disk-distr   'mutable)
-(DEFINE escape       'delayed)
-(DEFINE viewport     'delayed)
-(DEFINE last-compute ""      ) ; Not restored after mutation in an earlier session.
+(define height       'mutable)
+(define delay        'mutable)
+(define msg-str      'mutable)
+(define clock        'mutable)
+(define move-count   'mutable)
+(define manual-count 'mutable)
+(define allow-intro  'mutable)
+(define disk-distr   'mutable)
+(define escape       'delayed)
+(define viewport     'delayed)
+(define last-compute ""      ) ; Not restored after mutation in an earlier session.
 
 ; After being assigned a value variables escape and viewport never are mutated. Variable viewport can-
 ; not yet be opened because this needs graphics to be open. Graphics is opened by procedure initialize
@@ -182,7 +128,7 @@
   ; They may have been mutated in previous calls to procedure tower-of-hanoi. Button idle is
   ; initialized according to parameter idle-limit.
   (button-height 'put-content max-height )
-  (button-mode   'put-content 'manual    )
+  (button-mode   'put-content manual-mode)
   (button-delay  'put-content click      )
   (button-idle   'put-content (idle-limit))
   ; Draw the buttons.
@@ -244,26 +190,6 @@
     ((in-region? pos region-peg1) 1)
     ((in-region? pos region-peg2) 2)
     (else #f)))
-
-;=====================================================================================================
-; When the GUI is waiting for a mouse-click or a response to a modal dialog but the user does not act
-; or answer within a certain time, the GUI aborts. The limit is hold in parameter idle-limit.
-
-(define default-idle-minutes 10)
-(define max-idle-minutes 100000) ; Almost 70 days.
-(define min-idle-minutes      1)
-
-(define idle-limit
-  (make-parameter
-    default-idle-minutes
-    (λ (time) ; Minutes.
-      (cond
-        ((and (exact-positive-integer? time) (<= time max-idle-minutes)) time)
-        (else
-          (raise-user-error '|Parameter idle-limit|
-            "~n  Exact positive integer ~s<=time<=~s wanted.~n  Given ~s"
-            min-idle-minutes  max-idle-minutes time))))
-    'parameter-idle-limit))
 
 ;=====================================================================================================
 ; Buttons. They have procedure property. A button contains its name, its position, its region and a
@@ -415,6 +341,7 @@
 (define peg-top          (* 2 block)                               )
 (define peg-width        4                                         )
 (define click            'click                                    )
+(define manual-mode      'manual                                   )
 (define str-click        (symbol->string click)                    )
 (define str-warn1        " A dialog is waiting."                   )
 (define str-warn2        " Look for it when you don't see it."     )
@@ -708,7 +635,7 @@
   (prepare/finish-action-mode 'enable)
   (button-cancel 'disable)
   ((clear-string viewport) pos-msg msg-str)
-  (button-mode 'put-content 'manual))
+  (button-mode 'put-content manual-mode))
 
 (define buttons-for-action-mode ; All buttons but reset, quit and cancel excepted.
   (list
@@ -888,7 +815,7 @@
     (dispatch-button p
       (button-reset  (action-reset) (exit     ) #f)
       (button-cancel                (exit     ) #f)
-      (button-quit                  (action-quit) #f)
+      (button-quit   (action-quit)              #f)
       (else #t))))
 
 (define (doze t exit) ; t in seconds. Like sleep, but with time out.
@@ -910,8 +837,8 @@
   (when click
     (dispatch-button (mouse-click-posn click)
       (button-reset  (action-reset) (exit))
-      (button-cancel (exit))
-      (button-quit   (action-quit)))))
+      (button-cancel                (exit))
+      (button-quit   (action-quit )      ))))
 
 ;=====================================================================================================
 ; Action delay.
@@ -1088,7 +1015,7 @@
     button-peg2
     button-compute))
 
-(DEFINE-VALUES (SLC h M m f t) (values #f #f #f #f #f #f)) ; Are set by procedure validate-compute.
+(define-values (SLC h M m f t) (values #f #f #f #f #f #f)) ; Are set by procedure validate-compute.
 (define namespace (make-base-namespace))
 (define (catch-exn-for-compute e) (set! SLC 'wrong))
 (define nr-of-disks-per-line 50)
